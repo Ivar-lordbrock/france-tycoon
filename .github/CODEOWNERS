@@ -1,0 +1,9 @@
+# Relecteurs demandés automatiquement sur les PR.
+# Remplacer les pseudos quand le 2e développeur est ajouté au dépôt.
+# Dev A (Backend / Données) et Dev B (Frontend / Carte).
+
+*               @Ivar-lordbrock
+# /backend/     @pseudo-dev-a
+# /scripts/     @pseudo-dev-a
+# /frontend/    @pseudo-dev-b
+# /shared/      @pseudo-dev-a @pseudo-dev-b

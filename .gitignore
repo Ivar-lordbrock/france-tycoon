@@ -1,0 +1,58 @@
+# --- Secrets et configuration locale ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- Bases SQLite (jamais dans Git) ---
+*.sqlite
+*.sqlite3
+*.db
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db-journal
+*.db-wal
+*.db-shm
+
+# --- Données brutes téléchargées (API Geo, BPE, OSM) ---
+data/raw/
+data/cache/
+data/build/
+*.osm.pbf
+*.geojson.gz
+
+# --- Dépendances ---
+node_modules/
+.pnpm-store/
+
+# --- Builds et caches ---
+dist/
+build/
+out/
+.vite/
+.turbo/
+.cache/
+coverage/
+*.tsbuildinfo
+playwright-report/
+test-results/
+
+# --- Journaux ---
+logs/
+*.log
+npm-debug.log*
+
+# --- Éditeurs et système ---
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Claude Code : réglages perso (les skills du projet, eux, sont partagés) ---
+.claude/settings.local.json
