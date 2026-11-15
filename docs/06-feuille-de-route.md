@@ -1,0 +1,94 @@
+# 6. Feuille de route : 6 sprints de 2 semaines
+
+- **Dev A — Backend / Données** : API, base, import, tâches planifiées.
+- **Dev B — Frontend / Carte** : React, Leaflet, écrans, tutoriel.
+- **Règle « contrat d'abord »** : le 1er jour de chaque sprint, les deux écrivent ensemble dans `shared/` les schémas zod des routes du sprint. Dev B peut alors coder contre des **données factices** (MSW) sans attendre Dev A.
+- **Fin de sprint** : démo de 15 min, PR `dev → main`, tag `v0.<n>.0`, mise à jour de cette page.
+- Chaque sprint a un jalon GitHub (« Sprint 1 » … « Sprint 6 ») : les issues s'y rangent.
+
+## Sprint 1 — Fondations et carte
+
+| Dev A — Backend / Données | Dev B — Frontend / Carte |
+|---|---|
+| Monorepo npm workspaces (`frontend`, `backend`, `shared`), TypeScript, Biome, Vitest | App Vite + React + Tailwind, structure `map/ panels/ hud/` |
+| Serveur Fastify, `/admin/health`, logs Pino, `.env` | Carte Leaflet (canvas), tuiles OSM + attribution |
+| Connexion SQLite (WAL, pragmas) + exécuteur de migrations (`schema_migrations`) ; brancher `001` et `002` | Sélecteur des 12 zones + `maxBounds` par zone + masque gris hors France |
+| `scripts/import/communes` : API Geo → `territories`, contours simplifiés, R*Tree, FTS | Couche départements (zoom < 9) depuis `public/geo/departements.json` |
+| `GET /map/zones`, `GET /map/territories?bbox`, `GET /map/search` | Chargement des communes à l'écran (zoom ≥ 9), recherche avec autocomplétion |
+| CI : lint + tests + build (étend `.github/workflows/ci.yml`) | |
+
+**Fini quand** : on ouvre l'app, on saute en Martinique, on zoome, on voit les contours des communes et on trouve « Saint-Étienne » en tapant « saint etienne ».
+
+## Sprint 2 — Connexion Google et fiches de communes
+
+| Dev A | Dev B |
+|---|---|
+| Projet Google Cloud (ID client OAuth, origines autorisées) | Bouton Google Identity Services, état connecté/déconnecté |
+| `POST /auth/google`, sessions, `GET/PATCH /me`, `POST /auth/logout` ; création du profil + 30 000 ₮ via `wallet.apply` | Profil (avatar, pseudo, couleur de marqueur) |
+| Service portefeuille `wallet.apply` + tests (soldes, idempotence) | Barre du haut : cash, gemmes, revenu/h |
+| `scripts/import/bpe` et `osm` → `territory_stats` ; calcul de I, V0, emplacements (formules dans `shared/`) | Fiche commune : population, équipements, prix, revenu, propriétaire |
+| `GET /territories/:insee` avec `actions possibles` | Couleur des communes selon l'état (libre, à moi, rival) |
+
+**Fini quand** : un nouveau joueur se connecte avec Google, reçoit 30 000 ₮, ouvre la fiche de n'importe quelle commune avec un vrai prix.
+
+## Sprint 3 — Économie : achat, construction, revenus
+
+| Dev A | Dev B |
+|---|---|
+| `shared/src/balance.ts` (toutes les constantes de 05) + tests unitaires des formules | Bouton Acheter / Vendre avec confirmation et aperçu (formules `shared/`) |
+| Achat, vente, limite de territoires, bouclier 12 h | Panneau bâtiments : emplacements, construire, améliorer, démolir, minuteurs |
+| Moteur de revenus différés **par morceaux** (chantiers finis pendant l'absence) + tests de temps simulé | Cash qui monte en direct côté client, « encaisser » |
+| Bâtiments : construction, amélioration, files, siège social, capitale | Liste « Mes territoires », file de construction |
+| `GET /me/territories`, `/building-types`, `/me/construction-queue`, `/me/collect`, `/me/capital` | Gestion des erreurs métier (toasts lisibles) |
+
+**Fini quand** : on achète un village, on construit, on ferme l'onglet, on revient 2 h plus tard et le revenu encaissé est exact (testé automatiquement).
+
+## Sprint 4 — PvP : OPA et inactivité
+
+| Dev A | Dev B |
+|---|---|
+| OPA : devis, lancement (séquestre), défense, acceptation, retrait, toutes les conditions de 5.5 | Fenêtre de devis d'OPA (montants, raisons d'inéligibilité) |
+| Tâche `resolve-takeovers` + résolution à la lecture (même fonction, idempotente) + `job_runs` | Écran « OPA reçue » : compte à rebours, Défendre / Accepter |
+| Tâches `release-inactive`, `warn-inactive` | États de carte : OPA en cours, bouclier |
+| Notifications + flux SSE `/events` | Centre de notifications + toasts temps réel |
+| Tests : chaque issue d'OPA, concurrence (deux OPA simultanées), inactivité | |
+
+**Fini quand** : deux comptes de test jouent une OPA complète dans chacune des issues, et un compte inactif voit ses communes libérées.
+
+## Sprint 5 — Rétention : tutoriel, quêtes, classement
+
+| Dev A | Dev B |
+|---|---|
+| Bus d'événements interne (`territory_bought`, `building_started`...) qui fait avancer quêtes et tutoriel | Tutoriel interactif driver.js, 10 étapes, ancres `data-tuto` |
+| Tirage des 3 quêtes du jour (graine user+date), réclamation | Panneau des quêtes avec progression |
+| Tutoriel côté serveur (validation, récompenses, passer) ; `POST /events/track` | Classement national / Métropole / Outre-mer / région, profil public |
+| Tâche `leaderboard` (patrimoine, rangs, bonus de territoire) | Accueil du premier lancement, écran de rang |
+
+**Fini quand** : un nouveau joueur va du premier clic au classement guidé par le tutoriel, et ses quêtes se renouvellent à minuit (heure de Paris).
+
+## Sprint 6 — Solidité et mise en ligne (bêta fermée)
+
+| Dev A | Dev B |
+|---|---|
+| Limitation de débit, contrôle `Origin`, revue de sécurité (`/security-review`) | Version mobile (carte plein écran, panneaux en bas) |
+| Litestream + restauration testée ; VPS + Caddy (HTTPS) ; déploiement automatique depuis `main` | Performance carte (cache des bbox, contours `low/high`), accessibilité |
+| Routes admin (relance de tâche, correction tracée) ; tables boutique derrière `FEATURE_SHOP` | Tests bout en bout Playwright (connexion simulée, achat, OPA) |
+| Test de charge (k6) : 500 joueurs simultanés | Pages CGU, confidentialité (RGPD), mentions et attributions (OSM, INSEE, IGN) |
+| Réglage de l'équilibrage avec les chiffres de la bêta | Retours des testeurs |
+
+**Fini quand** : le jeu tourne en ligne en HTTPS pour 20 à 50 testeurs, avec sauvegarde continue vérifiée.
+
+## Après la V1
+
+- V2 monétisation : activer la boutique, Stripe Checkout + webhook → `payment_orders` et `gems_purchase`.
+- E-mails (alerte d'OPA, inactivité), événements saisonniers, expéditions TAAF, alliances.
+
+## Risques et parades
+
+| Risque | Parade |
+|---|---|
+| Contours trop lourds, carte lente | Simplification à l'import, deux niveaux de détail, zoom ≥ 9 seulement, canvas |
+| Limites de l'API Overpass | Pauses entre requêtes, cache `data/raw/`, ou extrait Geofabrik + osmium |
+| Économie déséquilibrée | Toutes les constantes dans `shared/src/balance.ts` ; `balance_version` permet de recalculer les V0 |
+| Multi-comptes qui se font des cadeaux par OPA | 7 jours d'ancienneté, règle des 25 %, alerte sur les paires récurrentes |
+| Deux devs qui se marchent dessus | Zones de code séparées, contrat `shared/` en début de sprint, PR relue par l'autre |
