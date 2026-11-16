@@ -24,6 +24,7 @@ Jeu web multijoueur de gestion et de conquête immobilière **sur la vraie carte
 | [4. API REST](docs/04-api.md) | Toutes les routes et les flux |
 | [5. Formules d'équilibrage](docs/05-equilibrage.md) | Prix, bâtiments, revenus, OPA |
 | [6. Feuille de route](docs/06-feuille-de-route.md) | 6 sprints répartis entre deux développeurs |
+| [7. Travailler à deux](docs/07-travailler-a-deux.md) | Guide pas à pas des outils du duo, sans connaître Git |
 
 ## Structure
 
@@ -34,12 +35,20 @@ shared/          types, schémas d'API, formules (à deux)
 scripts/import/  import des communes et des équipements
 data/            données téléchargées (ignorées par Git)
 docs/            dossier d'architecture
+outils/          outils du duo (fenêtre à boutons ou double-clic) : mettre à jour, commencer, envoyer…
 .claude/skills/  skills Claude Code partagés par le duo
+.claude/commands/ commandes Claude Code des outils du duo (/commencer, /envoyer…)
 ```
 
 ## Démarrer
 
-Prérequis : [Node.js](https://nodejs.org) LTS (≥ 22.18), Git.
+**Sans rien connaître à Git (Windows)** : ouvre le Terminal (clic droit sur Démarrer, puis « Terminal ») et colle cette ligne. Elle installe Git, Node.js et GitHub CLI, te connecte à GitHub et copie le projet :
+
+```powershell
+irm https://raw.githubusercontent.com/Ivar-lordbrock/france-tycoon/dev/outils/moteur/installer.ps1 | iex
+```
+
+**À la main** : prérequis [Node.js](https://nodejs.org) LTS (≥ 22.18), Git.
 
 ```bash
 git clone https://github.com/Ivar-lordbrock/france-tycoon.git
@@ -62,6 +71,8 @@ Le `.env` est facultatif en local (valeurs par défaut de `.env.example`). La ba
 ## Travailler à deux
 
 Branches `main` (stable, protégée) et `dev` (intégration, par défaut), une branche par fonctionnalité, PR relue par l'autre. Tout est dans [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Au quotidien, double-clique sur le raccourci « France Tycoon » du Bureau (ou sur `outils/0-ouvrir-les-outils`) : une fenêtre à gros boutons fait chaque étape. Tu peux aussi double-cliquer sur les fichiers numérotés du dossier [`outils/`](outils/) (ou taper `/commencer`, `/envoyer`… dans Claude Code) : mettre à jour, commencer une tâche, envoyer, proposer, fusionner. Guide pas à pas : [docs/07-travailler-a-deux.md](docs/07-travailler-a-deux.md), et vidéo de 3 minutes : [docs/medias/fenetre-des-outils.mp4](docs/medias/fenetre-des-outils.mp4).
 
 ## Données et licences
 

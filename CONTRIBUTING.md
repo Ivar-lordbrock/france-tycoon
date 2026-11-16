@@ -13,12 +13,24 @@ Zones : `api`, `db`, `data`, `map`, `ui`, `shared`, `docs`, `ci`.
 
 ## Cycle d'une tâche
 
-1. `git switch dev && git pull`
-2. `git switch -c feat/api-achat-territoire`
-3. Petits commits (voir convention ci-dessous).
-4. `git push -u origin feat/api-achat-territoire` puis ouvrir une PR vers `dev`.
-5. L'autre développeur relit. On fusionne en **squash** (un commit propre par fonctionnalité).
-6. Fin de sprint : PR `dev → main` en **merge commit**, puis tag `v0.<sprint>.0`.
+Pas besoin de connaître Git : les outils du dossier [`outils/`](outils/) font chaque étape avec des garde-fous (fenêtre à boutons `0-ouvrir-les-outils`, double-clic, ou commande dans Claude Code). Guide pas à pas : [docs/07-travailler-a-deux.md](docs/07-travailler-a-deux.md).
+
+| Étape | Double-clic (`outils/`) | Claude Code | Équivalent Git |
+|---|---|---|---|
+| Récupérer le dernier `dev` | `2-mettre-a-jour` | `/mettre-a-jour` | `git switch dev && git pull --ff-only` |
+| Commencer une tâche | `3-commencer-une-tache` | `/commencer` | `git switch -c feat/api-achat-territoire origin/dev` |
+| Enregistrer et envoyer | `4-envoyer-mon-travail` | `/envoyer` | `git add -A && git commit -m "feat(api): …" && git push -u origin HEAD` |
+| Proposer (PR vers `dev`) | `5-proposer-mon-travail` | `/proposer` | `gh pr create --base dev` |
+| Où j'en suis | `6-ou-j-en-suis` | `/ou-j-en-suis` | `git status`, `gh pr status` |
+| Relire la PR de l'autre | GitHub, « Review changes » | `/relire <n°>` | `gh pr review <n°> --approve` |
+| Fusionner (**squash**) | `7-fusionner` | `/fusionner` | `gh pr merge <n°> --squash` |
+| Fin de sprint : `dev → main` (**merge commit**) et version `v0.<sprint>.0` | `8-fin-de-sprint` | `/fin-de-sprint` | `gh pr create --base main --head dev`, `gh pr merge --merge`, `gh release create v0.<sprint>.0` |
+
+Garde-fous : refus de travailler sur `main` ou `dev`, arrêt s'il reste des modifications non enregistrées, jamais de `--force`, fusion seulement si les vérifications (CI) sont vertes, refus des secrets (`.env`), des bases (`.sqlite`) et des fichiers de plus de 10 Mo.
+
+### Relecture tant qu'on est seul
+
+La règle « 1 relecture obligatoire » reste active sur `main` et `dev`. Tant que le binôme n'est pas arrivé, le propriétaire fusionne ses propres PR avec son droit d'administrateur (`7-fusionner` le propose, après confirmation, et **seulement si la CI est verte**). Dès que le binôme est là, chaque PR est relue par l'autre.
 
 ## Convention de commits (Conventional Commits)
 
