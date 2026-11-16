@@ -2,9 +2,10 @@
 
 Étapes (détail dans [docs/02-stack-technique.md](../../docs/02-stack-technique.md#24-données-géographiques--import-et-cache)) :
 
-1. `communes` : API Geo → `territories`, contours simplifiés, index spatial, recherche
-2. `bpe` : équipements INSEE → `territory_stats`
-3. `osm` : gares, monuments, attractions (Overpass) → `territory_stats`
-4. `valeurs` : calcul de I, V0, emplacements avec `shared/src/balance.ts`
+1. `npm run import:communes` : API Geo → `territories`, contours simplifiés, index spatial, recherche
+2. `npm run import:bpe` : équipements INSEE (BPE 2025, Métropole et DROM) → `territory_stats` (quelques secondes)
+3. `npm run import:osm` : gares, aéroports, ports, monuments, musées et attractions partout, plus tous les équipements dans les collectivités d'outre-mer (Overpass, une requête par département toutes les 5 s, ≈ 30 min) → `territory_stats`
+
+`bpe` et `osm` recalculent ensuite I, V0 et les emplacements de toutes les communes avec `shared/src/balance.ts`, sans toucher aux propriétaires ni aux bâtiments. Chaque étape est rejouable.
 
 Les téléchargements bruts vont dans `data/raw/` (ignoré par Git). Respecter les services : 1 requête/seconde sur l'API Geo, pauses sur Overpass.

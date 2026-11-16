@@ -20,7 +20,9 @@
     "test:watch": "vitest",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "import:communes": "node scripts/import/communes.ts"
+    "import:communes": "node scripts/import/communes.ts",
+    "import:bpe": "node scripts/import/bpe.ts",
+    "import:osm": "node scripts/import/osm.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.8",
