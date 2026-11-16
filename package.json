@@ -15,16 +15,27 @@
   "scripts": {
     "dev": "concurrently -k -n api,web -c blue,green \"npm run dev -w backend\" \"npm run dev -w frontend\"",
     "build": "npm run build --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p tsconfig.json",
     "test": "vitest run && node --test backend/",
     "test:watch": "vitest",
     "lint": "biome check .",
-    "lint:fix": "biome check --write ."
+    "lint:fix": "biome check --write .",
+    "import:communes": "node scripts/import/communes.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.8",
+    "@turf/simplify": "^7.4.0",
+    "@types/geojson": "^7946.0.16",
     "@types/node": "^26.6.6",
+    "@types/topojson-client": "^3.1.5",
+    "@types/topojson-server": "^3.0.4",
+    "@types/topojson-simplify": "^3.0.3",
+    "@types/topojson-specification": "^1.0.5",
     "concurrently": "^10.0.7",
+    "polylabel": "^2.1.0",
+    "topojson-client": "^3.1.0",
+    "topojson-server": "^3.0.1",
+    "topojson-simplify": "^3.0.3",
     "typescript": "^7.0.2",
     "vitest": "^5.1.0"
   },

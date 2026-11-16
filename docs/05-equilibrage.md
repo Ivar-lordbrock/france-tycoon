@@ -1,6 +1,6 @@
 # 5. Formules d'équilibrage
 
-Toutes les constantes ci-dessous vivront dans **un seul fichier**, `shared/src/balance.ts` (Sprint 3), importé par le serveur (qui fait foi), par le front (aperçus) et par le script d'import (valeurs des communes). Les paramètres propres à chaque bâtiment sont dans la table `building_types` ([002_seed.sql](../backend/src/db/migrations/002_seed.sql)).
+Toutes les constantes ci-dessous vivent dans **un seul fichier**, `shared/src/balance.ts` (les formules de 5.1 depuis le Sprint 1, le reste au Sprint 3), importé par le serveur (qui fait foi), par le front (aperçus) et par le script d'import (valeurs des communes). Les paramètres propres à chaque bâtiment sont dans la table `building_types` ([002_seed.sql](../backend/src/db/migrations/002_seed.sql)).
 
 Notations : `P` population, `I` score d'infrastructures, `L` niveau, `arrondi_N` arrondi à N près, `plafond_N` arrondi au-dessus à N près, `⌊x⌋` partie entière.
 
@@ -32,6 +32,8 @@ Notations : `P` population, `I` score d'infrastructures, `L` niveau, `arrondi_N`
 
 - **`f_T = borne( √(V0 / 10 000) ; 1 ; 60 )`** — multiplie le coût et le revenu des bâtiments : construire à Lyon coûte et rapporte plus qu'au village, avec le **même temps de retour**.
 - **`Emplacements = borne( 2 + ⌊2 × log10(1 + P)⌋ ; 3 ; 16 )`** — une grande ville accueille plus de bâtiments.
+
+> **Provisoire (Sprint 1)** : tant que BPE et OSM ne sont pas importés, `territory_stats` est vide, donc `I = 0` et V0 ne dépend que de la population. Le script `npm run import:communes` relit `territory_stats` à chaque passage : il suffira de le relancer après l'import des équipements.
 
 ### Exemples (valeurs réelles de population ; équipements estimés en attendant l'import BPE/OSM)
 
