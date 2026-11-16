@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+/* Palette de la carte (mêmes valeurs que src/map/style.ts). */
+@theme {
+  --font-sans: "Archivo Variable", "Archivo", system-ui, sans-serif;
+  --color-encre: #1b2a41;
+  --color-ardoise: #5b6577;
+  --color-brume: #e6eaf0;
+  --color-surligneur: #ffd23f;
+}
+
+html,
+body,
+#racine {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #dfe3ea;
+  color: var(--color-encre);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer components {
+  /* Panneau posé sur la carte : blanc net, filet d'encre, ombre courte. */
+  .panneau {
+    border-radius: 10px;
+    background: #fff;
+    box-shadow:
+      0 0 0 1px rgb(27 42 65 / 0.14),
+      0 6px 18px -6px rgb(27 42 65 / 0.35);
+  }
+
+  /* Logo en lettres larges, comme un titre de carte. */
+  .marque {
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+
+  .titre-groupe {
+    padding: 0.25rem 0.5rem 0.35rem;
+    color: var(--color-ardoise);
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-stretch: 87.5%;
+  }
+}
+
+/* Leaflet */
+.leaflet-container {
+  background: #dfe3ea;
+  font-family: var(--font-sans);
+}
+
+.leaflet-control-zoom.leaflet-bar {
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgb(27 42 65 / 0.14),
+    0 6px 18px -6px rgb(27 42 65 / 0.35);
+}
+
+.leaflet-control-zoom a {
+  color: var(--color-encre);
+}
+
+.leaflet-control-attribution {
+  font-size: 11px;
+}
+
+.leaflet-tooltip.etiquette {
+  border: none;
+  border-radius: 6px;
+  background: var(--color-encre);
+  box-shadow: 0 4px 12px -4px rgb(27 42 65 / 0.5);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 3px 8px;
+}
+
+.leaflet-tooltip-top.etiquette::before {
+  border-top-color: var(--color-encre);
+}
+
+/* Sur téléphone, la recherche occupe le haut : le zoom descend sous elle. */
+@media (width < 48rem) {
+  .leaflet-top.leaflet-right {
+    top: 7.5rem;
+  }
+}

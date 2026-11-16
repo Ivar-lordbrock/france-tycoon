@@ -1,0 +1,26 @@
+{
+  "name": "@france-tycoon/backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API Fastify + SQLite (Dev A)",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.ts",
+    "start": "node src/server.ts",
+    "db:migrate": "node src/db/migrer.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@fastify/etag": "^6.2.2",
+    "@france-tycoon/shared": "*",
+    "better-sqlite3": "^13.2.0",
+    "fastify": "^5.12.8",
+    "fastify-type-provider-zod": "^7.0.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "pino-pretty": "^13.2.0"
+  }
+}

@@ -48,16 +48,25 @@ outils/          outils du duo (fenêtre à boutons ou double-clic) : mettre à 
 irm https://raw.githubusercontent.com/Ivar-lordbrock/france-tycoon/dev/outils/moteur/installer.ps1 | iex
 ```
 
-**À la main** : prérequis [Node.js](https://nodejs.org) LTS (≥ 22.13), Git.
+**À la main** : prérequis [Node.js](https://nodejs.org) LTS (≥ 22.18), Git.
 
 ```bash
 git clone https://github.com/Ivar-lordbrock/france-tycoon.git
 cd france-tycoon
 git switch dev
-node --test backend/
+npm install
+npm run import:communes   # ~35 000 communes depuis l'API Geo (1re fois : long, ensuite cache dans data/raw/)
+npm run dev               # API sur http://localhost:3000, carte sur http://localhost:5173
 ```
 
-La dernière commande applique les migrations dans une base en mémoire et vérifie les contraintes (24 tests). Le reste (`npm install`, `npm run dev`) arrive au Sprint 1.
+Le `.env` est facultatif en local (valeurs par défaut de `.env.example`). La base `data/france-tycoon.sqlite` est créée par l'import et n'est jamais commitée.
+
+| Commande | Rôle |
+|---|---|
+| `npm test` | Vitest (front, back, shared, scripts) puis tests du schéma (`node --test backend/`) |
+| `npm run lint` | Biome (lint + format) |
+| `npm run typecheck` | TypeScript dans chaque espace |
+| `npm run build` | Build du front (`frontend/dist`) |
 
 ## Travailler à deux
 

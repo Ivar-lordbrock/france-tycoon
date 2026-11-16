@@ -138,8 +138,8 @@ sequenceDiagram
   G-->>N: jeton d'identité (JWT signé)
   N->>A: POST /auth/google { credential }
   A->>A: verifyIdToken (audience = GOOGLE_CLIENT_ID, e-mail vérifié)
-  A->>D: BEGIN ; utilisateur existe ? sinon INSERT users + wallet_transactions(signup_bonus) ; INSERT sessions ; COMMIT
-  A-->>N: Set-Cookie sid=... ; { user, isNew }
+  A->>D: BEGIN, puis utilisateur existe ? sinon INSERT users + wallet_transactions(signup_bonus), puis INSERT sessions, puis COMMIT
+  A-->>N: Set-Cookie sid=..., puis { user, isNew }
   N->>N: isNew → lance le tutoriel
 ```
 
@@ -154,7 +154,7 @@ sequenceDiagram
   A->>D: BEGIN IMMEDIATE
   A->>D: encaisser les revenus en attente (chantiers finis compris)
   A->>D: territoire existe et libre ? limite de territoires ? cash ≥ V0 ?
-  A->>D: UPDATE territories (owner, bouclier 12 h) ; wallet.apply(-V0, territory_purchase) ; historique
+  A->>D: UPDATE territories (owner, bouclier 12 h), puis wallet.apply(-V0, territory_purchase), puis historique
   A->>D: progression quêtes + tutoriel (territory_bought)
   A->>D: COMMIT
   A-->>N: { territory, wallet }
@@ -176,7 +176,7 @@ sequenceDiagram
   A-->>DF: notification + SSE takeover.received (24 h pour réagir)
   alt le défenseur se défend
     DF->>A: POST defend → paie defenseCost → F += defenseCost, bouclier 72 h
-    A->>AT: remboursement offre − indemnité ; indemnité au défenseur
+    A->>AT: remboursement offre − indemnité, puis indemnité au défenseur
   else le défenseur accepte
     DF->>A: POST accept → transfert immédiat, le défenseur reçoit l'offre
   else personne ne bouge
