@@ -22,7 +22,7 @@ describe('sorties de l’import', () => {
 
     const contenu = fichierZones(boites as never, [8.53, 41.33, 9.56, 43.03]);
 
-    expect(contenu).toContain('MQ: { bbox: [-61.23,14.388,-60.809,14.879], zoom: 10 },');
+    expect(contenu).toContain('MQ: { bbox: [-61.23, 14.388, -60.809, 14.879], zoom: 10 },');
     expect(contenu).toContain('export const BOITE_CORSE');
     expect(contenu).toContain('Ne pas modifier à la main');
   });

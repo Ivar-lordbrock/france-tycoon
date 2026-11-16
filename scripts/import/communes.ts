@@ -105,7 +105,11 @@ for (const [index, departement] of choisis.entries()) {
 
 if (complet || options.sorties) {
   const tSorties = performance.now();
-  const { departements, zones } = contoursAlleges(contours, { poidsMin: 2e-6, decimales: 3 });
+  const { departements, zones } = contoursAlleges(contours, {
+    poidsMin: 2e-5, // ≈ 0,7 pixel² au zoom 8 : départements ≈ 0,7 Mo
+    poidsMinZones: 5e-6, // masque gris plus fidèle, visible aussi en zoomant : ≈ 0,5 Mo
+    decimales: 3,
+  });
   const ecrireFichier = (relatif: string, contenu: string) => {
     const chemin = join(RACINE, relatif);
     mkdirSync(dirname(chemin), { recursive: true });

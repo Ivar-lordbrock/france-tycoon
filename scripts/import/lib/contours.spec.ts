@@ -36,4 +36,28 @@ describe('contours des départements et des zones', () => {
     const metropole = zones.features.find((f) => f.properties.zone === 'MET');
     expect(anneaux(metropole?.geometry as Surface)).toHaveLength(1); // Loire + Haute-Loire = un seul bloc
   });
+
+  it('garde le masque des zones plus fidèle que les départements', () => {
+    const bosse: Surface = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [0, 0],
+          [0.5, 0.01],
+          [1, 0],
+          [1, 1],
+          [0, 1],
+          [0, 0],
+        ],
+      ],
+    };
+    const { departements, zones } = contoursAlleges([{ code: '42', nom: 'Loire', zone: 'MET', geometrie: bosse }], {
+      poidsMin: 0.01,
+      poidsMinZones: 0.001,
+      decimales: 3,
+    });
+    const points = (g: Surface) => anneaux(g).flat(2).length;
+    expect(points(departements.features[0]?.geometry as Surface)).toBe(5);
+    expect(points(zones.features[0]?.geometry as Surface)).toBe(6);
+  });
 });

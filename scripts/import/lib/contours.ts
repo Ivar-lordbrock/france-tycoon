@@ -38,6 +38,8 @@ export interface ContourDepartement {
 export interface OptionsSimplification {
   /** Aire minimale (degrés²) d'un triangle de Visvalingam pour garder un point. */
   poidsMin: number;
+  /** Idem pour le contour des zones (masque gris, visible à tous les zooms) ; par défaut `poidsMin`. */
+  poidsMinZones?: number;
   decimales: number;
 }
 
@@ -62,13 +64,16 @@ export function contoursAlleges(departements: ContourDepartement[], options: Opt
       })),
     };
     const brute = topology({ departements: collection }, 1e6) as Topology<{ departements: GeometryCollection }>;
-    const topo = simplify(presimplify(brute), options.poidsMin) as typeof brute;
+    const pondere = presimplify(brute);
+    const topo = simplify(pondere, options.poidsMin) as typeof brute;
+    const topoZone =
+      options.poidsMinZones === undefined ? topo : (simplify(pondere, options.poidsMinZones) as typeof brute);
 
     const simplifies = feature(topo, topo.objects.departements) as FeatureCollection<Surface, ProprietesDepartement>;
     for (const f of simplifies.features) {
       featuresDepartements.push({ ...f, geometry: arrondir(f.geometry, options.decimales) });
     }
-    const contourZone = merge(topo, topo.objects.departements.geometries as Surfaces);
+    const contourZone = merge(topoZone, topoZone.objects.departements.geometries as Surfaces);
     featuresZones.push({
       type: 'Feature',
       properties: { zone },

@@ -24,12 +24,15 @@ const arrondirBoite = (b: Boite): Boite => [
   Math.ceil(b[3] * 1e3) / 1e3,
 ];
 
+/** Tableau écrit comme Biome le formaterait. */
+const texteBoite = (b: Boite) => `[${arrondirBoite(b).join(', ')}]`;
+
 /** Contenu de `shared/src/zones.generees.ts` (boîte et zoom conseillé de chaque zone). */
 export function fichierZones(boites: Map<ZoneCode, Boite>, corse: Boite): string {
   const lignes = ZONE_CODES.map((code) => {
     const b = boites.get(code);
     if (!b) throw new Error(`Aucune commune importée pour la zone ${code} (${NOMS_ZONES[code]})`);
-    return `  ${code}: { bbox: ${JSON.stringify(arrondirBoite(b))}, zoom: ${zoomPourBoite(b)} },`;
+    return `  ${code}: { bbox: ${texteBoite(b)}, zoom: ${zoomPourBoite(b)} },`;
   });
   return `// Fichier généré par scripts/import/communes.ts à partir des contours de l'API Geo.
 // Ne pas modifier à la main : relancer \`npm run import:communes\`.
@@ -41,6 +44,6 @@ ${lignes.join('\n')}
 };
 
 /** Raccourci « Corse » du sélecteur (zone MET). */
-export const BOITE_CORSE: BoiteZone = { bbox: ${JSON.stringify(arrondirBoite(corse))}, zoom: ${zoomPourBoite(corse)} };
+export const BOITE_CORSE: BoiteZone = { bbox: ${texteBoite(corse)}, zoom: ${zoomPourBoite(corse)} };
 `;
 }
