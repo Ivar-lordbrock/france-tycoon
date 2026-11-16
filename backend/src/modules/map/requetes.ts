@@ -13,7 +13,7 @@ import type { Base } from '../../db/connexion.ts';
 interface LigneCommune {
   insee: string;
   name: string;
-  state: Exclude<EtatTerritoire, 'mine'>;
+  state: EtatTerritoire;
   ownerColor: string | null;
   ownerPseudo: string | null;
   geometry: string;
@@ -39,9 +39,12 @@ const CANDIDATS_PAR_REQUETE = 200;
 
 /** Requêtes préparées une fois pour toutes les routes /map. */
 export function creerRequetesCarte(db: Base) {
-  // `mine` demande une session (étape 2) : sans connexion, une commune possédée est `rival`.
+  // Sans connexion (`moi` = null), une commune possédée n'est jamais `mine`.
   const communesVisibles = (colonne: 'geojson_low' | 'geojson_high') =>
-    db.prepare<{ ouest: number; sud: number; est: number; nord: number; limite: number }, LigneCommune>(`
+    db.prepare<
+      { ouest: number; sud: number; est: number; nord: number; limite: number; moi: number | null },
+      LigneCommune
+    >(`
       WITH visibles AS (
         SELECT t.id, t.insee_code, t.name, t.owner_id, t.shield_until, t.population
         FROM territories_rtree AS r
@@ -56,6 +59,7 @@ export function creerRequetesCarte(db: Base) {
         CASE
           WHEN v.owner_id IS NULL THEN 'free'
           WHEN EXISTS (SELECT 1 FROM takeovers AS k WHERE k.territory_id = v.id AND k.status = 'pending') THEN 'takeover'
+          WHEN v.owner_id = @moi THEN 'mine'
           WHEN v.shield_until > unixepoch() THEN 'shield'
           ELSE 'rival'
         END AS state,
@@ -92,10 +96,14 @@ export function creerRequetesCarte(db: Base) {
      * GeoJSON des communes dont la boîte touche `bbox`, assemblé en texte : les contours sont déjà
      * stockés en JSON, les relire puis les resérialiser coûterait cher (plusieurs Mo par réponse).
      */
-    communesVisibles(bbox: BoiteCarte, zoom: number): { json: string; total: number; tronque: boolean } {
+    communesVisibles(
+      bbox: BoiteCarte,
+      zoom: number,
+      moi: number | null = null,
+    ): { json: string; total: number; tronque: boolean } {
       const [ouest, sud, est, nord] = bbox;
       const requete = zoom >= ZOOM_CONTOURS_PRECIS ? contoursHauts : contoursBas;
-      const lignes = requete.all({ ouest, sud, est, nord, limite: MAX_COMMUNES_PAR_REQUETE + 1 });
+      const lignes = requete.all({ ouest, sud, est, nord, limite: MAX_COMMUNES_PAR_REQUETE + 1, moi });
       const tronque = lignes.length > MAX_COMMUNES_PAR_REQUETE;
       const gardees = tronque ? lignes.slice(0, MAX_COMMUNES_PAR_REQUETE) : lignes;
       const features = gardees.map(({ geometry, ...proprietes }) => {

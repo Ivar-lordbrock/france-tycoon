@@ -5,14 +5,29 @@ import { z } from 'zod';
 /** Racine du dépôt (les chemins relatifs du `.env` partent d'ici). */
 export const RACINE = resolve(import.meta.dirname, '../..');
 
-const schemaConfig = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  HOST: z.string().default('127.0.0.1'),
-  PORT: z.coerce.number().int().min(1).max(65535).default(3000),
-  APP_ORIGIN: z.url().default('http://localhost:5173'),
-  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
-  DATABASE_PATH: z.string().min(1).default('./data/france-tycoon.sqlite'),
-});
+/** « true », « 1 », « oui » → vrai ; vide ou absent → faux. */
+const booleen = z
+  .string()
+  .optional()
+  .transform((texte) => ['true', '1', 'oui', 'yes'].includes((texte ?? '').trim().toLowerCase()));
+
+const schemaConfig = z
+  .object({
+    NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+    HOST: z.string().default('127.0.0.1'),
+    PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+    APP_ORIGIN: z.url().default('http://localhost:5173'),
+    LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+    DATABASE_PATH: z.string().min(1).default('./data/france-tycoon.sqlite'),
+    /** ID client OAuth « Application Web » (docs/08-connexion-google.md). Vide = connexion Google désactivée. */
+    GOOGLE_CLIENT_ID: z.string().trim().default(''),
+    /** Connexion de développement sans Google : pour tester en local, refusée en production. */
+    AUTH_DEV: booleen,
+  })
+  .refine((config) => !(config.AUTH_DEV && config.NODE_ENV === 'production'), {
+    message: 'AUTH_DEV=true est interdit avec NODE_ENV=production (connexion sans Google)',
+    path: ['AUTH_DEV'],
+  });
 
 export type Config = z.infer<typeof schemaConfig> & { cheminBase: string };
 

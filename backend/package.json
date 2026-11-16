@@ -12,11 +12,13 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.1.5",
     "@fastify/etag": "^6.2.2",
     "@france-tycoon/shared": "*",
     "better-sqlite3": "^13.2.0",
     "fastify": "^5.12.8",
     "fastify-type-provider-zod": "^7.0.0",
+    "google-auth-library": "^11.3.4",
     "zod": "^4.6.7"
   },
   "devDependencies": {

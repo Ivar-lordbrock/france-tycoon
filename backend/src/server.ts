@@ -16,7 +16,21 @@ const logger =
       };
 
 const db = ouvrirBase(config.cheminBase);
-const app = construireApp({ db, logger });
+const enProduction = config.NODE_ENV === 'production';
+const app = construireApp({
+  db,
+  logger,
+  auth: {
+    googleClientId: config.GOOGLE_CLIENT_ID || null,
+    // Double garde : lireConfig refuse déjà AUTH_DEV en production.
+    devLogin: config.AUTH_DEV && !enProduction,
+    cookieSecure: enProduction,
+  },
+});
+if (config.AUTH_DEV && !enProduction) {
+  app.log.warn('connexion de développement active (AUTH_DEV=true) : pour tester en local, jamais en production');
+}
+if (!config.GOOGLE_CLIENT_ID) app.log.warn('GOOGLE_CLIENT_ID vide : connexion Google désactivée');
 
 const { appliquees } = appliquerMigrations(db);
 if (appliquees.length > 0) app.log.info({ appliquees }, 'migrations appliquées');

@@ -1,6 +1,6 @@
 # 5. Formules d'équilibrage
 
-Toutes les constantes ci-dessous vivent dans **un seul fichier**, `shared/src/balance.ts` (les formules de 5.1 depuis l'étape 1, le reste à l'étape 3), importé par le serveur (qui fait foi), par le front (aperçus) et par le script d'import (valeurs des communes). Les paramètres propres à chaque bâtiment sont dans la table `building_types` ([002_seed.sql](../backend/src/db/migrations/002_seed.sql)).
+Toutes les constantes ci-dessous vivent dans **un seul fichier**, `shared/src/balance.ts` (5.1 depuis l'étape 1 ; capital de départ, protection débutant, revenu du sol et valeur d'un territoire depuis l'étape 2 ; le reste à l'étape 3), importé par le serveur (qui fait foi), par le front (aperçus) et par le script d'import (valeurs des communes). Les paramètres propres à chaque bâtiment sont dans la table `building_types` ([002_seed.sql](../backend/src/db/migrations/002_seed.sql)).
 
 Notations : `P` population, `I` score d'infrastructures, `L` niveau, `arrondi_N` arrondi à N près, `plafond_N` arrondi au-dessus à N près, `⌊x⌋` partie entière.
 
@@ -48,7 +48,7 @@ Notations : `P` population, `I` score d'infrastructures, `L` niveau, `arrondi_N`
 | Lyon (69) | MET | 519 127 | 35 740 | **9 448 700** | 30,7 | 13 | 94 487 | 14 173 100 |
 | Paris (75) | MET | 2 103 778 | 191 340 | **34 886 300** | 59,1 | 14 | 348 863 | 52 329 500 |
 
-Capital de départ : **30 000 ₮** → un village dès le premier jour ; Paris est l'objectif de fin de partie.
+Capital de départ : **30 000 ₮** (`CAPITAL_DEPART`, protection débutant 72 h : `PROTECTION_DEBUTANT_S`) → un village dès le premier jour ; Paris est l'objectif de fin de partie.
 
 ## 5.2 Bâtiments
 
@@ -78,7 +78,7 @@ Règles :
 
 ## 5.3 Revenus passifs
 
-- **Revenu du sol** : `R_sol = arrondi( 1 % × V0 )` par heure (temps de retour d'un terrain nu ≈ 100 h)
+- **Revenu du sol** : `R_sol = arrondi( 1 % × V0 )` par heure (`revenuSol`, taux `TAUX_REVENU_SOL`) (temps de retour d'un terrain nu ≈ 100 h)
 - **Revenu d'un territoire** : `R_T = ( R_sol + Σ R_b ) × ( 1 + Σ bonus_b / 100 )` — `bonus_b` = 8 × niveau de l'équipement public
 - **Revenu du joueur** : `R_J = Σ R_T × ( 1 + boost )`, avec `boost ≤ 25 %` (boost de quête ou de boutique, jamais cumulés au-delà)
 
@@ -93,7 +93,7 @@ Le calcul se fait **par morceaux** : si un chantier s'est terminé pendant l'abs
 
 ## 5.4 Valeur, patrimoine, limites
 
-- **Valeur d'un territoire** : `V_T = V0 + B + F` — `B` = somme des `invested_cash` de ses bâtiments, `F` = fortifications (défenses d'OPA)
+- **Valeur d'un territoire** : `V_T = V0 + B + F` (`valeurTerritoire`) — `B` = somme des `invested_cash` de ses bâtiments, `F` = fortifications (défenses d'OPA)
 - **Patrimoine** (classement) : `NW = cash + Σ V_T + séquestres d'OPA en cours` (les gemmes ne comptent pas)
 - **Achat** d'une commune libre : `V0`
 - **Vente à l'État** : `arrondi_100_inférieur( 70 % × V_T )`

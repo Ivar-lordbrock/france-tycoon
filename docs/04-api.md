@@ -34,9 +34,10 @@
 | `TAKEOVER_LIMIT` | 409 | Trop d'OPA sortantes, ou défenseur déjà visé par 2 OPA |
 | `TAKEOVER_COOLDOWN` | 409 | Même attaquant → même défenseur, moins de 7 jours après un échec |
 | `TARGET_TOO_SMALL` | 409 | Patrimoine de la cible < 25 % du vôtre (anti-acharnement) |
+| `PSEUDO_TAKEN` | 409 | Pseudo déjà pris par un autre joueur (majuscules ignorées) |
 | `VALIDATION_ERROR` | 400 | Corps de requête invalide |
 | `RATE_LIMITED` | 429 | Trop de requêtes |
-| `FEATURE_DISABLED` | 404 | Boutique en V1 |
+| `FEATURE_DISABLED` | 404 | Boutique en V1, connexion Google pas configurée, OPA avant l'étape 4 |
 
 ## 4.2 Points d'entrée
 
@@ -44,10 +45,12 @@
 
 | Méthode | Route | | Corps → Réponse |
 |---|---|---|---|
+| GET | `/auth/config` | | → `{ googleClientId, devLogin }` : ce que l'écran de connexion doit afficher (l'ID client Google n'est pas un secret) |
 | POST | `/auth/google` | | `{ credential }` (jeton d'identité Google) → `{ user, isNew }` + cookie. Crée le compte au premier passage : 30 000 ₮ (`signup_bonus`), bouclier 72 h |
+| POST | `/auth/dev` | | `{ pseudo }` → comme `/auth/google`, sans Google. **Local seulement** : la route n'existe que si `AUTH_DEV=true`, refusé avec `NODE_ENV=production` |
 | POST | `/auth/logout` | 🔒 | → 204, session supprimée |
 | GET | `/me` | 🔒 | → profil, portefeuille, revenu/h, `maxTerritories`, territoires possédés/max, files de construction, état du tutoriel, notifications non lues |
-| PATCH | `/me` | 🔒 | `{ pseudo?, markerColor? }` → profil |
+| PATCH | `/me` | 🔒 | `{ pseudo?, markerColor? }` (pseudo 3 à 24 caractères, couleur `#rrggbb`) → même réponse que `GET /me` ; `PSEUDO_TAKEN` si le pseudo est pris |
 | POST | `/me/collect` | 🔒 | → `{ collected, cash, incomePerHour }` (encaissement explicite, utile pour le tutoriel et les quêtes) |
 | DELETE | `/me` | 🔒 | → 204, anonymisation RGPD |
 
@@ -58,7 +61,7 @@
 | GET | `/map/zones` | | → les 12 zones : code, nom, boîte, zoom conseillé (statique, mis en cache 1 jour) |
 | GET | `/map/territories?bbox=W,S,E,N&zoom=Z` | | → GeoJSON `FeatureCollection` des communes visibles : `insee`, `name`, `state` (`free`, `mine`, `rival`, `takeover`, `shield`), `ownerColor`, `ownerPseudo`. Contour `low` (zoom 9–10) ou `high` (≥ 11). Zoom < 9 → 400. Max 3 000 communes. En-tête `ETag` |
 | GET | `/map/search?q=...` | | → 10 communes max (FTS5) : `insee`, `name`, `department`, `zone`, centre |
-| GET | `/territories/:insee` | | → fiche : population, équipements par catégorie, V0, valeur totale, revenu/h, emplacements, propriétaire, bâtiments, bouclier, OPA en cours, et les **actions possibles** pour le joueur connecté (`canBuy`, `buyPrice`, `canTakeover`, `takeoverReasons[]`...) |
+| GET | `/territories/:insee` | | → fiche : population, équipements par catégorie, V0, valeur totale, revenu/h, emplacements, propriétaire, bâtiments, bouclier, OPA en cours, et les **actions possibles** pour le joueur connecté (`canBuy`, `buyPrice`, `buyReasons[]`, `canTakeover`, `takeoverReasons[]`). Les raisons sont des codes d'erreur : `UNAUTHENTICATED` (pas connecté), `TERRITORY_NOT_FREE`, `TERRITORY_LIMIT_REACHED`, `INSUFFICIENT_FUNDS` ; OPA : `FEATURE_DISABLED` jusqu'à l'étape 4. Code en minuscules accepté (`2a004`) |
 
 ### Économie : territoires et bâtiments
 

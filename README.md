@@ -59,7 +59,7 @@ npm run import:communes   # ~35 000 communes depuis l'API Geo (1re fois : long, 
 npm run dev               # API sur http://localhost:3000, carte sur http://localhost:5173
 ```
 
-Le `.env` est facultatif en local (valeurs par défaut de `.env.example`). La base `data/france-tycoon.sqlite` est créée par l'import et n'est jamais commitée.
+Pour te connecter en local, copie `.env.example` en `.env` : il active le **compte de test** (`AUTH_DEV=true`, un simple pseudo, sans Google). Pour le vrai bouton Google, suis le guide [docs/08-connexion-google.md](docs/08-connexion-google.md). La base `data/france-tycoon.sqlite` est créée par l'import et n'est jamais commitée.
 
 | Commande | Rôle |
 |---|---|

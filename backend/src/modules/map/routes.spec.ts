@@ -6,7 +6,7 @@ import {
   zonesReponseSchema,
 } from '@france-tycoon/shared';
 import { describe, expect, it } from 'vitest';
-import { appDeTest, baseDeTest } from '../../outils-test/base.ts';
+import { appDeTest, baseDeTest, connecter } from '../../outils-test/base.ts';
 import { insererCommunes } from '../../outils-test/communes.ts';
 
 function baseAvecCommunes() {
@@ -104,6 +104,27 @@ describe('GET /api/v1/map/territories', () => {
       ownerColor: '#2563eb',
       ownerPseudo: 'Bruno',
     });
+  });
+
+  it('connecté : mes communes sont « mine », celles des autres « rival »', async () => {
+    const db = baseAvecCommunes();
+    const app = appDeTest(db);
+    const alice = await connecter(app, 'Alice');
+    const bruno = await connecter(app, 'Bruno');
+    db.prepare("UPDATE territories SET owner_id = ? WHERE insee_code = '42218'").run(alice.id);
+    db.prepare("UPDATE territories SET owner_id = ? WHERE insee_code = '42207'").run(bruno.id);
+    const url = urlCommunes('4.2,45.3,4.7,45.6', 9);
+
+    const etats = async (cookie?: string) => {
+      const reponse = await app.inject({ method: 'GET', url, headers: cookie ? { cookie } : {} });
+      return Object.fromEntries(
+        territoiresReponseSchema.parse(reponse.json()).features.map((f) => [f.id, f.properties.state]),
+      );
+    };
+
+    expect(await etats(alice.cookie)).toEqual({ '42218': 'mine', '42207': 'rival' });
+    expect(await etats(bruno.cookie)).toEqual({ '42218': 'rival', '42207': 'mine' });
+    expect(await etats()).toEqual({ '42218': 'rival', '42207': 'rival' });
   });
 
   it('refuse un zoom trop faible et une boîte mal formée', async () => {
