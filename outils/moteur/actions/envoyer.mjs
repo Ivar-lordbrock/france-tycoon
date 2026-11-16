@@ -36,7 +36,7 @@ export async function envoyer(options) {
   if (estProtegee(branche)) {
     throw new Stop(
       mods.length
-        ? `Tu es sur ${branche} : on n'y enregistre jamais directement (GitHub le refuserait). Lance ${nomOutil('commencer')} : tes ${nombre(mods.length, 'modification')} partiront avec la nouvelle tâche.`
+        ? `Tu es sur ${branche} : on n'y enregistre jamais directement (GitHub le refuserait). Lance ${nomOutil('commencer')} : ${mods.length === 1 ? 'ta modification partira' : `tes ${mods.length} modifications partiront`} avec la nouvelle tâche.`
         : `Tu es sur ${branche} et il n'y a rien à envoyer. Pour commencer une tâche : ${nomOutil('commencer')}.`,
     );
   }
