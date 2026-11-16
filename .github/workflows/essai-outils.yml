@@ -1,0 +1,9 @@
+name: Essai outils
+on:
+  pull_request:
+    branches: ['essai/**']
+jobs:
+  essai:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ok
