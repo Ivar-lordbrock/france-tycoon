@@ -1,6 +1,6 @@
 import { erreurApiSchema, santeReponseSchema } from '@france-tycoon/shared';
 import { describe, expect, it } from 'vitest';
-import { appDeTest, baseDeTest } from '../../test/base.ts';
+import { appDeTest, baseDeTest } from '../../outils-test/base.ts';
 
 describe('GET /api/v1/admin/health', () => {
   it('répond ok avec la version du schéma et les dernières tâches', async () => {
