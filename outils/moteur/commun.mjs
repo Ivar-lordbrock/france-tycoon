@@ -353,7 +353,9 @@ export function allerALaRacine() {
 export function brancheActuelle() {
   const branche = gitTexte('branch', '--show-current').trim();
   if (!branche) {
-    throw new Stop("Tu n'es sur aucune branche (Git est en « HEAD détachée »). Demande à Claude de te remettre sur dev.");
+    throw new Stop(
+      "Tu n'es sur aucune branche (Git est en « HEAD détachée »). Demande à Claude de te remettre sur dev.",
+    );
   }
   return branche;
 }
@@ -369,8 +371,9 @@ export function verifierAucuneOperation() {
     ['CHERRY_PICK_HEAD', 'un cherry-pick'],
     ['REVERT_HEAD', 'un revert'],
   ];
-  for (const [fichier, quoi] of operations) {
-    if (existsSync(gitTexte('rev-parse', '--git-path', fichier).trim())) {
+  const chemins = gitTexte('rev-parse', ...operations.flatMap(([fichier]) => ['--git-path', fichier])).split('\n');
+  for (const [i, [, quoi]] of operations.entries()) {
+    if (existsSync(chemins[i].trim())) {
       throw new Stop(
         `Git est resté au milieu d'une opération (${quoi}). Je ne touche à rien. Demande à Claude : « termine ou annule ${quoi} en cours ».`,
       );
@@ -411,11 +414,15 @@ export function afficherFichiers(liste, maximum = 20) {
 
 /** { avance, retard } : commits de a absents de b, et commits de b absents de a. */
 export function ecart(a, b) {
-  const [avance, retard] = gitTexte('rev-list', '--left-right', '--count', `${a}...${b}`).trim().split(/\s+/).map(Number);
+  const [avance, retard] = gitTexte('rev-list', '--left-right', '--count', `${a}...${b}`)
+    .trim()
+    .split(/\s+/)
+    .map(Number);
   return { avance, retard };
 }
 
-export const existe = (ref) => git(['rev-parse', '--verify', '--quiet', `${ref}^{commit}`], { autoriserEchec: true }).code === 0;
+export const existe = (ref) =>
+  git(['rev-parse', '--verify', '--quiet', `${ref}^{commit}`], { autoriserEchec: true }).code === 0;
 
 /** Branches de tâches sur ce PC : [{ nom, disparue }] (disparue = supprimée sur GitHub, souvent après fusion). */
 export function tachesLocales() {
@@ -616,7 +623,10 @@ export function fichiersRefuses(liste, tailleMaxMo = Number(process.env.DUO_TAIL
     try {
       const taille = statSync(chemin).size;
       if (taille > tailleMaxMo * 1024 * 1024) {
-        refuses.push({ chemin, raison: `trop gros (${Math.round(taille / 1024 / 1024)} Mo, maximum ${tailleMaxMo} Mo)` });
+        refuses.push({
+          chemin,
+          raison: `trop gros (${Math.round(taille / 1024 / 1024)} Mo, maximum ${tailleMaxMo} Mo)`,
+        });
       }
     } catch {
       // fichier illisible ou dossier : Git s'en chargera

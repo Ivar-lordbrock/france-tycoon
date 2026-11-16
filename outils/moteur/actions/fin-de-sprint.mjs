@@ -51,7 +51,8 @@ export async function finDeSprint(options) {
   );
   if (!(sprint > 0)) throw new Stop('Numéro de sprint non compris.', 2);
   const version = `v0.${sprint}.0`;
-  if (versionExiste(version)) throw new Stop(`La version ${version} existe déjà. Choisis un autre numéro (--sprint).`, 2);
+  if (versionExiste(version))
+    throw new Stop(`La version ${version} existe déjà. Choisis un autre numéro (--sprint).`, 2);
 
   dire.info(`Contenu du sprint ${sprint} (${nombre(contenu.length, 'changement')}) :`);
   afficherListe(contenu, 30);

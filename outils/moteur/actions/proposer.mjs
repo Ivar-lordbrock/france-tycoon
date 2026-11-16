@@ -10,8 +10,8 @@ import {
   ecart,
   estProtegee,
   etatCI,
-  existe,
   exigerGitHub,
+  existe,
   gh,
   gras,
   LIBELLE_CI,
@@ -19,8 +19,8 @@ import {
   messageCommit,
   modifications,
   nomOutil,
-  propositionDeLaBranche,
   pousser,
+  propositionDeLaBranche,
   recuperer,
   Stop,
   titresEntre,
@@ -70,7 +70,9 @@ export async function proposer(options) {
     options.titre ?? (await demander('Titre de ta proposition', { defaut: titreParDefaut, facultatif: true })),
   );
   const quoiParDefaut =
-    titres.length === 1 ? titres[0].replace(/^[a-z]+(\([a-z0-9-]+\))?!?: /, '') : 'Voir les enregistrements ci-dessous.';
+    titres.length === 1
+      ? titres[0].replace(/^[a-z]+(\([a-z0-9-]+\))?!?: /, '')
+      : 'Voir les enregistrements ci-dessous.';
   const quoi =
     options.quoi ??
     (await demander('En une ou deux phrases, que fait ce travail ?', { defaut: quoiParDefaut, facultatif: true }));

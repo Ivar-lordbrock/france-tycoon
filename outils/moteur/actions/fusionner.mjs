@@ -15,10 +15,10 @@ import {
   ghJson,
   git,
   gras,
+  nettoyerTachesFusionnees,
   nomOutil,
   permissionSurLeDepot,
   propositionDeLaBranche,
-  nettoyerTachesFusionnees,
   recuperer,
   Stop,
 } from '../commun.mjs';
@@ -86,7 +86,8 @@ export async function fusionnerProposition(pr, options) {
       'Les vérifications automatiques sont rouges : on ne fusionne pas. Ouvre la proposition pour voir le test qui échoue (ou demande à Claude).',
     );
   }
-  if (ci === 'en-cours') throw new Stop('Les vérifications automatiques tournent encore. Réessaie dans quelques minutes.');
+  if (ci === 'en-cours')
+    throw new Stop('Les vérifications automatiques tournent encore. Réessaie dans quelques minutes.');
   if (ci === 'aucune') {
     throw new Stop(
       "Aucune vérification automatique n'a encore tourné sur cette proposition. Attends quelques minutes ; si rien ne vient, demande à Claude.",
@@ -95,13 +96,17 @@ export async function fusionnerProposition(pr, options) {
   dire.ok('Vérifications automatiques vertes.');
 
   if (pr.reviewDecision === 'CHANGES_REQUESTED') {
-    throw new Stop('La relecture a demandé des changements. Corrige-les (puis renvoie), ou discutes-en dans la proposition.');
+    throw new Stop(
+      'La relecture a demandé des changements. Corrige-les (puis renvoie), ou discutes-en dans la proposition.',
+    );
   }
 
   let passerOutre = false;
   if (pr.reviewDecision === 'REVIEW_REQUIRED') {
     if (permissionSurLeDepot() !== 'ADMIN') {
-      throw new Stop("Personne n'a encore accepté cette proposition : il faut la relecture de ton binôme avant de fusionner.");
+      throw new Stop(
+        "Personne n'a encore accepté cette proposition : il faut la relecture de ton binôme avant de fusionner.",
+      );
     }
     dire.attention(
       "Personne n'a encore relu cette proposition. Tu es administrateur du dépôt : tu peux passer outre (tant que tu es seul).",
@@ -119,7 +124,9 @@ export async function fusionnerProposition(pr, options) {
   }
 
   if (!passerOutre) {
-    const oui = await confirmer(`Fusionner la proposition n°${pr.number} dans ${pr.baseRefName} ?`, { deja: options.oui });
+    const oui = await confirmer(`Fusionner la proposition n°${pr.number} dans ${pr.baseRefName} ?`, {
+      deja: options.oui,
+    });
     if (!oui) {
       dire.info("Fusion annulée : rien n'a changé.");
       return false;

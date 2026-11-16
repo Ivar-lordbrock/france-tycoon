@@ -14,8 +14,8 @@ import {
   git,
   gras,
   modifications,
-  nombre,
   nomBranche,
+  nombre,
   nomOutil,
   recuperer,
   Stop,
@@ -74,7 +74,8 @@ export async function commencer(options) {
       Object.entries(ZONES).map(([valeur, libelle]) => ({ valeur, libelle: `${valeur.padEnd(7)} ${libelle}` })),
       { option: `--zone ${Object.keys(ZONES).join('|')}` },
     ));
-  if (!ZONES[zone]) throw new Stop(`Zone inconnue : « ${zone} ». Choix possibles : ${Object.keys(ZONES).join(', ')}.`, 2);
+  if (!ZONES[zone])
+    throw new Stop(`Zone inconnue : « ${zone} ». Choix possibles : ${Object.keys(ZONES).join(', ')}.`, 2);
 
   const sujet =
     options.sujet ??
@@ -137,6 +138,7 @@ function reprendre(branche, actuelle) {
   }
   dire.ok(`Tu as repris la tâche ${gras(branche)}.`);
   const { retard } = ecart('HEAD', 'origin/dev');
-  if (retard) dire.info(`dev a ${nombre(retard, 'nouveauté')} depuis : ${nomOutil('mettre-a-jour')} pour les intégrer.`);
+  if (retard)
+    dire.info(`dev a ${nombre(retard, 'nouveauté')} depuis : ${nomOutil('mettre-a-jour')} pour les intégrer.`);
   dire.suite(`continue ton travail. Pour le sauvegarder sur GitHub : ${nomOutil('envoyer')}.`);
 }
