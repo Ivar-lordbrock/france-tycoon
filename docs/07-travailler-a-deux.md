@@ -9,6 +9,8 @@ Tout se fait de trois façons, au choix :
 
 Les trois font exactement la même chose (même moteur derrière, mêmes garde-fous). Chaque outil finit par **« Et maintenant ? »** : la prochaine étape.
 
+**Vidéo de 3 minutes** : [medias/fenetre-des-outils.mp4](medias/fenetre-des-outils.mp4) montre la fenêtre des outils sur une journée complète, du raccourci du Bureau jusqu'à la fusion (sous-titres, sans son, sur un projet d'exemple). Dans l'Explorateur : dossier `docs/medias` du projet, double-clic sur la vidéo.
+
 ## Les mots à connaître
 
 | Mot | Ce que ça veut dire |
