@@ -16,7 +16,7 @@ import { finDeSprint } from './actions/fin-de-sprint.mjs';
 import { fusionner } from './actions/fusionner.mjs';
 import { mettreAJour } from './actions/mettre-a-jour.mjs';
 import { proposer } from './actions/proposer.mjs';
-import { fermerQuestions, gras, gris, rouge, Stop } from './commun.mjs';
+import { emettre, fermerQuestions, gras, gris, modeInterface, rouge, Stop } from './commun.mjs';
 
 const ACTIONS = {
   'mettre-a-jour': {
@@ -47,7 +47,7 @@ const ACTIONS = {
     fn: etat,
     titre: "Où j'en suis",
     aide: 'branche, modifications, propositions, vérifications ; ne change rien',
-    options: '',
+    options: '[--json]',
   },
   fusionner: {
     fn: fusionner,
@@ -60,6 +60,13 @@ const ACTIONS = {
     titre: 'Fin de sprint',
     aide: 'proposition dev → main, puis fusion et version v0.<sprint>.0',
     options: '[--sprint <n>] [--oui] [--sans-relecture] [--essai]',
+  },
+  interface: {
+    // Chargée à la demande : le serveur local n'est utile qu'à la fenêtre des outils.
+    fn: async (options) => (await import('./interface.mjs')).ouvrirInterface(options),
+    titre: 'Outils',
+    aide: 'ouvre la fenêtre des outils (page locale, sur ce PC seulement)',
+    options: '[--sans-navigateur] [--port <n>] [--jeton <texte>]',
   },
 };
 
@@ -82,6 +89,10 @@ const OPTIONS = {
   'pas-integrer': { type: 'boolean' },
   sprint: { type: 'string' },
   essai: { type: 'boolean' },
+  json: { type: 'boolean' },
+  'sans-navigateur': { type: 'boolean' },
+  port: { type: 'string' },
+  jeton: { type: 'string' },
 };
 
 function afficherAide() {
@@ -114,7 +125,11 @@ async function principal() {
 
 principal()
   .catch((erreur) => {
-    if (erreur instanceof Stop) {
+    if (modeInterface) {
+      const stop = erreur instanceof Stop;
+      emettre(stop ? 'stop' : 'erreur', { texte: erreur?.message ?? String(erreur), pile: stop ? '' : erreur?.stack });
+      process.exitCode = stop ? erreur.codeSortie : 3;
+    } else if (erreur instanceof Stop) {
       console.log(`\n${rouge(gras('Stop'))}  ${erreur.message}`);
       process.exitCode = erreur.codeSortie;
     } else {

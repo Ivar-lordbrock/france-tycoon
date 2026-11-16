@@ -1,12 +1,13 @@
 # 7. Travailler à deux : guide pas à pas
 
 Ce guide est pour toi et ton binôme, **même sans rien connaître à Git**.
-Tout se fait de deux façons, au choix :
+Tout se fait de trois façons, au choix :
 
-- **double-clic** sur les fichiers numérotés du dossier `outils/` du projet ;
+- **la fenêtre des outils** (le plus simple) : double-clic sur **« France Tycoon »** sur le Bureau, ou sur `0-ouvrir-les-outils` dans le dossier `outils/` du projet. De gros boutons, les questions une par une ;
+- **double-clic** sur les fichiers numérotés du dossier `outils/` (une fenêtre noire pose les questions) ;
 - **dans Claude Code** : tape une commande comme `/commencer` ou `/envoyer`.
 
-Les deux font exactement la même chose (même moteur derrière). Chaque outil finit par **« Et maintenant ? »** : la prochaine étape.
+Les trois font exactement la même chose (même moteur derrière, mêmes garde-fous). Chaque outil finit par **« Et maintenant ? »** : la prochaine étape.
 
 ## Les mots à connaître
 
@@ -37,10 +38,25 @@ flowchart LR
   G --> A
 ```
 
+## La fenêtre des outils
+
+Double-clic sur **« France Tycoon »** (Bureau) : une fenêtre s'ouvre.
+
+- **En haut à gauche, « Où j'en suis »** : sur quelle tâche tu es, ce qui n'est pas encore enregistré ou envoyé, ta proposition et ses vérifications.
+- **« Et maintenant ? »** : la prochaine étape conseillée, avec son bouton. Le bouton de l'étape conseillée est aussi entouré en bleu.
+- **Les 5 boutons** : Mettre à jour, Commencer une tâche, Envoyer mon travail, Proposer mon travail, Fusionner.
+- **À droite** : les propositions ouvertes (avec un bouton « Fusionner » quand c'est possible), tes autres tâches (bouton « Reprendre ») et la dernière vérification de `dev`.
+- **Le menu « … »** : « Vérifier mon poste » et, pour le propriétaire, la fin de sprint.
+
+Quand tu cliques sur un bouton, un panneau montre ce qui se passe et pose les questions une par une (boutons à choisir, ou une phrase à taper). « Annuler » arrête sans rien changer. À la fin, « Et maintenant ? » propose le bouton suivant.
+
+La fenêtre ne marche que sur ton PC (personne d'autre ne peut l'ouvrir). Une petite fenêtre noire réduite dans la barre des tâches la fait tourner : ne la ferme pas, elle se ferme toute seule avec la fenêtre des outils.
+
 ## Les outils
 
 | Double-clic (`outils/`) | Dans Claude Code | Ce que ça fait |
 |---|---|---|
+| `0-ouvrir-les-outils` | | Ouvre la fenêtre des outils (tous les boutons ci-dessous). |
 | `1-installer-mon-poste` | | Installe Git, Node.js et GitHub CLI, te connecte à GitHub, copie le projet. Relançable sans risque. |
 | `2-mettre-a-jour` | `/mettre-a-jour` | Récupère le dernier `dev`. Sur une tâche, propose d'y intégrer les nouveautés. Range les tâches déjà fusionnées. |
 | `3-commencer-une-tache` | `/commencer <sujet>` | Crée ta tâche à partir du dernier `dev`. Te demande : fonctionnalité ou correction, la zone, le sujet en clair. Peut aussi reprendre une tâche commencée. |
@@ -65,26 +81,30 @@ flowchart LR
 5. Réponds aux questions :
    - Windows peut demander l'autorisation d'installer : clique sur **Oui** ;
    - pour GitHub : un code à 8 caractères s'affiche, une page s'ouvre, colle le code et clique sur « Authorize ».
-6. À la fin, le projet est dans `C:\Users\<toi>\france-tycoon` et son dossier `outils` s'ouvre. Si tu as dit oui, un raccourci « France Tycoon - outils » est sur le Bureau.
+6. À la fin, le projet est dans `C:\Users\<toi>\france-tycoon`, un raccourci **« France Tycoon »** est sur le Bureau (si tu as dit oui) et la fenêtre des outils s'ouvre.
 7. Pour les commandes Claude : installe [Claude](https://claude.ai/download), va dans l'onglet **Code** et ouvre le dossier du projet.
 
 Plus tard, `1-installer-mon-poste` sert à vérifier que tout va bien : ce qui est déjà en place est seulement vérifié.
 
 ## 2. La journée type
 
-1. **`2-mettre-a-jour`** : tu récupères le travail de ton binôme.
-2. **`3-commencer-une-tache`** : par exemple « achat de territoire », zone `api`. L'outil crée `feat/api-achat-territoire`.
+Ouvre la fenêtre des outils (« France Tycoon » sur le Bureau) et suis « Et maintenant ? ». Dans l'ordre :
+
+1. **Mettre à jour** : tu récupères le travail de ton binôme.
+2. **Commencer une tâche** : par exemple « achat de territoire », zone `api`. L'outil crée `feat/api-achat-territoire`.
 3. **Tu travailles**, seul ou avec Claude.
-4. **`4-envoyer-mon-travail`**, souvent (au moins à chaque pause) : c'est aussi ta sauvegarde.
-5. La tâche est finie : **`5-proposer-mon-travail`**.
-6. **`6-ou-j-en-suis`** : attends que les vérifications soient vertes (quelques minutes), puis que ton binôme accepte.
-7. **`7-fusionner`**, puis on recommence en 1.
+4. **Envoyer mon travail**, souvent (au moins à chaque pause) : c'est aussi ta sauvegarde.
+5. La tâche est finie : **Proposer mon travail**.
+6. Regarde « Où j'en suis » : attends que les vérifications soient vertes (quelques minutes, la fenêtre se met à jour toute seule), puis que ton binôme accepte.
+7. **Fusionner**, puis on recommence en 1.
+
+Sans la fenêtre, c'est pareil avec les fichiers `2-mettre-a-jour` à `7-fusionner`.
 
 Une tâche = **une seule chose**, petite (quelques jours au plus). Plus c'est petit, moins il y a de conflits.
 
 ## 3. Relire le travail de ton binôme
 
-- Sa proposition apparaît dans `6-ou-j-en-suis`, et GitHub t'envoie un e-mail.
+- Sa proposition apparaît dans la fenêtre des outils (« Propositions ouvertes ») et dans `6-ou-j-en-suis`, et GitHub t'envoie un e-mail.
 - **Avec Claude** : `/relire 12` (le numéro de la proposition). Claude t'explique ce qui change, vérifie les règles du projet, et te demande avant d'accepter.
 - **Sur GitHub** : ouvre la proposition, onglet « Files changed », bouton « Review changes », puis « Approve » (accepter) ou « Request changes » (demander des changements), et « Submit review ».
 - Une fois acceptée et verte, **l'auteur** de la proposition la fusionne avec `7-fusionner`.
@@ -105,7 +125,7 @@ Lance `8-fin-de-sprint` **deux fois** :
 
 ## 6. Quand l'outil dit « Stop »
 
-« Stop » veut dire qu'un garde-fou a refusé : **rien n'a été cassé**. Le message dit quoi faire.
+« Stop » veut dire qu'un garde-fou a refusé : **rien n'a été cassé**. Le message dit quoi faire (dans la fenêtre des outils, avec le bouton de l'outil à lancer).
 
 | Message | Quoi faire |
 |---|---|
@@ -116,6 +136,7 @@ Lance `8-fin-de-sprint` **deux fois** :
 | « GitHub refuse l'envoi » | Tu n'as pas encore accepté l'invitation : relance `1-installer-mon-poste`. |
 | « vérifications ROUGES » | Un test échoue. Dans Claude : « pourquoi les vérifications de ma proposition sont rouges ? ». |
 | « Node.js est introuvable » | Lance `1-installer-mon-poste`. |
+| « Les outils sont fermés » (fenêtre des outils) | La petite fenêtre noire a été fermée : ferme la fenêtre et rouvre « France Tycoon ». |
 
 **Règles d'or** : ne jamais travailler directement sur `dev` ou `main` (les outils refusent), envoyer souvent, une tâche = une chose. Si tu ne comprends pas un message, copie-le à Claude.
 
@@ -130,6 +151,7 @@ Lance `8-fin-de-sprint` **deux fois** :
 ### Sous le capot
 
 - Le moteur est `outils/moteur/duo.mjs` (Node.js). `node outils/moteur/duo.mjs aide` liste les actions et leurs options pour l'utiliser sans clavier (c'est ce que font les commandes de `.claude/commands/`).
+- La fenêtre des outils (`duo.mjs interface`, fichiers `interface.mjs` et `interface.html`) est une page web locale : un petit serveur sur `127.0.0.1` seulement, un jeton secret tiré au hasard à chaque ouverture, l'adresse vérifiée, et seulement les actions de la liste. Elle s'ouvre dans Edge (ou Chrome) en mode application et s'arrête toute seule quand on la ferme. Chaque bouton lance le moteur en « mode interface » (`DUO_INTERFACE=1`) : ses messages et ses questions sortent en lignes JSON (`@@{...}`), les réponses repartent par son entrée. « Où j'en suis » vient de `duo.mjs etat --json`.
 - Garde-fous : refus sur `main` et `dev`, arrêt s'il reste des modifications non enregistrées, jamais de `--force`, fusion seulement si les vérifications sont vertes, secrets et gros fichiers refusés, aucune fusion laissée à moitié en cas de conflit.
 - Les fichiers `.bat` trouvent Node.js même s'il n'est pas dans le PATH (`C:\Program Files\nodejs`). Le moteur trouve Git et GitHub CLI de la même façon.
 - Codes de sortie : 0 = fait, 1 = refusé par un garde-fou, 2 = il manque une réponse ou une option, 3 = erreur inattendue.

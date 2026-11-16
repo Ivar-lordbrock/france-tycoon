@@ -191,14 +191,20 @@ function Installer-Dependances($racine) {
 function Creer-Raccourci($racine) {
   if ($Essai -or -not $racine) { return }
   $outils = Join-Path $racine 'outils'
-  if (-not (Test-Path $outils)) { return }
-  $lien = Join-Path ([Environment]::GetFolderPath('Desktop')) 'France Tycoon - outils.lnk'
-  if (Test-Path $lien) { Ok 'Raccourci déjà présent sur le Bureau.'; return }
-  if (Oui 'Créer un raccourci « France Tycoon - outils » sur le Bureau ?') {
+  $lanceur = Join-Path $outils '0-ouvrir-les-outils.bat'
+  if (-not (Test-Path $lanceur)) { return }
+  $lien = Join-Path ([Environment]::GetFolderPath('Desktop')) 'France Tycoon.lnk'
+  if (Test-Path $lien) { Ok 'Raccourci « France Tycoon » déjà présent sur le Bureau.'; return }
+  if (Oui 'Créer un raccourci « France Tycoon » sur le Bureau (il ouvre la fenêtre des outils) ?') {
     $raccourci = (New-Object -ComObject WScript.Shell).CreateShortcut($lien)
-    $raccourci.TargetPath = $outils
+    $raccourci.TargetPath = $lanceur
+    $raccourci.WorkingDirectory = $outils
+    $raccourci.WindowStyle = 7
+    $raccourci.Description = 'France Tycoon : outils du duo'
+    $icone = Join-Path $outils 'moteur\icone.ico'
+    if (Test-Path $icone) { $raccourci.IconLocation = "$icone,0" }
     $raccourci.Save()
-    Ok 'Raccourci créé sur le Bureau.'
+    Ok 'Raccourci « France Tycoon » créé sur le Bureau.'
   }
 }
 
@@ -225,12 +231,14 @@ function Installer-Poste {
 
   Titre 'Tout est prêt.'
   if ($projet.Racine) { Info "Le projet est dans : $($projet.Racine)" }
-  Info 'Pour travailler : ouvre le dossier outils du projet et double-clique sur les fichiers numérotés,'
-  Info 'ou ouvre le dossier du projet dans Claude (onglet Code) et tape /commencer, /envoyer...'
+  Info 'Pour travailler : double-clique sur « France Tycoon » sur le Bureau'
+  Info '(ou sur 0-ouvrir-les-outils, dans le dossier outils du projet) : une fenêtre avec de gros boutons s''ouvre.'
+  Info 'Avec Claude : ouvre le dossier du projet dans Claude (onglet Code) et tape /commencer, /envoyer...'
   Info 'Claude se télécharge sur https://claude.ai/download'
   Info 'Guide pas à pas : docs\07-travailler-a-deux.md'
-  if ($projet.Nouveau -and (Test-Path (Join-Path $projet.Racine 'outils'))) {
-    Start-Process explorer.exe (Join-Path $projet.Racine 'outils')
+  $lanceur = if ($projet.Racine) { Join-Path $projet.Racine 'outils\0-ouvrir-les-outils.bat' }
+  if ($projet.Nouveau -and $lanceur -and (Test-Path $lanceur)) {
+    Start-Process -FilePath $lanceur -WorkingDirectory (Split-Path $lanceur) -WindowStyle Minimized
   }
 }
 

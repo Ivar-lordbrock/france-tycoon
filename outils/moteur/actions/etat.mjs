@@ -1,5 +1,6 @@
 // « Où j'en suis » : branche, modifications, envois en attente, propositions ouvertes, vérifications (CI).
 // Ne modifie rien. Termine par le conseil de la prochaine étape.
+// Avec --json : les mêmes informations en JSON (pour l'interface), sans aucun message.
 
 import {
   afficherFichiers,
@@ -23,18 +24,119 @@ import {
   permissionSurLeDepot,
   propositionDeLaBranche,
   recuperer,
+  seTaire,
   tachesLocales,
 } from '../commun.mjs';
 
-export async function etat() {
+export async function etat(options = {}) {
+  if (options.json) {
+    seTaire();
+    const donnees = collecter();
+    process.stdout.write(`${JSON.stringify(donnees)}\n`);
+    return;
+  }
   dire.titre("Où j'en suis");
+  afficher(collecter());
+}
+
+/** Résumé d'une proposition, pour l'affichage et l'interface. */
+function resumer(p) {
+  return {
+    numero: p.number,
+    titre: p.title,
+    url: p.url,
+    auteur: p.author?.login ?? '',
+    brouillon: Boolean(p.isDraft),
+    base: p.baseRefName,
+    branche: p.headRefName,
+    ci: etatCI(p.statusCheckRollup),
+    relecture: p.reviewDecision ?? '',
+    conflit: p.mergeable === 'CONFLICTING',
+  };
+}
+
+function collecter() {
   allerALaRacine();
   const enLigne = recuperer({ tolerant: true });
   const branche = git(['branch', '--show-current']).sortie.trim();
   const mods = modifications();
   const surTache = Boolean(branche) && !estProtegee(branche);
 
-  // --- Ta position ---------------------------------------------------------
+  let nonEnvoyes = 0;
+  let retard = 0;
+  if (surTache && existe('refs/remotes/origin/dev')) {
+    const distante = `origin/${branche}`;
+    nonEnvoyes = ecart('HEAD', existe(`refs/remotes/${distante}`) ? distante : 'origin/dev').avance;
+    retard = ecart('HEAD', 'origin/dev').retard;
+  } else if (branche && existe(`refs/remotes/origin/${branche}`)) {
+    retard = ecart('HEAD', `origin/${branche}`).retard;
+  }
+
+  const avecGitHub = enLigne && githubDisponible();
+  let maProposition = null;
+  let fusionnee = null;
+  let admin = false;
+  let ouvertes = [];
+  let derniereCI = null;
+
+  if (avecGitHub) {
+    admin = permissionSurLeDepot() === 'ADMIN';
+    if (surTache) {
+      const p = propositionDeLaBranche(branche);
+      if (p) maProposition = resumer(p);
+      else {
+        const f = propositionDeLaBranche(branche, 'merged');
+        if (f) fusionnee = { numero: f.number, url: f.url };
+      }
+    }
+    ouvertes = (ghJson(['pr', 'list', '--state', 'open', '--json', CHAMPS_PR, '--limit', '30']) ?? []).map(resumer);
+    const executions =
+      ghJson([
+        'run',
+        'list',
+        '--branch',
+        'dev',
+        '--workflow',
+        'ci.yml',
+        '--limit',
+        '1',
+        '--json',
+        'conclusion,status,createdAt,url',
+      ]) ?? [];
+    const d = executions[0];
+    if (d) {
+      derniereCI = {
+        resultat: d.status !== 'completed' ? 'en-cours' : d.conclusion === 'success' ? 'verte' : 'rouge',
+        conclusion: d.conclusion ?? '',
+        quand: ilYA(d.createdAt),
+        url: d.url,
+      };
+    }
+  }
+
+  const autres = tachesLocales().filter((t) => t.nom !== branche);
+  const donnees = {
+    enLigne,
+    avecGitHub,
+    admin,
+    branche,
+    surTache,
+    modifications: mods,
+    nonEnvoyes,
+    retard,
+    maProposition,
+    fusionnee,
+    ouvertes,
+    derniereCI,
+    autres,
+  };
+  donnees.conseil = conseil(donnees);
+  return donnees;
+}
+
+function afficher(d) {
+  const { branche, surTache, modifications: mods, nonEnvoyes, retard } = d;
+
   dire.section('Ta position');
   if (!branche) dire.info('Tu es sur aucune branche (HEAD détachée) : demande à Claude de te remettre sur dev.');
   else if (surTache) dire.info(`Tu es sur la tâche ${gras(branche)}.`);
@@ -51,131 +153,124 @@ export async function etat() {
   } else {
     dire.info('Aucune modification en attente.');
   }
-
-  let nonEnvoyes = 0;
-  let retard = 0;
-  if (surTache && existe('refs/remotes/origin/dev')) {
-    const distante = `origin/${branche}`;
-    nonEnvoyes = ecart('HEAD', existe(`refs/remotes/${distante}`) ? distante : 'origin/dev').avance;
-    if (nonEnvoyes)
-      dire.info(`${nombre(nonEnvoyes, 'enregistrement')} pas encore envoyé${nonEnvoyes > 1 ? 's' : ''} sur GitHub.`);
-    retard = ecart('HEAD', 'origin/dev').retard;
-    if (retard) dire.info(`dev a ${nombre(retard, 'nouveauté')} que ta tâche n'a pas.`);
-  } else if (branche && existe(`refs/remotes/origin/${branche}`)) {
-    retard = ecart('HEAD', `origin/${branche}`).retard;
-    if (retard) dire.info(`${branche} a ${nombre(retard, 'nouveauté')} sur GitHub que ce PC n'a pas.`);
+  if (nonEnvoyes) {
+    dire.info(`${nombre(nonEnvoyes, 'enregistrement')} pas encore envoyé${nonEnvoyes > 1 ? 's' : ''} sur GitHub.`);
+  }
+  if (retard) {
+    dire.info(
+      surTache
+        ? `dev a ${nombre(retard, 'nouveauté')} que ta tâche n'a pas.`
+        : `${branche} a ${nombre(retard, 'nouveauté')} sur GitHub que ce PC n'a pas.`,
+    );
   }
 
-  // --- GitHub --------------------------------------------------------------
-  const avecGitHub = enLigne && githubDisponible();
-  let maProposition = null;
-  let fusionnee = null;
-  let admin = false;
-
-  if (avecGitHub) {
-    admin = permissionSurLeDepot() === 'ADMIN';
-
+  if (d.avecGitHub) {
     if (surTache) {
       dire.section('Ta proposition');
-      maProposition = propositionDeLaBranche(branche);
-      if (maProposition) {
-        const p = maProposition;
-        dire.info(`n°${p.number} ${gras(p.title)}${p.isDraft ? ' (brouillon)' : ''}`);
+      const p = d.maProposition;
+      if (p) {
+        dire.info(`n°${p.numero} ${gras(p.titre)}${p.brouillon ? ' (brouillon)' : ''}`);
         dire.info(p.url);
-        dire.info(`${LIBELLE_CI[etatCI(p.statusCheckRollup)]} ; ${LIBELLE_RELECTURE[p.reviewDecision ?? '']}.`);
-        if (p.mergeable === 'CONFLICTING') dire.attention('Elle est en conflit avec dev.');
+        dire.info(`${LIBELLE_CI[p.ci]} ; ${LIBELLE_RELECTURE[p.relecture]}.`);
+        if (p.conflit) dire.attention('Elle est en conflit avec dev.');
       } else {
-        fusionnee = propositionDeLaBranche(branche, 'merged');
         dire.info(
-          fusionnee ? `Déjà fusionnée (n°${fusionnee.number}).` : 'Pas encore de proposition pour cette tâche.',
+          d.fusionnee ? `Déjà fusionnée (n°${d.fusionnee.numero}).` : 'Pas encore de proposition pour cette tâche.',
         );
       }
     }
 
     dire.section('Propositions ouvertes sur le dépôt');
-    const ouvertes = ghJson(['pr', 'list', '--state', 'open', '--json', CHAMPS_PR, '--limit', '30']) ?? [];
-    if (!ouvertes.length) dire.info('Aucune.');
-    for (const p of ouvertes) {
+    if (!d.ouvertes.length) dire.info('Aucune.');
+    for (const p of d.ouvertes) {
       const morceaux = [
-        `n°${p.number} ${p.title}`,
-        p.author?.login,
-        p.isDraft ? 'brouillon' : null,
-        LIBELLE_CI[etatCI(p.statusCheckRollup)],
-        LIBELLE_RELECTURE[p.reviewDecision ?? ''],
+        `n°${p.numero} ${p.titre}`,
+        p.auteur,
+        p.brouillon ? 'brouillon' : null,
+        LIBELLE_CI[p.ci],
+        LIBELLE_RELECTURE[p.relecture],
       ].filter(Boolean);
       dire.info(morceaux.join(' — '));
     }
 
     dire.section('Dernière vérification de dev');
-    const executions =
-      ghJson([
-        'run',
-        'list',
-        '--branch',
-        'dev',
-        '--workflow',
-        'ci.yml',
-        '--limit',
-        '1',
-        '--json',
-        'conclusion,status,createdAt,url',
-      ]) ?? [];
-    const derniere = executions[0];
-    if (!derniere) dire.info('Aucune pour le moment.');
+    const c = d.derniereCI;
+    if (!c) dire.info('Aucune pour le moment.');
     else {
-      const resultat =
-        derniere.status !== 'completed'
-          ? 'en cours'
-          : derniere.conclusion === 'success'
-            ? 'verte'
-            : `ROUGE (${derniere.conclusion})`;
-      dire.info(`${resultat}, ${ilYA(derniere.createdAt)}`);
+      const resultat = { 'en-cours': 'en cours', verte: 'verte', rouge: `ROUGE (${c.conclusion})` }[c.resultat];
+      dire.info(`${resultat}, ${c.quand}`);
     }
-  } else if (enLigne) {
+  } else if (d.enLigne) {
     dire.attention(
-      "GitHub CLI n'est pas prêt sur ce PC : je n'affiche pas les propositions. Lance 1-installer-mon-poste.",
+      `GitHub CLI n'est pas prêt sur ce PC : je n'affiche pas les propositions. Lance ${nomOutil('installer')}.`,
     );
   }
 
-  // --- Autres tâches ---------------------------------------------------------
-  const autres = tachesLocales().filter((t) => t.nom !== branche);
-  if (autres.length) {
+  if (d.autres.length) {
     dire.section('Tes autres tâches sur ce PC');
-    for (const t of autres) {
+    for (const t of d.autres) {
       dire.info(`${t.nom}${t.disparue ? ` (fusionnée : ${nomOutil('mettre-a-jour')} fera le ménage)` : ''}`);
     }
   }
 
-  dire.suite(conseil({ branche, surTache, mods, nonEnvoyes, retard, maProposition, fusionnee, admin, avecGitHub }));
+  dire.suite(d.conseil.texte);
 }
 
-function conseil({ branche, surTache, mods, nonEnvoyes, retard, maProposition, fusionnee, admin, avecGitHub }) {
-  if (!branche) return 'demande à Claude de te remettre sur dev.';
+/** Prochaine étape conseillée : { action (outil à mettre en avant, ou null), texte }. */
+function conseil({
+  branche,
+  surTache,
+  modifications: mods,
+  nonEnvoyes,
+  retard,
+  maProposition,
+  fusionnee,
+  admin,
+  enLigne,
+  avecGitHub,
+}) {
+  const c = (action, texte) => ({ action, texte });
+  if (!branche) return c(null, 'demande à Claude de te remettre sur dev.');
   if (!surTache) {
-    if (mods.length) return `lance ${nomOutil('commencer')} : tes modifications te suivront sur la nouvelle tâche.`;
-    if (retard) return `récupère les nouveautés avec ${nomOutil('mettre-a-jour')}, puis ${nomOutil('commencer')}.`;
-    return `pour commencer quelque chose : ${nomOutil('commencer')}.`;
+    if (mods.length)
+      return c('commencer', `lance ${nomOutil('commencer')} : tes modifications te suivront sur la nouvelle tâche.`);
+    if (retard)
+      return c(
+        'mettre-a-jour',
+        `récupère les nouveautés avec ${nomOutil('mettre-a-jour')}, puis ${nomOutil('commencer')}.`,
+      );
+    return c('commencer', `pour commencer quelque chose : ${nomOutil('commencer')}.`);
   }
   if (fusionnee && !mods.length)
-    return `ta tâche est fusionnée : lance ${nomOutil('mettre-a-jour')} pour repartir de dev.`;
-  if (mods.length || nonEnvoyes) return `sauvegarde ton travail sur GitHub : ${nomOutil('envoyer')}.`;
-  if (!avecGitHub) return 'reconnecte-toi à internet pour voir où en est ta proposition.';
-  if (!maProposition) return `continue ton travail. Quand la tâche est finie : ${nomOutil('proposer')}.`;
-  if (maProposition.isDraft)
-    return 'ta proposition est un brouillon : sur GitHub, clique « Ready for review » quand elle est prête.';
-  if (maProposition.mergeable === 'CONFLICTING') {
-    return `intègre les nouveautés de dev (${nomOutil('mettre-a-jour')}), puis renvoie (${nomOutil('envoyer')}).`;
+    return c('mettre-a-jour', `ta tâche est fusionnée : lance ${nomOutil('mettre-a-jour')} pour repartir de dev.`);
+  if (mods.length || nonEnvoyes) return c('envoyer', `sauvegarde ton travail sur GitHub : ${nomOutil('envoyer')}.`);
+  if (!avecGitHub) {
+    return enLigne
+      ? c('installer', `GitHub n'est pas prêt sur ce PC : lance ${nomOutil('installer')}.`)
+      : c(null, 'reconnecte-toi à internet pour voir où en est ta proposition.');
   }
-  const ci = etatCI(maProposition.statusCheckRollup);
-  if (ci === 'rouge')
-    return 'les vérifications sont rouges : ouvre la proposition pour voir le test qui échoue, ou demande à Claude.';
-  if (ci === 'en-cours' || ci === 'aucune') return 'attends la fin des vérifications automatiques (quelques minutes).';
-  if (maProposition.reviewDecision === 'CHANGES_REQUESTED')
-    return 'la relecture demande des changements : corrige, puis renvoie.';
-  if (maProposition.reviewDecision === 'REVIEW_REQUIRED') {
+  if (!maProposition) return c('proposer', `continue ton travail. Quand la tâche est finie : ${nomOutil('proposer')}.`);
+  if (maProposition.brouillon)
+    return c(null, 'ta proposition est un brouillon : sur GitHub, clique « Ready for review » quand elle est prête.');
+  if (maProposition.conflit) {
+    return c(
+      'mettre-a-jour',
+      `intègre les nouveautés de dev (${nomOutil('mettre-a-jour')}), puis renvoie (${nomOutil('envoyer')}).`,
+    );
+  }
+  if (maProposition.ci === 'rouge')
+    return c(
+      null,
+      'les vérifications sont rouges : ouvre la proposition pour voir le test qui échoue, ou demande à Claude.',
+    );
+  if (maProposition.ci === 'en-cours' || maProposition.ci === 'aucune')
+    return c(null, 'attends la fin des vérifications automatiques (quelques minutes).');
+  if (maProposition.relecture === 'CHANGES_REQUESTED')
+    return c(null, 'la relecture demande des changements : corrige, puis renvoie.');
+  if (maProposition.relecture === 'REVIEW_REQUIRED') {
     return admin
-      ? `tout est vert. Tant que tu es seul, tu peux fusionner toi-même : ${nomOutil('fusionner')}.`
-      : 'tout est vert : ton binôme doit maintenant relire et accepter.';
+      ? c('fusionner', `tout est vert. Tant que tu es seul, tu peux fusionner toi-même : ${nomOutil('fusionner')}.`)
+      : c(null, 'tout est vert : ton binôme doit maintenant relire et accepter.');
   }
-  return `tout est prêt : ${nomOutil('fusionner')}.`;
+  return c('fusionner', `tout est prêt : ${nomOutil('fusionner')}.`);
 }

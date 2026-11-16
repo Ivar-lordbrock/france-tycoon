@@ -3,8 +3,9 @@
 // GitHub CLI est volontairement absent (DUO_GH=absent) : on teste tout ce qui ne dépend que de Git.
 
 import assert from 'node:assert/strict';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { request } from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, test } from 'node:test';
@@ -53,7 +54,11 @@ function identite(depot, nom) {
 /** Faux GitHub + copies de « moi » et du « binôme », sur dev. */
 function preparer(t) {
   const dossier = mkdtempSync(path.join(tmpdir(), 'duo-'));
-  t.after(() => rmSync(dossier, { recursive: true, force: true }));
+  const avant = []; // à faire avant d'effacer (ex. arrêter un serveur qui tourne dans le dossier)
+  t.after(async () => {
+    for (const f of avant) await f();
+    rmSync(dossier, { recursive: true, force: true });
+  });
   const origine = path.join(dossier, 'origine.git');
   const moi = path.join(dossier, 'moi');
   const binome = path.join(dossier, 'binome');
@@ -68,7 +73,7 @@ function preparer(t) {
   g(moi, 'push', '--quiet', 'origin', 'dev:main');
   g(dossier, 'clone', '--quiet', origine, binome);
   identite(binome, 'binome');
-  return { moi, binome, origine };
+  return { moi, binome, origine, avantNettoyage: (f) => avant.push(f) };
 }
 
 /** Le binôme ajoute un enregistrement sur dev (comme une proposition fusionnée). */
@@ -377,5 +382,206 @@ describe('garde-fous généraux', { concurrency: 4 }, () => {
     const r = duo(dossier, ['etat']);
     assert.equal(r.code, 1, r.sortie);
     assert.match(r.sortie, /pas une copie du projet/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Fenêtre des outils (interface.mjs + mode interface du moteur)
+// ---------------------------------------------------------------------------
+
+/** Lignes « @@{json} » envoyées par le moteur en mode interface. */
+const messages = (sortie) =>
+  sortie
+    .split(/\r?\n/)
+    .filter((l) => l.startsWith('@@'))
+    .map((l) => JSON.parse(l.slice(2)));
+
+/** Démarre le serveur des outils sur un port libre ; renvoie son adresse et de quoi l'appeler. */
+async function demarrerInterface({ moi: depot, avantNettoyage }) {
+  const jeton = 'jeton-de-test-1234';
+  const enfant = spawn(process.execPath, [DUO, 'interface', '--sans-navigateur', '--port', '0', '--jeton', jeton], {
+    cwd: depot,
+    env: ENV,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  const arret = new Promise((resoudre) => enfant.on('exit', resoudre));
+  avantNettoyage(async () => {
+    enfant.kill();
+    await arret; // sinon Windows refuse d'effacer le dossier du test
+  });
+  const adresse = await new Promise((resoudre, rejeter) => {
+    let sortie = '';
+    const delai = setTimeout(() => rejeter(new Error(`Pas d'adresse :\n${sortie}`)), 15000);
+    const lire = (morceau) => {
+      sortie += morceau;
+      const m = /http:\/\/127\.0\.0\.1:(\d+)\//.exec(sortie);
+      if (m) {
+        clearTimeout(delai);
+        resoudre(`http://127.0.0.1:${m[1]}`);
+      }
+    };
+    enfant.stdout.on('data', lire);
+    enfant.stderr.on('data', lire);
+    enfant.on('exit', () => rejeter(new Error(`Le serveur s'est arrêté :\n${sortie}`)));
+  });
+  const appeler = async (chemin, corps, entetes = {}) => {
+    const r = await fetch(`${adresse}${chemin}`, {
+      method: corps === undefined ? 'GET' : 'POST',
+      headers: { 'x-jeton': jeton, 'content-type': 'application/json', ...entetes },
+      body: corps === undefined ? undefined : JSON.stringify(corps),
+    });
+    const texte = await r.text();
+    let json = null;
+    try {
+      json = JSON.parse(texte);
+    } catch {}
+    return { statut: r.status, texte, json };
+  };
+  return { adresse, jeton, appeler, arret };
+}
+
+/** Suit le flux d'une action et répond aux questions dans l'ordre ; renvoie tous les messages reçus. */
+async function suivreAction({ adresse, jeton, appeler }, id, reponses) {
+  const r = await fetch(`${adresse}/api/flux?id=${id}&jeton=${jeton}`);
+  assert.equal(r.status, 200);
+  const lecteur = r.body.pipeThrough(new TextDecoderStream()).getReader();
+  const recus = [];
+  let tampon = '';
+  for (;;) {
+    const { value, done } = await lecteur.read();
+    if (done) return recus;
+    tampon += value;
+    const blocs = tampon.split('\n\n');
+    tampon = blocs.pop();
+    for (const bloc of blocs) {
+      const data = bloc.split('\n').find((l) => l.startsWith('data: '));
+      if (!data) continue;
+      const m = JSON.parse(data.slice(6));
+      recus.push(m);
+      if (m.genre === 'question') await appeler('/api/repondre', { id, reponse: reponses.shift() ?? '' });
+      if (m.genre === 'fin') return recus;
+    }
+  }
+}
+
+describe('fenêtre des outils', { concurrency: 4 }, () => {
+  test('« Où j’en suis » en JSON, avec le conseil de la prochaine étape', (t) => {
+    const { moi } = preparer(t);
+    ecrire(moi, 'nouveau.txt', 'x\n');
+    const r = duo(moi, ['etat', '--json']);
+    assert.equal(r.code, 0, r.sortie);
+    const e = JSON.parse(r.sortie.trim());
+    assert.equal(e.branche, 'dev');
+    assert.equal(e.surTache, false);
+    assert.deepEqual(
+      e.modifications.map((m) => m.chemin),
+      ['nouveau.txt'],
+    );
+    assert.equal(e.conseil.action, 'commencer');
+    assert.equal(e.avecGitHub, false);
+  });
+
+  test('mode interface : questions en JSON, réponses par l’entrée, boutons cités', (t) => {
+    const { moi } = preparer(t);
+    const r = duo(moi, ['commencer'], { entree: 'feat\nmap\nSélecteur de zones\n', env: { DUO_INTERFACE: '1' } });
+    assert.equal(r.code, 0, r.sortie);
+    assert.equal(branche(moi), 'feat/map-selecteur-zones');
+    const m = messages(r.sortie);
+    const questions = m.filter((x) => x.genre === 'question');
+    assert.deepEqual(
+      questions.map((q) => q.forme),
+      ['choix', 'choix', 'texte'],
+    );
+    assert.ok(questions[1].choix.some((c) => c.valeur === 'map' && c.detail));
+    assert.match(m.find((x) => x.genre === 'suite').texte, /« Envoyer mon travail »/);
+    assert.ok(!r.sortie.split('\n').some((l) => l.trim() && !l.startsWith('@@')), 'rien d’autre que du JSON');
+  });
+
+  test('mode interface : « Annuler » arrête proprement, sans rien créer', (t) => {
+    const { moi } = preparer(t);
+    const r = duo(moi, ['commencer'], { entree: 'feat\n', env: { DUO_INTERFACE: '1' } });
+    assert.equal(r.code, 2, r.sortie);
+    const dernier = messages(r.sortie).at(-1);
+    assert.equal(dernier.genre, 'stop');
+    assert.match(dernier.texte, /^Annulé/);
+    assert.equal(branche(moi), 'dev');
+  });
+
+  test('serveur : jeton et adresse exigés, actions limitées', async (t) => {
+    const depots = preparer(t);
+    const { moi } = depots;
+    const { adresse, appeler } = await demarrerInterface(depots);
+
+    assert.equal((await fetch(`${adresse}/`)).status, 403, 'sans jeton');
+    assert.equal((await appeler('/api/ping', undefined, { 'x-jeton': 'mauvais-jeton-0000' })).statut, 403);
+    const page = await appeler('/');
+    assert.equal(page.statut, 200);
+    assert.match(page.texte, /"commencer":"Commencer une tâche"/);
+    assert.doesNotMatch(page.texte, /\/\*CONFIG\*\//);
+
+    // Un autre site qui se ferait passer pour 127.0.0.1 (« DNS rebinding ») : refusé.
+    const statutHote = await new Promise((resoudre, rejeter) => {
+      const u = new URL(adresse);
+      request(
+        { host: '127.0.0.1', port: u.port, path: '/api/ping', headers: { host: 'pirate.test', 'x-jeton': 'x' } },
+        (res) => {
+          res.resume();
+          resoudre(res.statusCode);
+        },
+      )
+        .on('error', rejeter)
+        .end();
+    });
+    assert.equal(statutHote, 403);
+    const origine = await appeler('/api/action', { action: 'commencer' }, { origin: 'https://pirate.test' });
+    assert.equal(origine.statut, 403, 'requête venue d’un autre site');
+
+    assert.equal((await appeler('/api/action', { action: 'etat' })).statut, 400, 'action hors liste');
+    assert.equal((await appeler('/api/action', { action: 'commencer', options: { sujet: 'x' } })).statut, 400);
+    assert.equal(
+      (await appeler('/api/action', { action: 'commencer', options: { reprendre: '--force' } })).statut,
+      400,
+      'option déguisée',
+    );
+    assert.equal(branche(moi), 'dev', 'rien n’a été lancé');
+  });
+
+  test('serveur : « Où j’en suis », puis une action avec ses questions, de bout en bout', async (t) => {
+    const depots = preparer(t);
+    const { moi } = depots;
+    const serveur = await demarrerInterface(depots);
+
+    const etat = await serveur.appeler('/api/etat');
+    assert.equal(etat.statut, 200, etat.texte);
+    assert.equal(etat.json.etat.branche, 'dev');
+
+    const lancement = await serveur.appeler('/api/action', { action: 'commencer' });
+    assert.equal(lancement.statut, 200, lancement.texte);
+    const recus = await suivreAction(serveur, lancement.json.id, ['fix', 'ui', 'Bouton acheter']);
+    assert.equal(recus.at(-1).genre, 'fin');
+    assert.equal(recus.at(-1).code, 0, JSON.stringify(recus, null, 1));
+    assert.equal(recus.filter((m) => m.genre === 'question').length, 3);
+    assert.ok(recus.some((m) => m.genre === 'ok'));
+    assert.equal(branche(moi), 'fix/ui-bouton-acheter');
+
+    const apres = await serveur.appeler('/api/etat');
+    assert.equal(apres.json.etat.branche, 'fix/ui-bouton-acheter');
+    assert.equal(apres.json.etat.surTache, true);
+  });
+
+  test('serveur : la fenêtre fermée arrête les outils en quelques secondes', async (t) => {
+    const depots = preparer(t);
+    const serveur = await demarrerInterface(depots);
+    const verrou = path.join(depots.moi, '.git', 'duo-interface.json');
+    assert.ok(existsSync(verrou), 'la fenêtre ouverte est notée (pour ne pas en ouvrir deux)');
+    assert.equal((await serveur.appeler('/api/au-revoir', {})).statut, 200);
+    const debut = Date.now();
+    const code = await Promise.race([
+      serveur.arret,
+      new Promise((r) => setTimeout(() => r('toujours là'), 30000).unref()),
+    ]);
+    assert.equal(code, 0);
+    assert.ok(Date.now() - debut < 20000);
+    assert.ok(!existsSync(verrou), 'la note est effacée');
   });
 });

@@ -1,9 +1,12 @@
 # Outils du duo
 
-Double-clique sur les fichiers numérotés, dans l'ordre de ta journée :
+Le plus simple : double-clique sur **`0-ouvrir-les-outils`** (ou sur le raccourci « France Tycoon » du Bureau). Une fenêtre avec de gros boutons s'ouvre et pose les questions une par une.
+
+Sinon, double-clique sur les fichiers numérotés, dans l'ordre de ta journée :
 
 | Fichier | Ce que ça fait |
 |---|---|
+| `0-ouvrir-les-outils` | Ouvre la fenêtre des outils (tous les boutons). |
 | `1-installer-mon-poste` | Installe et vérifie ton poste (une fois, puis quand tu veux). |
 | `2-mettre-a-jour` | Récupère le dernier `dev`. |
 | `3-commencer-une-tache` | Crée ta tâche depuis le dernier `dev`. |

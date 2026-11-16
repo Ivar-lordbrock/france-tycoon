@@ -114,7 +114,7 @@ function assurerSignature() {
   const email = git(['config', 'user.email'], { autoriserEchec: true }).sortie.trim();
   if (nom && email) return;
   if (!githubDisponible()) {
-    throw new Stop("Git ne sait pas encore qui tu es (signature). Lance d'abord 1-installer-mon-poste.");
+    throw new Stop(`Git ne sait pas encore qui tu es (signature). Lance d'abord ${nomOutil('installer')}.`);
   }
   const moi = ghJson(['api', 'user']);
   if (!nom) git(['config', '--global', 'user.name', moi.name || moi.login]);

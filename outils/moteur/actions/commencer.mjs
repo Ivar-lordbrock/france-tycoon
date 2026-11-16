@@ -51,8 +51,19 @@ export async function commencer(options) {
       const liste = enCours.map((b, i) => `  ${i + 1}. ${b}`).join('\n');
       const reponse = await demander(
         `Tu as déjà des tâches en cours :\n${liste}\nTape son numéro pour la reprendre, ou Entrée pour une nouvelle tâche`,
-        { facultatif: true },
+        {
+          facultatif: true,
+          interface: {
+            genre: 'choix',
+            question: 'Tu as déjà des tâches en cours. Tu en reprends une ?',
+            choix: [
+              ...enCours.map((b) => ({ valeur: b, libelle: b, detail: 'reprendre cette tâche' })),
+              { valeur: '', libelle: 'Non, une nouvelle tâche' },
+            ],
+          },
+        },
       );
+      if (enCours.includes(reponse)) return reprendre(reponse, actuelle);
       const rang = Number.parseInt(reponse, 10);
       if (rang >= 1 && rang <= enCours.length) return reprendre(enCours[rang - 1], actuelle);
     }
@@ -71,7 +82,7 @@ export async function commencer(options) {
     options.zone ??
     (await choisir(
       'Ça touche surtout :',
-      Object.entries(ZONES).map(([valeur, libelle]) => ({ valeur, libelle: `${valeur.padEnd(7)} ${libelle}` })),
+      Object.entries(ZONES).map(([valeur, detail]) => ({ valeur, libelle: valeur, detail })),
       { option: `--zone ${Object.keys(ZONES).join('|')}` },
     ));
   if (!ZONES[zone])
@@ -110,7 +121,11 @@ export async function commencer(options) {
     } else {
       dire.attention(`Ta tâche part de ${actuelle}, pas du dernier dev. Demande à Claude de vérifier.`);
     }
-    dire.ok(`Tâche ${gras(branche)} créée. Tes ${nombre(mods.length, 'modification')} en cours l'ont suivie.`);
+    const suivies =
+      mods.length > 1
+        ? `Tes ${mods.length} modifications en cours l'ont suivie`
+        : "Ta modification en cours l'a suivie";
+    dire.ok(`Tâche ${gras(branche)} créée. ${suivies}.`);
   } else {
     git(['switch', '--no-track', '-c', branche, 'origin/dev']);
     git(['fetch', 'origin', 'dev:dev'], { autoriserEchec: true });

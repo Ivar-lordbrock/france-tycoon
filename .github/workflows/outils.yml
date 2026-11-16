@@ -40,3 +40,24 @@ jobs:
           call outils\6-ou-j-en-suis.bat > sortie.txt 2>&1
           type sortie.txt
           findstr /c:"Ta position" /c:"Node.js est introuvable" sortie.txt
+      - name: Fenêtre des outils ouverte par 0-ouvrir-les-outils.bat (sans navigateur)
+        shell: pwsh
+        run: |
+          cmd /c "outils\0-ouvrir-les-outils.bat --sans-navigateur --port 4790 --jeton essai-ci-12345678"
+          $entete = @{ 'x-jeton' = 'essai-ci-12345678' }
+          $pret = $false
+          foreach ($i in 1..60) {
+            try { Invoke-RestMethod http://127.0.0.1:4790/api/ping -Headers $entete -TimeoutSec 2 | Out-Null; $pret = $true; break }
+            catch { Start-Sleep -Milliseconds 500 }
+          }
+          if (-not $pret) { throw 'La fenêtre des outils ne répond pas.' }
+          $etat = Invoke-RestMethod http://127.0.0.1:4790/api/etat -Headers $entete -TimeoutSec 120
+          if ($null -eq $etat.etat) { throw "Où j'en suis : $($etat.erreur)" }
+          "Où j'en suis : conseil = $($etat.etat.conseil.texte)"
+          # La page dit « au revoir » (fenêtre fermée) : les outils doivent s'arrêter tout seuls.
+          Invoke-RestMethod -Method Post 'http://127.0.0.1:4790/api/au-revoir?jeton=essai-ci-12345678' | Out-Null
+          Start-Sleep -Seconds 15
+          $encore = $true
+          try { Invoke-RestMethod http://127.0.0.1:4790/api/ping -Headers $entete -TimeoutSec 2 | Out-Null } catch { $encore = $false }
+          if ($encore) { throw 'Les outils tournent encore après la fermeture de la page.' }
+          'Les outils se sont arrêtés tout seuls.'

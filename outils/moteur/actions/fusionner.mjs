@@ -55,6 +55,11 @@ async function choisirProposition(options) {
   const liste = ouvertes.map((p) => `  n°${p.number}  ${p.title} (${p.author?.login})`).join('\n');
   const reponse = await demander(`Propositions ouvertes :\n${liste}\nTape le numéro (n°) de celle à fusionner`, {
     option: '--pr <numéro>',
+    interface: {
+      genre: 'choix',
+      question: 'Quelle proposition fusionner ?',
+      choix: ouvertes.map((p) => ({ valeur: String(p.number), libelle: `n°${p.number}`, detail: p.title })),
+    },
   });
   const numero = Number.parseInt(reponse.replace(/^#|^n°/, ''), 10);
   if (!ouvertes.some((p) => p.number === numero)) throw new Stop(`Pas de proposition ouverte n°${reponse}.`, 2);
@@ -114,6 +119,7 @@ export async function fusionnerProposition(pr, options) {
     passerOutre = await confirmer('Fusionner sans relecture ?', {
       deja: options['sans-relecture'],
       option: '--sans-relecture',
+      danger: true,
     });
     if (!passerOutre) {
       dire.info("Fusion annulée : rien n'a changé.");

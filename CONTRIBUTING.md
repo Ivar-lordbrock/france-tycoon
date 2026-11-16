@@ -13,7 +13,7 @@ Zones : `api`, `db`, `data`, `map`, `ui`, `shared`, `docs`, `ci`.
 
 ## Cycle d'une tâche
 
-Pas besoin de connaître Git : les outils du dossier [`outils/`](outils/) font chaque étape avec des garde-fous (double-clic, ou commande dans Claude Code). Guide pas à pas : [docs/07-travailler-a-deux.md](docs/07-travailler-a-deux.md).
+Pas besoin de connaître Git : les outils du dossier [`outils/`](outils/) font chaque étape avec des garde-fous (fenêtre à boutons `0-ouvrir-les-outils`, double-clic, ou commande dans Claude Code). Guide pas à pas : [docs/07-travailler-a-deux.md](docs/07-travailler-a-deux.md).
 
 | Étape | Double-clic (`outils/`) | Claude Code | Équivalent Git |
 |---|---|---|---|

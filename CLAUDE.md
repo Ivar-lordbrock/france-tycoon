@@ -28,6 +28,7 @@ Les deux développeurs ne connaissent pas forcément Git. Pour le flux quotidien
 - Toujours passer les réponses en options (`--sujet`, `--message`, `--oui`…) : sans clavier, une question manquante s'arrête avec le code 2.
 - Un « Stop » (code 1) est un garde-fou : expliquer le message à l'utilisateur, ne jamais le contourner à la main (pas de commit sur `dev`/`main`, pas de `--force`, pas de fusion si la CI n'est pas verte).
 - `--sans-relecture` (droit admin) seulement après accord explicite de l'utilisateur.
+- Fenêtre des outils pour l'utilisateur : `outils/0-ouvrir-les-outils.bat` (`duo.mjs interface`, page locale). Ne pas la lancer soi-même : elle ouvre une fenêtre sur l'écran de l'utilisateur.
 - Modifier les outils : `node --test outils/` doit rester vert ; guide dans `docs/07-travailler-a-deux.md`.
 
 ## Commandes

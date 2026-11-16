@@ -32,21 +32,25 @@ export const ZONES = {
 
 const TYPES_COMMIT = ['feat', 'fix', 'refactor', 'test', 'docs', 'chore', 'perf', 'ci'];
 
-/** Noms des outils : fichier à double-cliquer, et commande Claude Code. */
-const OUTILS = {
-  installer: ['1-installer-mon-poste', null],
-  'mettre-a-jour': ['2-mettre-a-jour', '/mettre-a-jour'],
-  commencer: ['3-commencer-une-tache', '/commencer'],
-  envoyer: ['4-envoyer-mon-travail', '/envoyer'],
-  proposer: ['5-proposer-mon-travail', '/proposer'],
-  etat: ['6-ou-j-en-suis', '/ou-j-en-suis'],
-  fusionner: ['7-fusionner', '/fusionner'],
-  'fin-de-sprint': ['8-fin-de-sprint', '/fin-de-sprint'],
+/** Noms des outils : fichier à double-cliquer, commande Claude Code, bouton de l'interface. */
+export const OUTILS = {
+  installer: ['1-installer-mon-poste (dans le dossier outils)', null, 'Vérifier mon poste'],
+  'mettre-a-jour': ['2-mettre-a-jour', '/mettre-a-jour', 'Mettre à jour'],
+  commencer: ['3-commencer-une-tache', '/commencer', 'Commencer une tâche'],
+  envoyer: ['4-envoyer-mon-travail', '/envoyer', 'Envoyer mon travail'],
+  proposer: ['5-proposer-mon-travail', '/proposer', 'Proposer mon travail'],
+  etat: ['6-ou-j-en-suis', '/ou-j-en-suis', "Où j'en suis"],
+  fusionner: ['7-fusionner', '/fusionner', 'Fusionner'],
+  'fin-de-sprint': ['8-fin-de-sprint', '/fin-de-sprint', 'Fin de sprint'],
 };
 
-/** Nom à citer dans les messages : la commande Claude si on tourne dans Claude Code, sinon le fichier. */
+/** Lancé par l'interface (fenêtre) : messages et questions passent en lignes « @@{json} ». */
+export const modeInterface = process.env.DUO_INTERFACE === '1';
+
+/** Nom à citer dans les messages : le bouton dans l'interface, la commande dans Claude Code, sinon le fichier. */
 export function nomOutil(action) {
-  const [fichier, commande] = OUTILS[action];
+  const [fichier, commande, bouton] = OUTILS[action];
+  if (modeInterface) return `« ${bouton} »`;
   return process.env.CLAUDECODE && commande ? commande : fichier;
 }
 
@@ -72,15 +76,37 @@ export const rouge = teinte('31');
 export const gris = teinte('90');
 export const cyan = teinte('36');
 
-export const dire = {
-  titre: (texte) => console.log(`\n${gras(cyan(texte))}\n`),
-  section: (texte) => console.log(`\n${gras(texte)}`),
-  ok: (texte) => console.log(`${vert('OK')}  ${texte}`),
-  info: (texte) => console.log(`    ${texte}`),
-  etape: (texte) => console.log(gris(`... ${texte}`)),
-  attention: (texte) => console.log(`${jaune('Attention')}  ${texte}`),
-  suite: (texte) => console.log(`\n${gras('Et maintenant ?')} ${texte}`),
+/** Envoie un message à l'interface : une ligne « @@{"genre": …} ». */
+export function emettre(genre, donnees = {}) {
+  process.stdout.write(`@@${JSON.stringify({ genre, ...donnees })}\n`);
+}
+
+let silence = false;
+/** Plus aucun message (ex. « Où j'en suis » en JSON pour l'interface). */
+export function seTaire() {
+  silence = true;
+}
+
+const FORMATS = {
+  titre: (texte) => `\n${gras(cyan(texte))}\n`,
+  section: (texte) => `\n${gras(texte)}`,
+  ok: (texte) => `${vert('OK')}  ${texte}`,
+  info: (texte) => `    ${texte}`,
+  etape: (texte) => gris(`... ${texte}`),
+  attention: (texte) => `${jaune('Attention')}  ${texte}`,
+  suite: (texte) => `\n${gras('Et maintenant ?')} ${texte}`,
 };
+
+export const dire = Object.fromEntries(
+  Object.entries(FORMATS).map(([genre, format]) => [
+    genre,
+    (texte) => {
+      if (silence) return;
+      if (modeInterface) emettre(genre, { texte: String(texte) });
+      else console.log(format(texte));
+    },
+  ]),
+);
 
 /** « 1 fichier », « 3 fichiers ». */
 export const nombre = (n, mot, motPluriel = `${mot}s`) => `${n} ${n > 1 ? motPluriel : mot}`;
@@ -133,35 +159,48 @@ export function fermerQuestions() {
 /**
  * Pose une question et renvoie la réponse (ou la valeur par défaut si on appuie sur Entrée).
  * Sans clavier (ex. lancé par Claude), une question obligatoire arrête l'outil en citant l'option à passer.
+ * `interface` : comment l'interface doit la présenter ({ question, genre, choix }), si ce n'est pas un texte libre.
  */
-export async function demander(question, { defaut = '', option, facultatif = false } = {}) {
-  const indice = defaut ? gris(` (Entrée = ${defaut})`) : '';
-  process.stdout.write(`\n${gras('?')} ${question}${indice}\n> `);
+export async function demander(question, { defaut = '', option, facultatif = false, interface: vue } = {}) {
+  if (modeInterface) {
+    const { genre: forme = 'texte', ...reste } = vue ?? {};
+    emettre('question', { forme, question: question.split('\n')[0], defaut, facultatif, ...reste });
+  } else {
+    const indice = defaut ? gris(` (Entrée = ${defaut})`) : '';
+    process.stdout.write(`\n${gras('?')} ${question}${indice}\n> `);
+  }
   const reponse = await lignes().suivante();
   if (reponse === null) {
     process.stdout.write('\n');
     if (facultatif) return defaut;
+    if (modeInterface) throw new Stop('Annulé : la suite n’a pas été lancée.', 2);
     const indiceOption = option ? ` Sans clavier, passe l'option ${option}.` : '';
     throw new Stop(`Il manque une réponse à la question : « ${question.split('\n')[0]} ».${indiceOption}`, 2);
   }
   return reponse.replace(/^﻿/, '').trim() || defaut;
 }
 
-/** Question oui/non. `deja` = la réponse a été donnée par une option (ex. --oui). */
-export async function confirmer(question, { deja = false, option = '--oui' } = {}) {
+/** Question oui/non. `deja` = la réponse a été donnée par une option (ex. --oui). `danger` : l'interface met en garde. */
+export async function confirmer(question, { deja = false, option = '--oui', danger = false } = {}) {
   if (deja) return true;
-  const reponse = await demander(`${question} (oui/non)`, { option });
+  const reponse = await demander(`${question} (oui/non)`, {
+    option,
+    interface: { genre: 'oui-non', question, danger },
+  });
   return /^(o|oui|y|yes)$/i.test(reponse);
 }
 
-/** Choix dans une liste numérotée. `choix` = [{ valeur, libelle }]. */
+/** Choix dans une liste numérotée. `choix` = [{ valeur, libelle, detail? }]. */
 export async function choisir(question, choix, { defaut, option } = {}) {
-  const liste = choix.map((c, i) => `  ${i + 1}. ${c.libelle}`).join('\n');
+  const liste = choix
+    .map((c, i) => `  ${i + 1}. ${c.detail ? `${c.libelle.padEnd(7)} ${c.detail}` : c.libelle}`)
+    .join('\n');
   const indexDefaut = choix.findIndex((c) => c.valeur === defaut);
   for (;;) {
     const reponse = await demander(`${question}\n${liste}\nTape le numéro`, {
       defaut: indexDefaut >= 0 ? String(indexDefaut + 1) : '',
       option,
+      interface: { genre: 'choix', question, choix, defaut: indexDefaut >= 0 ? String(indexDefaut + 1) : '' },
     });
     const rang = Number.parseInt(reponse, 10);
     if (rang >= 1 && rang <= choix.length) return choix[rang - 1].valeur;
@@ -181,8 +220,8 @@ const EMPLACEMENTS = {
 };
 
 const MESSAGE_ABSENT = {
-  git: "Git est introuvable sur ce PC. Lance d'abord 1-installer-mon-poste (dans le dossier outils).",
-  gh: "GitHub CLI (gh) est introuvable sur ce PC. Lance d'abord 1-installer-mon-poste (dans le dossier outils).",
+  git: `Git est introuvable sur ce PC. Lance d'abord ${nomOutil('installer')}.`,
+  gh: `GitHub CLI (gh) est introuvable sur ce PC. Lance d'abord ${nomOutil('installer')}.`,
 };
 
 const trouves = new Map();
@@ -269,7 +308,7 @@ export function exigerGitHub() {
   const r = gh(['auth', 'status', '--hostname', 'github.com'], { autoriserEchec: true });
   if (r.code !== 0) {
     throw new Stop(
-      "Tu n'es pas connecté à GitHub sur ce PC (ou internet ne répond pas). Lance 1-installer-mon-poste : il s'occupe de la connexion.",
+      `Tu n'es pas connecté à GitHub sur ce PC (ou internet ne répond pas). Lance ${nomOutil('installer')} : il s'occupe de la connexion.`,
     );
   }
   githubPret = true;
@@ -476,7 +515,7 @@ export function pousser(branche) {
   if (r.code !== 0) {
     if (/\b403\b|denied|permission/i.test(r.erreur)) {
       throw new Stop(
-        "GitHub refuse l'envoi : tu n'as pas (encore) le droit d'écrire sur le dépôt. Vérifie que tu as accepté l'invitation, puis relance 1-installer-mon-poste.",
+        `GitHub refuse l'envoi : tu n'as pas (encore) le droit d'écrire sur le dépôt. Vérifie que tu as accepté l'invitation, puis relance ${nomOutil('installer')}.`,
       );
     }
     throw new Stop(`L'envoi vers GitHub a échoué :\n${r.erreur}`);
