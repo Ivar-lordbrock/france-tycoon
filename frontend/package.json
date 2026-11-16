@@ -1,0 +1,7 @@
+{
+  "name": "@france-tycoon/frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Carte React + Leaflet (Dev B)",
+  "type": "module"
+}

@@ -1,18 +1,21 @@
 // Vérifie que les migrations s'appliquent et que la base refuse les états interdits.
 // Lancer : node --test backend/   (Node >= 22.13, aucune dépendance : module intégré node:sqlite)
-import { test } from 'node:test';
+
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), 'migrations');
 
 function freshDb() {
   const db = new DatabaseSync(':memory:');
   db.exec('PRAGMA foreign_keys = ON');
-  for (const file of readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort()) {
+  for (const file of readdirSync(migrationsDir)
+    .filter((f) => f.endsWith('.sql'))
+    .sort()) {
     db.exec(readFileSync(join(migrationsDir, file), 'utf8'));
   }
   db.exec(`
@@ -36,13 +39,20 @@ test('les catalogues sont remplis', () => {
   assert.equal(count('building_types'), 6);
   assert.equal(count('tutorials'), 10);
   assert.ok(count('daily_quests') >= 9);
-  assert.equal(db.prepare('SELECT count(*) AS n FROM shop_items WHERE is_active = 1').get().n, 0, 'boutique fermée en V1');
+  assert.equal(
+    db.prepare('SELECT count(*) AS n FROM shop_items WHERE is_active = 1').get().n,
+    0,
+    'boutique fermée en V1',
+  );
 });
 
 test('recherche par nom sans accents (FTS5)', () => {
   const db = freshDb();
   const rows = db.prepare("SELECT rowid FROM territories_fts WHERE territories_fts MATCH 'clemenciat'").all();
-  assert.deepEqual(rows.map((r) => r.rowid), [1]);
+  assert.deepEqual(
+    rows.map((r) => r.rowid),
+    [1],
+  );
 });
 
 test("index spatial : communes visibles dans l'écran (R*Tree)", () => {
@@ -50,7 +60,10 @@ test("index spatial : communes visibles dans l'écran (R*Tree)", () => {
   const rows = db
     .prepare('SELECT id FROM territories_rtree WHERE max_lng >= ? AND min_lng <= ? AND max_lat >= ? AND min_lat <= ?')
     .all(-62, -61, 16, 17);
-  assert.deepEqual(rows.map((r) => r.id), [2]);
+  assert.deepEqual(
+    rows.map((r) => r.id),
+    [2],
+  );
 });
 
 test('bouclier débutant de 72 h à la création du compte', () => {
@@ -61,21 +74,31 @@ test('bouclier débutant de 72 h à la création du compte', () => {
 const forbidden = {
   'argent négatif': 'UPDATE users SET cash = -1 WHERE id = 1',
   'texte dans une colonne entière (STRICT)': "UPDATE users SET cash = 'beaucoup' WHERE id = 1",
-  'commune hors de France': "INSERT INTO territories (insee_code, name, department_code, region_type, zone_code, center_lat, center_lng, base_value, building_slots) VALUES ('99134', 'Madrid', '99', 'metropole', 'ES', 40.4, -3.7, 1000, 5)",
-  'code INSEE invalide': "INSERT INTO territories (insee_code, name, department_code, region_type, zone_code, center_lat, center_lng, base_value, building_slots) VALUES ('1001', 'X', '01', 'metropole', 'MET', 0, 0, 1000, 5)",
-  'deux OPA en cours sur la même commune': 'INSERT INTO takeovers (territory_id, attacker_id, defender_id, territory_value, offer_amount, defense_cost, break_fee, expires_at) VALUES (1, 2, 1, 1, 1, 1, 0, unixepoch() + 10)',
-  'OPA sur soi-même': 'INSERT INTO takeovers (territory_id, attacker_id, defender_id, territory_value, offer_amount, defense_cost, break_fee, expires_at) VALUES (2, 1, 1, 1, 1, 1, 0, unixepoch() + 10)',
+  'commune hors de France':
+    "INSERT INTO territories (insee_code, name, department_code, region_type, zone_code, center_lat, center_lng, base_value, building_slots) VALUES ('99134', 'Madrid', '99', 'metropole', 'ES', 40.4, -3.7, 1000, 5)",
+  'code INSEE invalide':
+    "INSERT INTO territories (insee_code, name, department_code, region_type, zone_code, center_lat, center_lng, base_value, building_slots) VALUES ('1001', 'X', '01', 'metropole', 'MET', 0, 0, 1000, 5)",
+  'deux OPA en cours sur la même commune':
+    'INSERT INTO takeovers (territory_id, attacker_id, defender_id, territory_value, offer_amount, defense_cost, break_fee, expires_at) VALUES (1, 2, 1, 1, 1, 1, 0, unixepoch() + 10)',
+  'OPA sur soi-même':
+    'INSERT INTO takeovers (territory_id, attacker_id, defender_id, territory_value, offer_amount, defense_cost, break_fee, expires_at) VALUES (2, 1, 1, 1, 1, 1, 0, unixepoch() + 10)',
   'OPA résolue sans date de résolution': "UPDATE takeovers SET status = 'defended' WHERE id = 1",
   'modifier le journal du portefeuille': 'UPDATE wallet_transactions SET amount = 1 WHERE id = 1',
   'effacer le journal du portefeuille': 'DELETE FROM wallet_transactions WHERE id = 1',
-  "réutiliser une clé d'idempotence": "INSERT INTO wallet_transactions (user_id, currency, amount, balance_after, reason, idempotency_key) VALUES (1, 'cash', -1, 1, 'territory_purchase', 'achat-1')",
-  'devise inconnue': "INSERT INTO wallet_transactions (user_id, currency, amount, balance_after, reason) VALUES (1, 'euros', 5, 5, 'admin_adjustment')",
-  'chantier sans date de fin': 'INSERT INTO buildings (territory_id, building_type_id, level, target_level) VALUES (1, 1, 0, 1)',
-  'sauter un niveau': 'INSERT INTO buildings (territory_id, building_type_id, level, target_level, works_ends_at) VALUES (1, 1, 1, 3, unixepoch())',
+  "réutiliser une clé d'idempotence":
+    "INSERT INTO wallet_transactions (user_id, currency, amount, balance_after, reason, idempotency_key) VALUES (1, 'cash', -1, 1, 'territory_purchase', 'achat-1')",
+  'devise inconnue':
+    "INSERT INTO wallet_transactions (user_id, currency, amount, balance_after, reason) VALUES (1, 'euros', 5, 5, 'admin_adjustment')",
+  'chantier sans date de fin':
+    'INSERT INTO buildings (territory_id, building_type_id, level, target_level) VALUES (1, 1, 0, 1)',
+  'sauter un niveau':
+    'INSERT INTO buildings (territory_id, building_type_id, level, target_level, works_ends_at) VALUES (1, 1, 1, 3, unixepoch())',
   'capitale sans propriétaire': 'UPDATE territories SET is_capital = 1 WHERE id = 2',
   'pseudo trop court': "INSERT INTO users (google_id, email, pseudo) VALUES ('g3', 'c@exemple.fr', 'Al')",
-  'pseudo déjà pris (casse différente)': "INSERT INTO users (google_id, email, pseudo) VALUES ('g3', 'c@exemple.fr', 'alice')",
-  'quatrième quête du jour': "INSERT INTO user_quests (user_id, quest_id, quest_date, slot, target, reward_cash) VALUES (1, 1, '2026-11-15', 4, 1, 100)",
+  'pseudo déjà pris (casse différente)':
+    "INSERT INTO users (google_id, email, pseudo) VALUES ('g3', 'c@exemple.fr', 'alice')",
+  'quatrième quête du jour':
+    "INSERT INTO user_quests (user_id, quest_id, quest_date, slot, target, reward_cash) VALUES (1, 1, '2026-11-15', 4, 1, 100)",
 };
 
 for (const [label, sql] of Object.entries(forbidden)) {
@@ -89,15 +112,23 @@ test('une OPA défendue libère la place pour une nouvelle', () => {
   const db = freshDb();
   db.exec("UPDATE takeovers SET status = 'defended', resolved_at = unixepoch() WHERE id = 1");
   assert.doesNotThrow(() =>
-    db.exec('INSERT INTO takeovers (territory_id, attacker_id, defender_id, territory_value, offer_amount, defense_cost, break_fee, expires_at) VALUES (1, 2, 1, 1, 1, 1, 0, unixepoch() + 10)'),
+    db.exec(
+      'INSERT INTO takeovers (territory_id, attacker_id, defender_id, territory_value, offer_amount, defense_cost, break_fee, expires_at) VALUES (1, 2, 1, 1, 1, 1, 0, unixepoch() + 10)',
+    ),
   );
 });
 
 test('les tâches planifiées utilisent leurs index', () => {
   const db = freshDb();
   const plan = (sql) => JSON.stringify(db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all());
-  assert.match(plan("SELECT id FROM takeovers WHERE status = 'pending' AND expires_at <= unixepoch()"), /idx_takeovers_pending_expiry/);
-  assert.match(plan("SELECT id FROM users WHERE status = 'active' AND last_active_at < unixepoch() - 1209600"), /idx_users_inactivity/);
+  assert.match(
+    plan("SELECT id FROM takeovers WHERE status = 'pending' AND expires_at <= unixepoch()"),
+    /idx_takeovers_pending_expiry/,
+  );
+  assert.match(
+    plan("SELECT id FROM users WHERE status = 'active' AND last_active_at < unixepoch() - 1209600"),
+    /idx_users_inactivity/,
+  );
 });
 
 test('clés étrangères cohérentes', () => {

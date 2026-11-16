@@ -1,0 +1,7 @@
+{
+  "name": "@france-tycoon/backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API Fastify + SQLite (Dev A)",
+  "type": "module"
+}
