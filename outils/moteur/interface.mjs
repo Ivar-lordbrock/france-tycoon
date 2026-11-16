@@ -18,7 +18,7 @@ const DUO = path.join(ICI, 'duo.mjs');
 const PAGE = path.join(ICI, 'interface.html');
 
 /** Actions que la page peut lancer, et options qu'elle peut leur passer (avec leur forme permise). */
-const ACTIONS = new Set(['mettre-a-jour', 'commencer', 'envoyer', 'proposer', 'fusionner', 'fin-de-sprint']);
+const ACTIONS = new Set(['mettre-a-jour', 'commencer', 'envoyer', 'proposer', 'fusionner', 'fin-d-etape']);
 const OPTIONS = {
   reprendre: /^[\w][\w./-]{0,100}$/,
   pr: /^\d{1,7}$/,

@@ -12,7 +12,7 @@
 | OPA de 24 h, libération des inactifs | Des actions à heure fixe, même si personne n'est connecté | **Tâches planifiées** (`node-cron`) **+ vérification à la requête** (une OPA expirée est résolue dès qu'on la lit) |
 | Économie juste, sans triche | Le client ne doit rien décider | Toutes les règles **côté serveur**, en **transactions SQLite** ; montants **entiers** ; journal `wallet_transactions` en ajout seul |
 | Monétisation plus tard | Ne pas avoir à tout refaire | Deux devises séparées dès la V1 (`cash`, `premium_currency`), tables boutique et paiements déjà créées mais désactivées |
-| Deux développeurs | Travailler en parallèle sans se bloquer | Monorepo `frontend/` + `backend/` + `shared/` ; contrat d'API (schémas zod) écrit **avant** chaque sprint dans `shared/` |
+| Deux développeurs | Travailler en parallèle sans se bloquer | Monorepo `frontend/` + `backend/` + `shared/` ; contrat d'API (schémas zod) écrit **avant** chaque étape dans `shared/` |
 
 ## 2.2 Stack choisie
 
@@ -31,7 +31,7 @@
 | Auth | **google-auth-library** (`verifyIdToken`) | Vérification officielle du jeton Google |
 | Tâches planifiées | **node-cron** (fuseau `Europe/Paris`) | Dans le même processus que l'API, pas d'infrastructure en plus |
 | Temps réel | **Server-Sent Events** (`GET /api/v1/events`) | Notifications d'OPA sans WebSocket |
-| Tests | **Vitest** (unitaires), **node:test** (schéma SQL, déjà en place), **Playwright** (bout en bout, Sprint 6) | |
+| Tests | **Vitest** (unitaires), **node:test** (schéma SQL, déjà en place), **Playwright** (bout en bout, étape 6) | |
 | Qualité | **Biome** (lint + format en un outil) | Une seule config pour le duo |
 | Hébergement | **Un VPS** (ex. 2 vCPU / 4 Go) + **Caddy** (HTTPS auto) + **Litestream** (sauvegarde continue de SQLite) | SQLite = un seul serveur, c'est voulu et suffisant pour des milliers de joueurs |
 
@@ -79,7 +79,7 @@ Les communes ne changent presque jamais : on les **importe une fois** dans SQLit
 
 Exclus en V1 : les districts des **TAAF** (984) et **Clipperton** (989) — pas d'habitants, pas de vraies communes. Ils pourront revenir plus tard sous forme d'« expéditions » (événement spécial).
 
-### Pipeline `scripts/import/` (Sprint 1 et 2)
+### Pipeline `scripts/import/` (étapes 1 et 2)
 
 1. **communes** : pour chaque code département (liste de `/departements` + COM `975, 977, 978, 986, 987, 988`), appel
    `GET /communes?codeDepartement=XX&fields=nom,code,codeDepartement,codeRegion,population,surface,centre,contour&format=geojson&geometry=contour`.
@@ -91,7 +91,7 @@ Exclus en V1 : les districts des **TAAF** (984) et **Clipperton** (989) — pas 
 6. **valeurs** : calcul de `infra_score`, `base_value` (V0) et `building_slots` avec les formules de [05-equilibrage.md](05-equilibrage.md) (importées depuis `shared/`), et `balance_version`. Rejouable à tout moment sans toucher aux propriétaires.
 7. **sorties pour le front** : `frontend/public/geo/departements.json` (contours très simplifiés pour les zooms < 9) et `shared/src/zones.ts` (boîte et zoom de chaque zone, calculés depuis les contours).
 
-Volumes attendus (à mesurer au Sprint 1) : quelques dizaines de Mo pour les contours simplifiés, ~35 000 lignes de territoires.
+Volumes attendus (à mesurer à l'étape 1) : quelques dizaines de Mo pour les contours simplifiés, ~35 000 lignes de territoires.
 
 ## 2.5 Carte verrouillée sur la France
 
@@ -128,7 +128,7 @@ Chaque règle temporelle a **deux** garde-fous : une tâche planifiée (pour que
 - **Limitation de débit** : `@fastify/rate-limit` (ex. 120 requêtes/min par joueur, 10/min sur `/auth`).
 - **Idempotence** : les actions qui coûtent de l'argent acceptent un en-tête `Idempotency-Key` ; il devient `wallet_transactions.idempotency_key` (unique) : un double-clic ne paie jamais deux fois.
 - **Multi-comptes** : un compte par compte Google ; il faut 7 jours d'ancienneté pour lancer une OPA ; alerte admin si deux comptes s'échangent souvent des territoires.
-- **RGPD** : on ne garde que l'identifiant Google, l'e-mail, le pseudo et l'avatar. Suppression de compte = **anonymisation** (le journal financier doit rester cohérent). Pages « Confidentialité » et « Mentions légales » au Sprint 6.
+- **RGPD** : on ne garde que l'identifiant Google, l'e-mail, le pseudo et l'avatar. Suppression de compte = **anonymisation** (le journal financier doit rester cohérent). Pages « Confidentialité » et « Mentions légales » à l'étape 6.
 
 ## 2.8 Organisation du code
 

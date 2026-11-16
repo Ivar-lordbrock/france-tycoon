@@ -23,7 +23,7 @@ Tout en français : réponses, commentaires de code, messages de commit, docs.
 
 ## Outils du duo (`outils/`)
 
-Les deux développeurs ne connaissent pas forcément Git. Pour le flux quotidien, passer par le moteur plutôt que par Git à la main : `node outils/moteur/duo.mjs <action> [options]` (`aide` liste tout ; si `node` est introuvable : `"C:/Program Files/nodejs/node.exe"`). Commandes : `/mettre-a-jour`, `/commencer`, `/envoyer`, `/proposer`, `/ou-j-en-suis`, `/fusionner`, `/fin-de-sprint`, `/relire` (`.claude/commands/`).
+Les deux développeurs ne connaissent pas forcément Git. Pour le flux quotidien, passer par le moteur plutôt que par Git à la main : `node outils/moteur/duo.mjs <action> [options]` (`aide` liste tout ; si `node` est introuvable : `"C:/Program Files/nodejs/node.exe"`). Commandes : `/mettre-a-jour`, `/commencer`, `/envoyer`, `/proposer`, `/ou-j-en-suis`, `/fusionner`, `/fin-d-etape`, `/relire` (`.claude/commands/`).
 
 - Toujours passer les réponses en options (`--sujet`, `--message`, `--oui`…) : sans clavier, une question manquante s'arrête avec le code 2.
 - Un « Stop » (code 1) est un garde-fou : expliquer le message à l'utilisateur, ne jamais le contourner à la main (pas de commit sur `dev`/`main`, pas de `--force`, pas de fusion si la CI n'est pas verte).
@@ -35,7 +35,7 @@ Les deux développeurs ne connaissent pas forcément Git. Pour le flux quotidien
 
 - Tests du schéma : `node --test backend/`
 - Tests des outils du duo : `node --test outils/`
-- (Sprint 1) `npm install`, `npm run dev`, `npm test`, `npm run lint`
+- (Étape 1) `npm install`, `npm run dev`, `npm test`, `npm run lint`
 
 ## Skills du projet (`.claude/skills/`)
 

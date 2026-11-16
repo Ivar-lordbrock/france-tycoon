@@ -2,7 +2,7 @@
 
 Jeu web multijoueur de gestion et de conquête immobilière **sur la vraie carte de France** (Métropole et Outre-mer) : achète des communes, construis, encaisse des revenus même hors ligne, et rachète les territoires de tes rivaux par **OPA**.
 
-> État : **conception terminée, code pas encore commencé** (Sprint 1 à venir). Le schéma de base de données est écrit et testé.
+> État : **étape 1 terminée** (fondations et carte : on parcourt les communes de toutes les zones et on les cherche par leur nom). Prochaine étape : connexion Google et fiches de communes.
 
 ## Le jeu en bref
 
@@ -23,7 +23,7 @@ Jeu web multijoueur de gestion et de conquête immobilière **sur la vraie carte
 | [3. Base de données](docs/03-base-de-donnees.md) | Schéma SQLite complet ([SQL](backend/src/db/migrations/001_initial.sql)) |
 | [4. API REST](docs/04-api.md) | Toutes les routes et les flux |
 | [5. Formules d'équilibrage](docs/05-equilibrage.md) | Prix, bâtiments, revenus, OPA |
-| [6. Feuille de route](docs/06-feuille-de-route.md) | 6 sprints répartis entre deux développeurs |
+| [6. Feuille de route](docs/06-feuille-de-route.md) | 6 étapes réparties entre deux développeurs |
 | [7. Travailler à deux](docs/07-travailler-a-deux.md) | Guide pas à pas des outils du duo, sans connaître Git |
 
 ## Structure

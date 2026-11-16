@@ -78,7 +78,7 @@ export async function proposer(options) {
     (await demander('En une ou deux phrases, que fait ce travail ?', { defaut: quoiParDefaut, facultatif: true }));
   const pourquoi =
     options.pourquoi ??
-    (await demander('Pourquoi ? (sprint, besoin… Entrée pour passer)', { defaut: '', facultatif: true }));
+    (await demander('Pourquoi ? (étape, besoin… Entrée pour passer)', { defaut: '', facultatif: true }));
 
   const args = ['pr', 'create', '--base', base, '--head', branche, '--title', titre, '--body-file', '-'];
   if (options.brouillon) args.push('--draft');

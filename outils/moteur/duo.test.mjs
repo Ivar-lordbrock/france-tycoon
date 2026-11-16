@@ -10,6 +10,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { numeroDansTitre } from './actions/fin-d-etape.mjs';
 import { etatCI, fichiersRefuses, messageCommit, slug, trouverOutil } from './commun.mjs';
 
 const DUO = path.join(path.dirname(fileURLToPath(import.meta.url)), 'duo.mjs');
@@ -139,6 +140,12 @@ describe('règles de nommage', () => {
       { etat: 'supprimé', chemin: 'vieux.db' },
     ]).map((f) => f.chemin);
     assert.deepEqual(refuses, ['.env', 'backend/.env.local', 'data/jeu.sqlite', 'cle.pem']);
+  });
+
+  test('fin d’étape : numéro lu dans le titre de la proposition', () => {
+    assert.equal(numeroDansTitre('chore(release): étape 3 (v0.3.0)'), 3);
+    assert.equal(numeroDansTitre('chore(release): Etape 12 (v0.12.0)'), 12);
+    assert.ok(Number.isNaN(numeroDansTitre('chore(release): version spéciale')));
   });
 });
 

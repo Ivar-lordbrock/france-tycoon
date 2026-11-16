@@ -12,7 +12,7 @@ import { parseArgs } from 'node:util';
 import { commencer } from './actions/commencer.mjs';
 import { envoyer } from './actions/envoyer.mjs';
 import { etat } from './actions/etat.mjs';
-import { finDeSprint } from './actions/fin-de-sprint.mjs';
+import { finDEtape } from './actions/fin-d-etape.mjs';
 import { fusionner } from './actions/fusionner.mjs';
 import { mettreAJour } from './actions/mettre-a-jour.mjs';
 import { proposer } from './actions/proposer.mjs';
@@ -55,11 +55,11 @@ const ACTIONS = {
     aide: 'fusionne une proposition aux vérifications vertes',
     options: '[--pr <numéro>] [--oui] [--sans-relecture]',
   },
-  'fin-de-sprint': {
-    fn: finDeSprint,
-    titre: 'Fin de sprint',
-    aide: 'proposition dev → main, puis fusion et version v0.<sprint>.0',
-    options: '[--sprint <n>] [--oui] [--sans-relecture] [--essai]',
+  'fin-d-etape': {
+    fn: finDEtape,
+    titre: "Fin d'étape",
+    aide: 'proposition dev → main, puis fusion et version v0.<étape>.0',
+    options: '[--etape <n>] [--oui] [--sans-relecture] [--essai]',
   },
   interface: {
     // Chargée à la demande : le serveur local n'est utile qu'à la fenêtre des outils.
@@ -87,7 +87,7 @@ const OPTIONS = {
   'sans-relecture': { type: 'boolean' },
   integrer: { type: 'boolean' },
   'pas-integrer': { type: 'boolean' },
-  sprint: { type: 'string' },
+  etape: { type: 'string' },
   essai: { type: 'boolean' },
   json: { type: 'boolean' },
   'sans-navigateur': { type: 'boolean' },

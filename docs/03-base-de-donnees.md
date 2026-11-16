@@ -186,7 +186,7 @@ LIMIT 3000;
 
 ## 3.4 Ce que la base garantit, ce que le code garantit
 
-| Garanti par SQLite (testé) | Garanti par le code (à tester en Sprint 3–4) |
+| Garanti par SQLite (testé) | Garanti par le code (à tester aux étapes 3–4) |
 |---|---|
 | Solde jamais négatif | Limite de territoires (`max_territories`) |
 | Commune hors des 12 zones refusée | Emplacements de bâtiments disponibles |
@@ -198,6 +198,6 @@ LIMIT 3000;
 
 ## 3.5 Exploitation
 
-- **Sauvegarde** : Litestream réplique le fichier WAL en continu vers un stockage S3 ; restauration testée au Sprint 6.
-- **Migrations** : au démarrage, le serveur applique les fichiers `migrations/*.sql` pas encore joués (table `schema_migrations`, créée par le petit exécuteur de migrations du Sprint 1).
+- **Sauvegarde** : Litestream réplique le fichier WAL en continu vers un stockage S3 ; restauration testée à l'étape 6.
+- **Migrations** : au démarrage, le serveur applique les fichiers `migrations/*.sql` pas encore joués (table `schema_migrations`, créée par le petit exécuteur de migrations de l'étape 1).
 - **RGPD** : suppression = `status = 'deleted'`, e-mail remplacé par un hachage, pseudo par « Joueur supprimé #id », `google_id` par `deleted:<id>`, territoires libérés.

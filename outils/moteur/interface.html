@@ -321,7 +321,7 @@ const ICONES = {
   envoyer: '<path d="M7 18.5a4.5 4.5 0 0 1-.6-9 6 6 0 0 1 11.4-1.2A4.5 4.5 0 0 1 17.5 18.5"/><path d="M12 12.5V20M9 15.5l3-3 3 3"/>',
   proposer: '<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5v7"/><path d="M18 15.5V9a3 3 0 0 0-3-3h-3.5"/><path d="M13.5 3.5 11 6l2.5 2.5"/>',
   fusionner: '<circle cx="6" cy="5" r="2.5"/><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M6 7.5v9"/><path d="M6 8c0 3.5 3.5 4 9.5 4"/>',
-  'fin-de-sprint': '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
+  'fin-d-etape': '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
   actualiser: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
   dossier: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
   github: '<path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
@@ -665,10 +665,10 @@ function dessinerMenu() {
   ];
   if (etat?.admin) {
     elements.push(
-      h('button', { type: 'button', onclick: () => lancer('fin-de-sprint', { essai: true }) },
-        h('span', null, 'Fin de sprint — essai'), h('small', null, 'Montre ce qui serait fait, sans rien changer')),
-      h('button', { type: 'button', onclick: () => lancer('fin-de-sprint') },
-        h('span', null, 'Fin de sprint'), h('small', null, 'dev vers main, puis version v0.<sprint>.0')),
+      h('button', { type: 'button', onclick: () => lancer('fin-d-etape', { essai: true }) },
+        h('span', null, "Fin d'étape — essai"), h('small', null, 'Montre ce qui serait fait, sans rien changer')),
+      h('button', { type: 'button', onclick: () => lancer('fin-d-etape') },
+        h('span', null, "Fin d'étape"), h('small', null, 'dev vers main, puis version v0.<étape>.0')),
     );
   }
   $('#menu-liste').replaceChildren(...elements);

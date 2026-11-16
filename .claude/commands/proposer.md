@@ -9,7 +9,7 @@ Ouvre la proposition (pull request) de la tâche en cours vers `dev`, avec l'out
 2. Prépare :
    - un titre au format Conventional Commits, en français (ex. : `feat(api): achat d'un territoire libre`). Il deviendra le message de l'enregistrement dans dev ;
    - « quoi » : une ou deux phrases simples sur ce que fait ce travail ;
-   - « pourquoi » : le sprint ou le besoin (voir `docs/06-feuille-de-route.md`), ou rien si ce n'est pas clair.
+   - « pourquoi » : l'étape ou le besoin (voir `docs/06-feuille-de-route.md`), ou rien si ce n'est pas clair.
 3. Lance `node outils/moteur/duo.mjs proposer --titre "<titre>" --quoi "<quoi>" --pourquoi "<pourquoi>"`
    (si `node` est introuvable : `"C:/Program Files/nodejs/node.exe"`).
 4. Donne le lien de la proposition et explique la suite : les vérifications automatiques tournent quelques minutes, puis le binôme relit (`/ou-j-en-suis` pour suivre).

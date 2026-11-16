@@ -17,7 +17,7 @@ Les trois font exactement la même chose (même moteur derrière, mêmes garde-f
 |---|---|
 | **Dépôt** | Le projet sur GitHub, partagé par les deux. |
 | **`dev`** | La version de travail commune. On n'y travaille **jamais** directement. |
-| **`main`** | La version stable, mise à jour à chaque fin de sprint. |
+| **`main`** | La version stable, mise à jour à chaque fin d'étape. |
 | **Tâche** (branche) | Ta copie de travail pour une seule chose. Ex. : `feat/api-achat-territoire`. |
 | **Enregistrer** (commit) | Prendre une photo de ton travail, avec une phrase qui dit ce qui change. |
 | **Envoyer** (push) | Mettre tes enregistrements sur GitHub. C'est aussi ta sauvegarde. |
@@ -48,7 +48,7 @@ Double-clic sur **« France Tycoon »** (Bureau) : une fenêtre s'ouvre.
 - **« Et maintenant ? »** : la prochaine étape conseillée, avec son bouton. Le bouton de l'étape conseillée est aussi entouré en bleu.
 - **Les 5 boutons** : Mettre à jour, Commencer une tâche, Envoyer mon travail, Proposer mon travail, Fusionner.
 - **À droite** : les propositions ouvertes (avec un bouton « Fusionner » quand c'est possible), tes autres tâches (bouton « Reprendre ») et la dernière vérification de `dev`.
-- **Le menu « … »** : « Vérifier mon poste » et, pour le propriétaire, la fin de sprint.
+- **Le menu « … »** : « Vérifier mon poste » et, pour le propriétaire, la fin d'étape.
 
 Quand tu cliques sur un bouton, un panneau montre ce qui se passe et pose les questions une par une (boutons à choisir, ou une phrase à taper). « Annuler » arrête sans rien changer. À la fin, « Et maintenant ? » propose le bouton suivant.
 
@@ -66,7 +66,7 @@ La fenêtre ne marche que sur ton PC (personne d'autre ne peut l'ouvrir). Une pe
 | `5-proposer-mon-travail` | `/proposer` | Ouvre la proposition vers `dev`, remplie avec le modèle du projet. |
 | `6-ou-j-en-suis` | `/ou-j-en-suis` | Montre où tu en es, les propositions ouvertes, les vérifications. Ne change rien. |
 | `7-fusionner` | `/fusionner [n°]` | Fusionne une proposition dont les vérifications sont vertes. |
-| `8-fin-de-sprint` | `/fin-de-sprint` | Fin de sprint : `dev` vers `main`, puis version `v0.<sprint>.0`. |
+| `8-fin-d-etape` | `/fin-d-etape` | Fin d'étape : `dev` vers `main`, puis version `v0.<étape>.0`. |
 | | `/relire <n°>` | Claude t'explique la proposition de ton binôme avant que tu l'acceptes. |
 
 ## 1. Installer ton poste (une seule fois)
@@ -118,12 +118,12 @@ Tant que ton binôme n'est pas là, `7-fusionner` te propose de **passer outre a
 
 Le jour où ton binôme arrive, il n'y a rien à changer : ses propositions et les tiennes passeront par la relecture. Lui n'est pas administrateur, il ne peut donc pas passer outre.
 
-## 5. Fin de sprint (propriétaire)
+## 5. Fin d'étape (propriétaire)
 
-Lance `8-fin-de-sprint` **deux fois** :
+Lance `8-fin-d-etape` **deux fois** :
 
 1. la première fois, il ouvre la proposition `dev` vers `main` avec la liste de ce qui a changé ;
-2. quand les vérifications sont vertes, la seconde fois il fusionne dans `main` et crée la version `v0.<sprint>.0` (visible dans « Releases » sur GitHub).
+2. quand les vérifications sont vertes, la seconde fois il fusionne dans `main` et crée la version `v0.<étape>.0` (visible dans « Releases » sur GitHub).
 
 ## 6. Quand l'outil dit « Stop »
 

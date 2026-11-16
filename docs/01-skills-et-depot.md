@@ -65,7 +65,7 @@ Les skills déjà installés au niveau utilisateur sur ce poste (impeccable, emi
 - **Fusion** : squash (fonctionnalité → `dev`) et merge commit (`dev → main`) ; branches supprimées après fusion.
 - **CI** : `.github/workflows/ci.yml` lance `node --test backend/` à chaque push et PR sur `main` et `dev`.
 - **Gabarits** : modèle de PR (`.github/pull_request_template.md`), `CODEOWNERS` (à compléter avec les pseudos).
-- **Organisation** : jalons « Sprint 1 » à « Sprint 6 » ; étiquettes `backend`, `frontend`, `data`, `shared`, `design`.
+- **Organisation** : jalons « Étape 1 » à « Étape 6 » ; étiquettes `backend`, `frontend`, `data`, `shared`, `design`.
 - Règles de travail : [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ### Ajouter le 2ᵉ développeur

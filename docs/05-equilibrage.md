@@ -1,6 +1,6 @@
 # 5. Formules d'équilibrage
 
-Toutes les constantes ci-dessous vivent dans **un seul fichier**, `shared/src/balance.ts` (les formules de 5.1 depuis le Sprint 1, le reste au Sprint 3), importé par le serveur (qui fait foi), par le front (aperçus) et par le script d'import (valeurs des communes). Les paramètres propres à chaque bâtiment sont dans la table `building_types` ([002_seed.sql](../backend/src/db/migrations/002_seed.sql)).
+Toutes les constantes ci-dessous vivent dans **un seul fichier**, `shared/src/balance.ts` (les formules de 5.1 depuis l'étape 1, le reste à l'étape 3), importé par le serveur (qui fait foi), par le front (aperçus) et par le script d'import (valeurs des communes). Les paramètres propres à chaque bâtiment sont dans la table `building_types` ([002_seed.sql](../backend/src/db/migrations/002_seed.sql)).
 
 Notations : `P` population, `I` score d'infrastructures, `L` niveau, `arrondi_N` arrondi à N près, `plafond_N` arrondi au-dessus à N près, `⌊x⌋` partie entière.
 
@@ -33,7 +33,7 @@ Notations : `P` population, `I` score d'infrastructures, `L` niveau, `arrondi_N`
 - **`f_T = borne( √(V0 / 10 000) ; 1 ; 60 )`** — multiplie le coût et le revenu des bâtiments : construire à Lyon coûte et rapporte plus qu'au village, avec le **même temps de retour**.
 - **`Emplacements = borne( 2 + ⌊2 × log10(1 + P)⌋ ; 3 ; 16 )`** — une grande ville accueille plus de bâtiments.
 
-> **Provisoire (Sprint 1)** : tant que BPE et OSM ne sont pas importés, `territory_stats` est vide, donc `I = 0` et V0 ne dépend que de la population. Le script `npm run import:communes` relit `territory_stats` à chaque passage : il suffira de le relancer après l'import des équipements.
+> **Provisoire (étape 1)** : tant que BPE et OSM ne sont pas importés, `territory_stats` est vide, donc `I = 0` et V0 ne dépend que de la population. Le script `npm run import:communes` relit `territory_stats` à chaque passage : il suffira de le relancer après l'import des équipements.
 
 ### Exemples (valeurs réelles de population ; équipements estimés en attendant l'import BPE/OSM)
 
@@ -167,4 +167,4 @@ En patrimoine, une OPA réussie coûte `0,5 × V_T` à l'attaquant et rapporte `
 | 2 Résidences de plus (8 860) | 1 910 |
 | Revenu : 218 + 3 × 295 = **1 103 ₮/h** (≈ 26 500 ₮/jour) | |
 
-Avec les 7 emplacements remplis : ≈ 2 280 ₮/h, soit une 2ᵉ commune de village en moins d'une journée et une ville comme Pointe-à-Pitre en une à deux semaines avec 3 territoires. À ajuster après la bêta (Sprint 6), en changeant seulement `shared/src/balance.ts` et `building_types`.
+Avec les 7 emplacements remplis : ≈ 2 280 ₮/h, soit une 2ᵉ commune de village en moins d'une journée et une ville comme Pointe-à-Pitre en une à deux semaines avec 3 territoires. À ajuster après la bêta (étape 6), en changeant seulement `shared/src/balance.ts` et `building_types`.

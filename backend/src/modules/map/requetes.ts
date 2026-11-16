@@ -39,7 +39,7 @@ const CANDIDATS_PAR_REQUETE = 200;
 
 /** Requêtes préparées une fois pour toutes les routes /map. */
 export function creerRequetesCarte(db: Base) {
-  // `mine` demande une session (Sprint 2) : sans connexion, une commune possédée est `rival`.
+  // `mine` demande une session (étape 2) : sans connexion, une commune possédée est `rival`.
   const communesVisibles = (colonne: 'geojson_low' | 'geojson_high') =>
     db.prepare<{ ouest: number; sud: number; est: number; nord: number; limite: number }, LigneCommune>(`
       WITH visibles AS (

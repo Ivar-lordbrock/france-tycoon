@@ -1,12 +1,12 @@
-# 6. Feuille de route : 6 sprints de 2 semaines
+# 6. Feuille de route : 6 étapes de 2 semaines
 
 - **Dev A — Backend / Données** : API, base, import, tâches planifiées.
 - **Dev B — Frontend / Carte** : React, Leaflet, écrans, tutoriel.
-- **Règle « contrat d'abord »** : le 1er jour de chaque sprint, les deux écrivent ensemble dans `shared/` les schémas zod des routes du sprint. Dev B peut alors coder contre des **données factices** (MSW) sans attendre Dev A.
-- **Fin de sprint** : démo de 15 min, PR `dev → main`, tag `v0.<n>.0`, mise à jour de cette page.
-- Chaque sprint a un jalon GitHub (« Sprint 1 » … « Sprint 6 ») : les issues s'y rangent.
+- **Règle « contrat d'abord »** : le 1er jour de chaque étape, les deux écrivent ensemble dans `shared/` les schémas zod des routes de l'étape. Dev B peut alors coder contre des **données factices** (MSW) sans attendre Dev A.
+- **Fin d'étape** : démo de 15 min, PR `dev → main`, tag `v0.<n>.0`, mise à jour de cette page.
+- Chaque étape a un jalon GitHub (« Étape 1 » … « Étape 6 ») : les issues s'y rangent.
 
-## Sprint 1 — Fondations et carte
+## Étape 1 — Fondations et carte
 
 | Dev A — Backend / Données | Dev B — Frontend / Carte |
 |---|---|
@@ -19,7 +19,7 @@
 
 **Fini quand** : on ouvre l'app, on saute en Martinique, on zoome, on voit les contours des communes et on trouve « Saint-Étienne » en tapant « saint etienne ».
 
-## Sprint 2 — Connexion Google et fiches de communes
+## Étape 2 — Connexion Google et fiches de communes
 
 | Dev A | Dev B |
 |---|---|
@@ -31,7 +31,7 @@
 
 **Fini quand** : un nouveau joueur se connecte avec Google, reçoit 30 000 ₮, ouvre la fiche de n'importe quelle commune avec un vrai prix.
 
-## Sprint 3 — Économie : achat, construction, revenus
+## Étape 3 — Économie : achat, construction, revenus
 
 | Dev A | Dev B |
 |---|---|
@@ -43,7 +43,7 @@
 
 **Fini quand** : on achète un village, on construit, on ferme l'onglet, on revient 2 h plus tard et le revenu encaissé est exact (testé automatiquement).
 
-## Sprint 4 — PvP : OPA et inactivité
+## Étape 4 — PvP : OPA et inactivité
 
 | Dev A | Dev B |
 |---|---|
@@ -55,7 +55,7 @@
 
 **Fini quand** : deux comptes de test jouent une OPA complète dans chacune des issues, et un compte inactif voit ses communes libérées.
 
-## Sprint 5 — Rétention : tutoriel, quêtes, classement
+## Étape 5 — Rétention : tutoriel, quêtes, classement
 
 | Dev A | Dev B |
 |---|---|
@@ -66,7 +66,7 @@
 
 **Fini quand** : un nouveau joueur va du premier clic au classement guidé par le tutoriel, et ses quêtes se renouvellent à minuit (heure de Paris).
 
-## Sprint 6 — Solidité et mise en ligne (bêta fermée)
+## Étape 6 — Solidité et mise en ligne (bêta fermée)
 
 | Dev A | Dev B |
 |---|---|
@@ -91,4 +91,4 @@
 | Limites de l'API Overpass | Pauses entre requêtes, cache `data/raw/`, ou extrait Geofabrik + osmium |
 | Économie déséquilibrée | Toutes les constantes dans `shared/src/balance.ts` ; `balance_version` permet de recalculer les V0 |
 | Multi-comptes qui se font des cadeaux par OPA | 7 jours d'ancienneté, règle des 25 %, alerte sur les paires récurrentes |
-| Deux devs qui se marchent dessus | Zones de code séparées, contrat `shared/` en début de sprint, PR relue par l'autre |
+| Deux devs qui se marchent dessus | Zones de code séparées, contrat `shared/` en début d'étape, PR relue par l'autre |

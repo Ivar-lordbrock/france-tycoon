@@ -4,7 +4,7 @@
 
 | Branche | Rôle | Règle |
 |---|---|---|
-| `main` | Version stable (ce qui est en ligne) | Protégée : pas de push direct, pas de force-push. On y arrive seulement par une PR `dev → main` en fin de sprint. |
+| `main` | Version stable (ce qui est en ligne) | Protégée : pas de push direct, pas de force-push. On y arrive seulement par une PR `dev → main` en fin d'étape. |
 | `dev` | Intégration (branche par défaut) | Protégée : on y arrive par PR, relue par l'autre développeur. |
 | `feat/<zone>-<sujet>` | Une fonctionnalité | Part de `dev`, revient dans `dev` par PR. Ex. : `feat/api-achat-territoire`, `feat/map-selecteur-zones`. |
 | `fix/<zone>-<sujet>` | Une correction | Idem. |
@@ -24,7 +24,7 @@ Pas besoin de connaître Git : les outils du dossier [`outils/`](outils/) font c
 | Où j'en suis | `6-ou-j-en-suis` | `/ou-j-en-suis` | `git status`, `gh pr status` |
 | Relire la PR de l'autre | GitHub, « Review changes » | `/relire <n°>` | `gh pr review <n°> --approve` |
 | Fusionner (**squash**) | `7-fusionner` | `/fusionner` | `gh pr merge <n°> --squash` |
-| Fin de sprint : `dev → main` (**merge commit**) et version `v0.<sprint>.0` | `8-fin-de-sprint` | `/fin-de-sprint` | `gh pr create --base main --head dev`, `gh pr merge --merge`, `gh release create v0.<sprint>.0` |
+| Fin d'étape : `dev → main` (**merge commit**) et version `v0.<étape>.0` | `8-fin-d-etape` | `/fin-d-etape` | `gh pr create --base main --head dev`, `gh pr merge --merge`, `gh release create v0.<étape>.0` |
 
 Garde-fous : refus de travailler sur `main` ou `dev`, arrêt s'il reste des modifications non enregistrées, jamais de `--force`, fusion seulement si les vérifications (CI) sont vertes, refus des secrets (`.env`), des bases (`.sqlite`) et des fichiers de plus de 10 Mo.
 
@@ -52,7 +52,7 @@ Types : `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `ci`.
 - **Dev B — Frontend / Carte** : `frontend/`.
 - **À deux** : `shared/` (types, schémas zod, formules d'équilibrage). Toute modification de `shared/` ou d'une route d'API se discute dans la PR, car elle touche les deux côtés.
 
-Voir [docs/06-feuille-de-route.md](docs/06-feuille-de-route.md) pour le découpage par sprint.
+Voir [docs/06-feuille-de-route.md](docs/06-feuille-de-route.md) pour le découpage en étapes.
 
 ## Règles du code
 
