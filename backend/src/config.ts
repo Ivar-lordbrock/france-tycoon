@@ -1,0 +1,32 @@
+import { existsSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { z } from 'zod';
+
+/** Racine du dépôt (les chemins relatifs du `.env` partent d'ici). */
+export const RACINE = resolve(import.meta.dirname, '../..');
+
+const schemaConfig = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  HOST: z.string().default('127.0.0.1'),
+  PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+  APP_ORIGIN: z.url().default('http://localhost:5173'),
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  DATABASE_PATH: z.string().min(1).default('./data/france-tycoon.sqlite'),
+});
+
+export type Config = z.infer<typeof schemaConfig> & { cheminBase: string };
+
+/** Charge `.env` (s'il existe) sans écraser les variables déjà définies. */
+export function chargerFichierEnv(chemin = join(RACINE, '.env')): void {
+  if (existsSync(chemin)) process.loadEnvFile(chemin);
+}
+
+export function lireConfig(env: NodeJS.ProcessEnv = process.env): Config {
+  const resultat = schemaConfig.safeParse(env);
+  if (!resultat.success) {
+    throw new Error(`Configuration invalide (.env) :\n${z.prettifyError(resultat.error)}`);
+  }
+  const config = resultat.data;
+  const cheminBase = config.DATABASE_PATH === ':memory:' ? ':memory:' : resolve(RACINE, config.DATABASE_PATH);
+  return { ...config, cheminBase };
+}
