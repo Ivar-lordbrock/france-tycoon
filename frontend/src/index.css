@@ -89,9 +89,9 @@ body {
   border-top-color: var(--color-encre);
 }
 
-/* Sur téléphone, la recherche occupe le haut : le zoom descend sous elle. */
+/* Le zoom est en bas à droite (le haut appartient au compte et à la fiche) ; sur téléphone, on zoome avec les doigts. */
 @media (width < 48rem) {
-  .leaflet-top.leaflet-right {
-    top: 7.5rem;
+  .leaflet-control-zoom {
+    display: none;
   }
 }
