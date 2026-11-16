@@ -1,6 +1,8 @@
 // Les 12 zones françaises du jeu (colonne `territories.zone_code`).
 // TAAF (984) et Clipperton (989) sont exclus en V1.
 
+import { BOITE_CORSE, BOITES_ZONES } from './zones.generees.ts';
+
 export const ZONE_CODES = ['MET', 'GP', 'MQ', 'GF', 'RE', 'YT', 'PM', 'BL', 'MF', 'WF', 'PF', 'NC'] as const;
 
 export type ZoneCode = (typeof ZONE_CODES)[number];
@@ -67,3 +69,25 @@ export function typeDeRegion(code: string): 'metropole' | 'outre_mer' {
 export function estZoneCode(valeur: string): valeur is ZoneCode {
   return (ZONE_CODES as readonly string[]).includes(valeur);
 }
+
+export interface BoiteZone {
+  /** [ouest, sud, est, nord] en degrés. */
+  bbox: [number, number, number, number];
+  /** Zoom conseillé pour voir toute la zone. */
+  zoom: number;
+}
+
+export interface Zone extends BoiteZone {
+  code: ZoneCode;
+  nom: string;
+}
+
+/** Les 12 zones avec leur boîte (calculée par l'import des communes). */
+export const ZONES: readonly Zone[] = ZONE_CODES.map((code) => ({
+  code,
+  nom: NOMS_ZONES[code],
+  ...BOITES_ZONES[code],
+}));
+
+/** Raccourci « Corse » du sélecteur de zones : une vue de la Métropole. */
+export const VUE_CORSE: Zone = { code: 'MET', nom: 'Corse', ...BOITE_CORSE };
