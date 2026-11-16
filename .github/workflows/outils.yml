@@ -6,10 +6,10 @@ name: Outils du duo
 on:
   push:
     branches: [main, dev]
-    paths: ['outils/**', '.github/workflows/outils.yml']
+    paths: ["outils/**", ".github/workflows/outils.yml"]
   pull_request:
     branches: [main, dev]
-    paths: ['outils/**', '.github/workflows/outils.yml']
+    paths: ["outils/**", ".github/workflows/outils.yml"]
 
 permissions:
   contents: read
@@ -19,7 +19,7 @@ jobs:
     name: Outils (Windows)
     runs-on: windows-latest
     env:
-      DUO_SANS_PAUSE: '1'
+      DUO_SANS_PAUSE: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
