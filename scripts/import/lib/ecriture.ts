@@ -71,7 +71,7 @@ export function creerEcrivain(db: Base) {
   return (territoires: TerritoireImporte[]) => ecrire.immediate(territoires);
 }
 
-/** Équipements déjà importés (BPE, OSM) par code INSEE : vide au Sprint 1, donc I = 0. */
+/** Équipements déjà importés (BPE, OSM) par code INSEE : vide à l'étape 1, donc I = 0. */
 export function lireComptesInfra(db: Base): Map<string, ComptesInfra> {
   const lignes = db
     .prepare<[], { insee: string; category: CategorieInfra; source: 'bpe' | 'osm'; count: number }>(`

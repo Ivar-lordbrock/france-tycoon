@@ -1,7 +1,7 @@
 // Constantes et formules d'équilibrage : seul endroit où elles vivent (avec la table `building_types`).
 // Toute modification ici se reporte dans docs/05-equilibrage.md.
-// Sprint 1 : section 5.1 (valeur d'une commune), utilisée par scripts/import/communes.
-// Le reste (bâtiments, revenus, OPA) arrive au Sprint 3.
+// Étape 1 : section 5.1 (valeur d'une commune), utilisée par scripts/import/communes.
+// Le reste (bâtiments, revenus, OPA) arrive à l'étape 3.
 
 /** À incrémenter quand une formule change : `territories.balance_version` dit quelles valeurs sont à recalculer. */
 export const BALANCE_VERSION = 1;

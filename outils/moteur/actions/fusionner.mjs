@@ -68,7 +68,7 @@ async function choisirProposition(options) {
 
 /**
  * Vérifie puis fusionne. Renvoie true si c'est fait, false si l'utilisateur a renoncé.
- * Aussi utilisé par la fin de sprint (dev → main).
+ * Aussi utilisé par la fin d'étape (dev → main).
  */
 export async function fusionnerProposition(pr, options) {
   dire.info(`n°${pr.number} ${gras(pr.title)} (${pr.headRefName} → ${pr.baseRefName})`);
@@ -139,7 +139,7 @@ export async function fusionnerProposition(pr, options) {
     }
   }
 
-  // dev reçoit un seul enregistrement propre par tâche (squash) ; main garde l'historique du sprint (merge commit).
+  // dev reçoit un seul enregistrement propre par tâche (squash) ; main garde l'historique de l'étape (merge commit).
   const methode = pr.baseRefName === 'main' ? '--merge' : '--squash';
   const args = [
     'pr',

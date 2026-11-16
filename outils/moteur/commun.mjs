@@ -41,7 +41,7 @@ export const OUTILS = {
   proposer: ['5-proposer-mon-travail', '/proposer', 'Proposer mon travail'],
   etat: ['6-ou-j-en-suis', '/ou-j-en-suis', "Où j'en suis"],
   fusionner: ['7-fusionner', '/fusionner', 'Fusionner'],
-  'fin-de-sprint': ['8-fin-de-sprint', '/fin-de-sprint', 'Fin de sprint'],
+  'fin-d-etape': ['8-fin-d-etape', '/fin-d-etape', "Fin d'étape"],
 };
 
 /** Lancé par l'interface (fenêtre) : messages et questions passent en lignes « @@{json} ». */
