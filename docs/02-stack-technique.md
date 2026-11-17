@@ -30,7 +30,7 @@
 | Base | **SQLite** via **better-sqlite3** | Synchrone et transactionnel : idéal pour une économie (pas de « course » entre deux requêtes) |
 | Auth | **google-auth-library** (`verifyIdToken`) | Vérification officielle du jeton Google |
 | Tâches planifiées | **node-cron** (fuseau `Europe/Paris`) | Dans le même processus que l'API, pas d'infrastructure en plus |
-| Temps réel | **Server-Sent Events** (`GET /api/v1/events`) | Notifications d'OPA sans WebSocket |
+| Temps réel | **Server-Sent Events** (`GET /api/v1/events`) | Notifications d'OPA sans WebSocket ni bibliothèque : le flux relit la table `notifications` chaque seconde (docs/04) |
 | Tests | **Vitest** (unitaires), **node:test** (schéma SQL, déjà en place), **Playwright** (bout en bout, étape 6) | |
 | Qualité | **Biome** (lint + format en un outil) | Une seule config pour le duo |
 | Hébergement | **Un VPS** (ex. 2 vCPU / 4 Go) + **Caddy** (HTTPS auto) + **Litestream** (sauvegarde continue de SQLite) | SQLite = un seul serveur, c'est voulu et suffisant pour des milliers de joueurs |
@@ -112,13 +112,14 @@ Chaque règle temporelle a **deux** garde-fous : une tâche planifiée (pour que
 | Tâche | Fréquence | Ce qu'elle fait |
 |---|---|---|
 | `resolve-takeovers` | toutes les minutes | OPA `pending` dont `expires_at` est passé → transfert du territoire (voir 05) |
-| `release-inactive` | chaque jour à 04:00 | Joueurs sans activité depuis 14 jours → territoires libérés, rachat par l'État, OPA annulées, statut `dormant` |
-| `warn-inactive` | chaque jour à 04:05 | Notification « tes territoires seront libérés dans 3 jours » (visible au retour ; e-mail possible en V2) |
+| `release-inactive` | toutes les heures | Joueurs sans activité depuis 14 jours → territoires libérés, rachat par l'État, OPA annulées, statut `dormant` (`backend/src/modules/inactivity/inactivite.ts`) |
+| `warn-inactive` | toutes les heures | Notification « tes territoires seront libérés dans 3 jours », une fois par absence (visible au retour ; e-mail possible en V2) |
 | `leaderboard` | toutes les 10 min | Recalcule `users.net_worth` et `rank_level` |
 | `cleanup` | chaque jour à 05:00 | Sessions expirées, notifications lues de plus de 30 jours |
 
 - Les chantiers terminés, les boucliers et les quêtes du jour **n'ont pas besoin de tâche** : ils se calculent à la lecture à partir des dates.
-- Chaque exécution laisse une ligne dans `job_runs` ; l'index unique `uq_job_runs_one_running` empêche deux exécutions simultanées.
+- Chaque exécution laisse une ligne dans `job_runs` ; l'index unique `uq_job_runs_one_running` empêche deux exécutions simultanées. On garde 7 jours de lignes par tâche.
+- Code : `backend/src/jobs/taches.ts`, lancé par `server.ts`. Les tâches tournent avec un simple minuteur (toutes les N secondes) : chaque passage ne traite que ce qui a passé le cap, donc pas besoin d'heure fixe ni de `node-cron` pour l'instant (le classement de l'étape 5 pourra en avoir besoin).
 - Si un jour il faut plusieurs serveurs, ces tâches passent dans un processus « worker » séparé ; rien d'autre ne change.
 
 ## 2.7 Sécurité

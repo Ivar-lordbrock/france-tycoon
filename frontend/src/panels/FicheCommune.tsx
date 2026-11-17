@@ -2,6 +2,7 @@ import { type KeyboardEvent as ToucheReact, useEffect } from 'react';
 import { useFiche, useMoi } from '../api/compte.ts';
 import { type OngletFiche, useCarte } from '../etat/carte.ts';
 import { ActionsFiche } from './ActionsFiche.tsx';
+import { ActionsOpa } from './ActionsOpa.tsx';
 import { entier, LIBELLES_EQUIPEMENTS, lieu, proprietaire, raisonAchat, tycoons } from './fiche-texte.ts';
 import { OngletBatiments } from './OngletBatiments.tsx';
 import { estAMoi } from './territoires-texte.ts';
@@ -125,6 +126,7 @@ export function FicheCommune() {
           </dl>
 
           <ActionsFiche key={fiche.insee} fiche={fiche} moi={moi ?? null} raisonsAchat={raisons} />
+          <ActionsOpa key={`opa-${fiche.insee}`} fiche={fiche} moi={moi ?? null} />
 
           <h3 className="mt-4 text-sm font-semibold">Équipements</h3>
           {fiche.equipments.length === 0 ? (

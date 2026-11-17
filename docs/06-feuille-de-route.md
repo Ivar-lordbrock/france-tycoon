@@ -35,6 +35,8 @@
 
 Décisions prises le 17/11/2026 (détail dans [idees.md](idees.md#décisions-prises) et [05-equilibrage.md](05-equilibrage.md#52-bâtiments)) : bâtiments jusqu'au **niveau 5**, coût ×2 et revenu +70 % par niveau, chantiers **longs en temps réel** (durée ×2 par niveau, gare niveau 5 = 48 h), une **gare** en plus, **une seule file** de construction, chantier annulable et remboursé, siège social au niveau 5 et **4 territoires** au départ, revenus hors ligne plafonnés à **48 h**, bâtiments détruits à la revente.
 
+**Faite** le 17/11/2026 en 7 paquets (PR #16 à #23), version **v0.3.0**. Reste pour plus tard : les erreurs s'affichent à côté de l'action (les toasts arrivent avec le direct, étape 4).
+
 | Dev A | Dev B |
 |---|---|
 | `shared/src/balance.ts` (toutes les constantes de 05) + tests unitaires des formules | Bouton Acheter / Vendre avec confirmation et aperçu (formules `shared/`) |
@@ -47,6 +49,8 @@ Décisions prises le 17/11/2026 (détail dans [idees.md](idees.md#décisions-pri
 **Fini quand** : on achète un village, on construit, on ferme l'onglet, on revient 2 h plus tard : le revenu encaissé est exact (testé automatiquement) et un résumé dit quels chantiers se sont terminés.
 
 ## Étape 4 — PvP : OPA et inactivité
+
+Décisions prises le 17/11/2026 ([idees.md](idees.md#décisions-prises)) : les règles de [5.5](05-equilibrage.md#55-opa-rachat-hostile) et [5.6](05-equilibrage.md#56-inactivité) sont gardées telles quelles, dont l'ancienneté de **7 jours** pour lancer une OPA. Contrat dans `shared/src/api/opa.ts` et `notifications.ts`.
 
 | Dev A | Dev B |
 |---|---|

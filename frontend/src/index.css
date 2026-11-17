@@ -51,6 +51,20 @@ body {
   }
 }
 
+/* Petit message qui arrive : glisse et apparaît (rien si l'on préfère moins d'animations). */
+@media (prefers-reduced-motion: no-preference) {
+  .entree-toast {
+    animation: entree-toast 180ms ease-out;
+  }
+}
+
+@keyframes entree-toast {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
 /* Leaflet */
 .leaflet-container {
   background: #dfe3ea;

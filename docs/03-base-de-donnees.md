@@ -180,7 +180,7 @@ LIMIT 3000;
 
 **`daily_quests`** (catalogue) + **`user_quests`** — 3 quêtes par joueur et par jour (`slot` 1 = facile, 2 = moyenne, 3 = difficile). La récompense est figée au tirage. Contraintes : une quête ne sort pas deux fois le même jour, pas de 4ᵉ quête, pas de réclamation avant d'avoir fini.
 
-**`notifications`** — OPA reçue, OPA résolue, chantier fini, alerte d'inactivité. Index partiel sur les non lues. Chantier fini : `kind = 'building_done'`, `payload` au format `chantierFiniSchema` (shared/src/api/economie.ts), `created_at` = date de fin du chantier ; écrit par l'encaissement (`backend/src/modules/income/revenus.ts`).
+**`notifications`** — OPA reçue, OPA résolue, chantier fini, alerte d'inactivité. OPA : `takeover_received` (au défenseur, au lancement), `takeover_resolved` (à l'autre joueur à chaque issue ; aux deux pour `succeeded`). Inactivité : `inactivity_warning` (J+11, une fois par absence), `inactivity_released` (J+14, nombre de territoires et total racheté). Index partiel sur les non lues. Chantier fini : `kind = 'building_done'`, `payload` au format `chantierFiniSchema` (shared/src/api/economie.ts), `created_at` = date de fin du chantier ; écrit par l'encaissement (`backend/src/modules/income/revenus.ts`).
 
 ### Monétisation V2 (créée, inactive)
 

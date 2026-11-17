@@ -5,13 +5,13 @@ import type {
   DemolitionReponse,
   FileConstruction,
   LireNotificationsReponse,
-  MoiReponse,
 } from '@france-tycoon/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMaintenantMs } from '../etat/horloge.ts';
 import { cashEnDirect, prochaineRelecture } from '../panels/batiments-texte.ts';
 import { envoyerJson, lireJson } from './client.ts';
 import { useMoi } from './compte.ts';
+import { apresLecture } from './notifications.ts';
 import { apresRefus, poserPortefeuille } from './territoires.ts';
 
 /** Clé de la file de construction : sous `moi`, elle se relit avec le profil. */
@@ -91,15 +91,6 @@ export function useMarquerVus() {
   return useMutation({
     mutationFn: (ids: number[]) =>
       envoyerJson<LireNotificationsReponse>('/api/v1/me/notifications/read', 'POST', { ids }),
-    onSuccess: ({ unreadNotifications }, ids) =>
-      client.setQueryData<MoiReponse | null>(['moi'], (moi) =>
-        moi
-          ? {
-              ...moi,
-              unreadNotifications,
-              finishedWorks: moi.finishedWorks.filter((f) => !ids.includes(f.notificationId)),
-            }
-          : moi,
-      ),
+    onSuccess: (reponse, ids) => apresLecture(client, { ids }, reponse),
   });
 }

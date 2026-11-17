@@ -17,6 +17,7 @@ import {
   revenuDuTerritoire,
   versBatimentRevenu,
 } from '../income/revenus.ts';
+import { codesRefus, creerEvaluationOpa } from '../takeovers/conditions.ts';
 import { creerLecteurJoueurAchat, raisonsAchat, raisonsVente } from './achat-vente.ts';
 
 interface LigneTerritoire {
@@ -73,6 +74,7 @@ export function creerLecteurFiche(db: Base) {
     "SELECT id, expires_at AS endsAt FROM takeovers WHERE territory_id = ? AND status = 'pending'",
   );
   const joueur = creerLecteurJoueurAchat(db);
+  const evaluerOpa = creerEvaluationOpa(db);
 
   /** La fiche d'une commune vue par `moi` (ou par un visiteur), `null` si le code INSEE est inconnu. */
   return function lireFiche(insee: string, moi: number | null, maintenant: number): FicheCommune | null {
@@ -104,8 +106,9 @@ export function creerLecteurFiche(db: Base) {
     );
     const sellReasons = raisonsVente(t.ownerId, moi, t.isCapital === 1, opa !== null);
     const totalValue = valeurTerritoire(t.baseValue, investi, t.fortification);
-    // OPA : ouvertes à l'étape 4 ; d'ici là, seulement signalées comme indisponibles chez un rival.
-    const chezUnRival = t.ownerId !== null && t.ownerId !== moi;
+    // OPA : mêmes règles que le devis et le lancement (`takeovers/conditions.ts`).
+    const takeoverReasons: CodeErreur[] =
+      moi === null ? ['UNAUTHENTICATED'] : codesRefus(evaluerOpa(moi, { ...t, investi }, maintenant).refus);
 
     return {
       insee: t.insee,
@@ -162,8 +165,8 @@ export function creerLecteurFiche(db: Base) {
         canSell: sellReasons.length === 0,
         sellPrice: moi !== null && t.ownerId === moi ? prixVenteEtat(totalValue) : null,
         sellReasons,
-        canTakeover: false,
-        takeoverReasons: chezUnRival ? ['FEATURE_DISABLED'] : [],
+        canTakeover: takeoverReasons.length === 0,
+        takeoverReasons,
       },
     };
   };

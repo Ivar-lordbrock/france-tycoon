@@ -9,7 +9,7 @@
 | Authentification | Cookie de session `sid` (HttpOnly). 🔒 = connexion obligatoire, 🛡️ = rôle admin |
 | Validation | Schémas **zod** dans `shared/src/api/` : les mêmes servent au front et au back |
 | Idempotence | Les actions qui coûtent de l'argent (💰) acceptent `Idempotency-Key: <uuid>` (8 à 100 caractères : lettres, chiffres, `-`, `_`) ; rejouer la même clé renvoie le même résultat sans repayer. La clé est rangée dans `wallet_transactions.idempotency_key`, préfixée par l'action et le joueur (`wallet/idempotence.ts`) ; une clé déjà servie pour une autre commune → 400 |
-| Revenus | Toute requête 🔒 qui lit ou dépense le portefeuille **encaisse d'abord** les revenus en attente (calcul différé) et termine les chantiers finis : `GET`/`PATCH /me`, `GET /me/territories`, `GET /me/construction-queue`, `POST /me/collect`, achat, vente, bâtiments, capitale (puis OPA…). Moteur : `backend/src/modules/income/revenus.ts` |
+| Revenus | Toute requête 🔒 qui lit ou dépense le portefeuille **encaisse d'abord** les revenus en attente (calcul différé) et termine les chantiers finis : `GET`/`PATCH /me`, `GET /me/territories`, `GET /me/construction-queue`, `GET /me/notifications`, `POST /me/collect`, achat, vente, bâtiments, capitale, OPA. Avant de compter les revenus, les OPA dont les 24 h sont passées sont résolues (la commune change de main à `expires_at`, chacun touche les revenus pour son temps). Moteur : `backend/src/modules/income/revenus.ts` |
 | Pagination | `?cursor=...&limit=50` → `{ items, nextCursor }` |
 | Erreurs | `{ "error": { "code": "INSUFFICIENT_FUNDS", "message": "Il manque 1 200 ₮", "details": {...} } }` avec un statut HTTP cohérent |
 | Monnaie affichée | `₮` (« tycoon ») pour le cash, 💎 pour les gemmes |
@@ -19,7 +19,7 @@
 | Code | HTTP | Quand |
 |---|---|---|
 | `UNAUTHENTICATED` | 401 | Pas de session valide |
-| `FORBIDDEN` | 403 | Pas le propriétaire, pas admin |
+| `FORBIDDEN` | 403 | Pas le propriétaire, pas admin ; OPA sur une commune libre ou à soi |
 | `TERRITORY_NOT_FOUND` | 404 | Code INSEE inconnu (= hors France ou TAAF) |
 | `TERRITORY_NOT_FREE` | 409 | Achat d'une commune déjà possédée |
 | `TERRITORY_LIMIT_REACHED` | 409 | `max_territories` atteint (OPA en cours comprises) |
@@ -33,6 +33,7 @@
 | `TAKEOVER_ALREADY_PENDING` | 409 | OPA déjà en cours sur cette commune |
 | `TAKEOVER_LIMIT` | 409 | Trop d'OPA sortantes, ou défenseur déjà visé par 2 OPA |
 | `TAKEOVER_COOLDOWN` | 409 | Même attaquant → même défenseur, moins de 7 jours après un échec |
+| `TAKEOVER_NOT_PENDING` | 409 | Répondre à une OPA déjà terminée (défendue, acceptée, retirée, ou 24 h passées) ; `details.status` |
 | `TARGET_TOO_SMALL` | 409 | Patrimoine de la cible < 25 % du vôtre (anti-acharnement) |
 | `WORKS_IN_PROGRESS` | 409 | Démolir un bâtiment pendant son chantier (l'annuler d'abord) |
 | `NO_WORKS_IN_PROGRESS` | 409 | Annuler un chantier alors qu'il n'y en a pas |
@@ -40,7 +41,7 @@
 | `PSEUDO_TAKEN` | 409 | Pseudo déjà pris par un autre joueur (majuscules ignorées) |
 | `VALIDATION_ERROR` | 400 | Corps de requête invalide |
 | `RATE_LIMITED` | 429 | Trop de requêtes |
-| `FEATURE_DISABLED` | 404 | Boutique en V1, connexion Google pas configurée, OPA avant l'étape 4 |
+| `FEATURE_DISABLED` | 404 | Boutique en V1, connexion Google pas configurée |
 
 ## 4.2 Points d'entrée
 
@@ -64,7 +65,7 @@
 | GET | `/map/zones` | | → les 12 zones : code, nom, boîte, zoom conseillé (statique, mis en cache 1 jour) |
 | GET | `/map/territories?bbox=W,S,E,N&zoom=Z` | | → GeoJSON `FeatureCollection` des communes visibles : `insee`, `name`, `state` (`free`, `mine`, `rival`, `takeover`, `shield`), `ownerColor`, `ownerPseudo`. Contour `low` (zoom 9–10) ou `high` (≥ 11). Zoom < 9 → 400. Max 3 000 communes. En-tête `ETag` |
 | GET | `/map/search?q=...` | | → 10 communes max (FTS5) : `insee`, `name`, `department`, `zone`, centre |
-| GET | `/territories/:insee` | | → fiche : population, équipements par catégorie, V0, valeur totale, revenu/h, emplacements, propriétaire, bâtiments, bouclier, OPA en cours, et les **actions possibles** pour le joueur connecté (`canBuy`, `buyPrice`, `buyReasons[]`, `canSell`, `sellPrice`, `sellReasons[]`, `canTakeover`, `takeoverReasons[]`). Les raisons sont des codes d'erreur : achat `UNAUTHENTICATED` (pas connecté), `TERRITORY_NOT_FREE`, `TERRITORY_LIMIT_REACHED`, `INSUFFICIENT_FUNDS` ; vente `UNAUTHENTICATED`, `FORBIDDEN` (pas à moi), `CAPITAL_IMMUNE`, `TAKEOVER_ALREADY_PENDING` (`sellPrice` seulement sur ma commune) ; OPA : `FEATURE_DISABLED` jusqu'à l'étape 4. Mêmes règles que les routes d'achat et de vente (`territories/achat-vente.ts`). Code en minuscules accepté (`2a004`) |
+| GET | `/territories/:insee` | | → fiche : population, équipements par catégorie, V0, valeur totale, revenu/h, emplacements, propriétaire, bâtiments, bouclier, OPA en cours, et les **actions possibles** pour le joueur connecté (`canBuy`, `buyPrice`, `buyReasons[]`, `canSell`, `sellPrice`, `sellReasons[]`, `canTakeover`, `takeoverReasons[]`). Les raisons sont des codes d'erreur : achat `UNAUTHENTICATED` (pas connecté), `TERRITORY_NOT_FREE`, `TERRITORY_LIMIT_REACHED`, `INSUFFICIENT_FUNDS` ; vente `UNAUTHENTICATED`, `FORBIDDEN` (pas à moi), `CAPITAL_IMMUNE`, `TAKEOVER_ALREADY_PENDING` (`sellPrice` seulement sur ma commune) ; OPA : `UNAUTHENTICATED`, puis les raisons du devis ci-dessous. Mêmes règles que les routes d'achat, de vente (`territories/achat-vente.ts`) et d'OPA (`takeovers/conditions.ts`). Code en minuscules accepté (`2a004`) |
 
 ### Économie : territoires et bâtiments
 
@@ -85,13 +86,15 @@
 
 | Méthode | Route | | Corps → Réponse |
 |---|---|---|---|
-| GET | `/territories/:insee/takeover-quote` | 🔒 | → `{ territoryValue, offerAmount, defenseCost, breakFee, eligible, reasons[] }` |
-| POST | `/territories/:insee/takeovers` | 🔒💰 | → OPA créée ; `offerAmount` bloqué (débité en `takeover_escrow`) ; notification + SSE au défenseur |
-| GET | `/me/takeovers?role=attacker\|defender&status=pending` | 🔒 | → liste avec compte à rebours |
-| GET | `/takeovers/:id` | 🔒 | → détail (attaquant ou défenseur seulement). Résout l'OPA si elle a expiré |
-| POST | `/takeovers/:id/defend` | 🔒💰 | Défenseur : paie `defenseCost` → `defended`, bouclier 72 h |
-| POST | `/takeovers/:id/accept` | 🔒 | Défenseur : vend tout de suite → `accepted` |
-| POST | `/takeovers/:id/cancel` | 🔒 | Attaquant : retire l'offre → `cancelled`, l'indemnité est quand même versée au défenseur |
+| GET | `/territories/:insee/takeover-quote` | 🔒 | → `{ territoryValue, offerAmount, defenseCost, breakFee, eligible, reasons[] }` : les montants qui seraient figés maintenant (docs/05, 5.5 ; encaisse d'abord). Raisons, dans l'ordre : `FORBIDDEN` (commune libre ou à soi, seule raison dans ce cas), `CAPITAL_IMMUNE`, `SHIELD_ACTIVE`, `NEWBIE_PROTECTION` (défenseur protégé 72 h, ou compte de l'attaquant de moins de 7 jours), `TAKEOVER_ALREADY_PENDING`, `TAKEOVER_LIMIT`, `TAKEOVER_COOLDOWN`, `TARGET_TOO_SMALL`, `TERRITORY_LIMIT_REACHED`, `INSUFFICIENT_FUNDS` ; sans doublon. `TERRITORY_NOT_FOUND` si le code est inconnu |
+| POST | `/territories/:insee/takeovers` | 🔒💰 | → `{ takeover, wallet }` : OPA `pending`, 24 h pour répondre ; `offerAmount` bloqué (débité en `takeover_escrow`) ; notification `takeover_received` au défenseur (et en direct sur `/events`) ; l'attaquant perd sa protection débutant. Refus : la première raison du devis (403/409), `INSUFFICIENT_FUNDS` avec `details.missing`. Moteur : `backend/src/modules/takeovers/lancement.ts` |
+| GET | `/me/takeovers?role=attacker\|defender&status=pending` | 🔒 | → `{ takeovers }` : mes OPA (100 au plus), les plus récentes d'abord ; `role` et `status` facultatifs. Résout d'abord les OPA échues |
+| GET | `/takeovers/:id` | 🔒 | → `{ takeover }` (attaquant ou défenseur seulement, sinon `NOT_FOUND`). Résout l'OPA si ses 24 h sont passées |
+| POST | `/takeovers/:id/defend` | 🔒💰 | Défenseur : paie `defenseCost` (`takeover_defense`) et reçoit `breakFee` ; l'attaquant récupère `offerAmount − breakFee` (`takeover_refund`). → `defended`, `F += defenseCost`, bouclier 72 h. → `{ takeover, wallet }` |
+| POST | `/takeovers/:id/accept` | 🔒 | Défenseur : vend tout de suite → `accepted` ; il reçoit `offerAmount` (`takeover_payout`), la commune passe à l'attaquant avec ses bâtiments et chantiers, bouclier 48 h. Même chose sans réponse au bout de 24 h → `succeeded` |
+| POST | `/takeovers/:id/cancel` | 🔒💰 | Attaquant : retire l'offre → `cancelled` ; il récupère `offerAmount − breakFee`, l'indemnité est versée au défenseur |
+
+Réponses : `FORBIDDEN` si ce n'est pas son rôle (le défenseur défend ou accepte, l'attaquant retire), `TAKEOVER_NOT_PENDING` si l'OPA est terminée, `INSUFFICIENT_FUNDS` pour une défense trop chère. Chaque issue envoie une notification `takeover_resolved` à l'autre joueur (aux deux pour `succeeded`). Les OPA échues sont résolues par la tâche `resolve-takeovers` (chaque minute) et dès qu'on lit : encaissement, fiche de la commune, `/takeovers/:id`, `/me/takeovers`. Moteur : `backend/src/modules/takeovers/issues.ts` et `reponses.ts`
 
 ### Quêtes, tutoriel, classement
 
@@ -110,9 +113,11 @@
 
 | Méthode | Route | | Corps → Réponse |
 |---|---|---|---|
-| GET | `/me/notifications` | 🔒 | → liste paginée |
+| GET | `/me/notifications?before=<id>&limit=20` | 🔒 | → `{ notifications, nextCursor, unreadNotifications }`, les plus récents d'abord (50 au plus par page). Types (`kind`) : `building_done`, `takeover_received`, `takeover_resolved`, `inactivity_warning`, `inactivity_released` ; contenu de chacun dans `shared/src/api/notifications.ts`. `nextCursor` = `before` de la page suivante. Encaisse d'abord (les chantiers finis ont leur message) ; un type inconnu du contrat n'est pas listé. Code : `backend/src/modules/notifications/liste.ts` |
 | POST | `/me/notifications/read` | 🔒 | `{ ids[] }` (1 à 100) ou `{ all: true }` → `{ unreadNotifications }` ; seulement ses propres messages |
-| GET | `/events` | 🔒 | Flux SSE : `takeover.received`, `takeover.resolved`, `building.done`, `quest.completed`, `wallet.changed` |
+| GET | `/events` | 🔒 | Flux SSE (`event: <type>` puis `data: <JSON>`) : `takeover.received`, `takeover.resolved`, `building.done` (le message du centre de notifications), `wallet.changed` (`{ cash, gems, incomePerHour }`, après une issue d'OPA ou un rachat pour inactivité) ; `quest.completed` à l'étape 5. Pas d'événement pour l'avertissement d'inactivité. Voir ci-dessous |
+
+Le flux relit la table `notifications` : tant qu'un joueur écoute, un passage chaque seconde termine ce qui est dû pour ceux qui regardent (OPA échues, chantiers finis : à la seconde près, sans attendre une action), puis envoie les messages écrits depuis le passage d'avant, quelle que soit la route ou la tâche qui les a écrits. Rien d'une transaction annulée n'est envoyé. Un commentaire `: ping` toutes les 25 s garde la connexion ouverte ; `retry: 5000` : le navigateur se reconnecte seul au bout de 5 s. 5 onglets par joueur au plus (le plus ancien est fermé). Pas de rattrapage à la reconnexion : le front relit `/me` et `/me/notifications` à chaque ouverture du flux. Un seul serveur pour l'instant (les abonnés sont en mémoire). Code : `backend/src/modules/notifications/direct.ts` et `routes.ts`
 
 ### Boutique (V2, renvoie `FEATURE_DISABLED` tant que `FEATURE_SHOP=false`)
 
@@ -200,5 +205,8 @@ sequenceDiagram
 | Fiche commune | `/territories/:insee`, puis actions `buy`, `sell`, `takeover-quote`. Acheter et vendre passent par une confirmation avec aperçu (formules de `shared/`) ; une clé `Idempotency-Key` par confirmation (`frontend/src/panels/ActionsFiche.tsx`). Après un refus, la fiche et `/me` sont relus. Onglet « Bâtiments » (communes à soi) : `/building-types` (catalogue, 1 h), construire `POST …/buildings`, améliorer `…/upgrade`, arrêter `…/cancel`, démolir `DELETE /buildings/:id`, chacun avec confirmation et aperçu (prix, durée, revenu avant → après) ; `Idempotency-Key` sauf pour démolir (`frontend/src/panels/OngletBatiments.tsx`) |
 | Résumé au retour | `finishedWorks` de `/me` : chantiers finis pas encore vus (« Pendant ton absence » s'ils ont fini avant l'ouverture de la page) ; « Compris » → `POST /me/notifications/read` (`frontend/src/hud/ResumeRetour.tsx`) |
 | Mes territoires | `/me/territories` à l'ouverture de la liste (barre du haut) ; un clic ouvre la fiche et amène la carte sur la commune |
-| Notifications | flux SSE `/events` → toasts + invalidation des requêtes concernées |
+| OPA (fiche commune) | Commune d'un rival : bouton « Lancer une OPA » (aperçu `montantsOpa`), puis `takeover-quote` à l'ouverture de la confirmation (montants figés par le serveur) et `POST …/takeovers` ; sinon, la raison en clair (`opa-texte.ts`). OPA en cours : compte à rebours et `GET /takeovers/:id` ; défenseur : « Défendre » (`defend`, bloqué si le cash manque) ou « Accepter » (`accept`) ; attaquant : « Retirer mon offre » (`cancel`). Chaque réponse passe par une confirmation, avec `Idempotency-Key` sauf pour accepter. Après coup, `/me`, la fiche et la carte sont relus (`frontend/src/panels/ActionsOpa.tsx`) |
+| Mes OPA | `/me/takeovers?status=pending` toutes les 60 s, sous la barre du haut : OPA reçues d'abord (orange), puis lancées, avec le temps restant ; un clic ouvre la fiche (`frontend/src/hud/MesOpa.tsx`). Légende des couleurs de la carte (rival, OPA en cours, bouclier) en bas à gauche (`frontend/src/hud/Legende.tsx`) |
+| Notifications | Flux SSE `/events` ouvert tant que le joueur est connecté (`frontend/src/api/direct.ts`) : `wallet.changed` pose le solde, les autres relisent `/me` (mes OPA, centre de notifications compris), la fiche de la commune et la carte. Petits messages (toasts) : OPA reçue (« Réagir »), OPA terminée par l'autre joueur ou sans réponse ; rien pour ses propres actions ni pour un chantier fini (le résumé s'en charge). À chaque reconnexion, `/me`, les fiches et la carte sont relus ; après une réponse d'erreur (502, 401), le front rouvre le flux au bout de 10 s. Centre de notifications : volet « Messages » de la barre du haut, pastille = `unreadNotifications`, `/me/notifications` page par page ; un clic marque le message lu et ouvre la commune, « Tout marquer comme lu » → `{ all: true }` (`frontend/src/hud/CentreMessages.tsx`) |
+| Erreurs | Une action refusée s'affiche à côté de son bouton. Une relecture en arrière-plan qui échoue (l'écran garde l'ancienne valeur) ou un échec du centre de notifications s'affiche en petit message rouge (`QueryCache` dans `frontend/src/main.tsx`, `frontend/src/hud/Toasts.tsx`) |
 | Tutoriel | `/tutorial` au démarrage ; driver.js met en avant `[data-tuto="<ui_anchor>"]` |

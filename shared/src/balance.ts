@@ -3,7 +3,7 @@
 // Étape 1 : section 5.1 (valeur d'une commune), utilisée par scripts/import/communes.
 // Étape 2 : capital de départ, protection débutant, revenu du sol (5.3), valeur d'un territoire (5.4).
 // Étape 3 : bâtiments (5.2), revenus et calcul hors ligne (5.3), vente, limites de territoires (5.4).
-// Les OPA (5.5) et l'inactivité (5.6) arrivent à l'étape 4.
+// Étape 4 : OPA (5.5), patrimoine (5.4) et inactivité (5.6).
 
 /** À incrémenter quand une formule change : `territories.balance_version` dit quelles valeurs sont à recalculer. */
 export const BALANCE_VERSION = 1;
@@ -332,4 +332,95 @@ export function bonusTerritoiresRang(rang: number): number {
 /** max_territories = min( 12 ; 4 + niveau du siège + bonus de rang + emplacement acheté ). */
 export function maxTerritoires(niveauSiege: number, rang: number, emplacementAchete: number): number {
   return Math.min(TERRITOIRES_MAX, TERRITOIRES_DEPART + niveauSiege + bonusTerritoiresRang(rang) + emplacementAchete);
+}
+
+// --- Étape 4 : patrimoine (5.4) ---
+
+/** NW = cash + Σ V_T + séquestres d'OPA en cours (les gemmes ne comptent pas). */
+export function patrimoine(cash: number, valeursTerritoires: readonly number[], sequestres: readonly number[]): number {
+  const somme = (valeurs: readonly number[]) => valeurs.reduce((total, v) => total + v, 0);
+  return cash + somme(valeursTerritoires) + somme(sequestres);
+}
+
+// --- Étape 4 : OPA (5.5) ---
+// Les taux sont en % entiers : le calcul se fait en entiers, sans nombre à virgule.
+
+/** `x × pct %`, arrondi à la centaine supérieure. */
+const plafond100Pct = (x: number, pct: number) => Math.ceil((x * pct) / 10_000) * 100;
+
+/** Offre de l'attaquant, en % de V_T : bloquée chez lui (séquestre) pendant l'OPA. */
+export const TAUX_OFFRE_OPA_PCT = 150;
+/** Coût de la défense, en % de V_T : payé par le défenseur pour garder sa commune. */
+export const TAUX_DEFENSE_OPA_PCT = 35;
+/** Indemnité d'échec, en % de l'offre : versée au défenseur si l'OPA est défendue ou retirée. */
+export const TAUX_INDEMNITE_OPA_PCT = 5;
+
+/** Les trois montants d'une OPA, figés au lancement. */
+export interface MontantsOpa {
+  offre: number;
+  defense: number;
+  indemnite: number;
+}
+
+/** P_OPA = plafond_100( 1,5 × V_T ) ; D = plafond_100( 0,35 × V_T ) ; i = plafond_100( 5 % × P_OPA ). */
+export function montantsOpa(valeurTerritoire: number): MontantsOpa {
+  const offre = plafond100Pct(valeurTerritoire, TAUX_OFFRE_OPA_PCT);
+  return {
+    offre,
+    defense: plafond100Pct(valeurTerritoire, TAUX_DEFENSE_OPA_PCT),
+    indemnite: plafond100Pct(offre, TAUX_INDEMNITE_OPA_PCT),
+  };
+}
+
+/** Le défenseur a 24 h pour réagir ; sans réponse, l'OPA réussit. */
+export const DELAI_REPONSE_OPA_S = 24 * 3_600;
+
+/** Bouclier posé sur la commune après une défense réussie. */
+export const BOUCLIER_DEFENSE_S = 72 * 3_600;
+
+/** Bouclier posé sur la commune prise par une OPA (acceptée ou expirée). */
+export const BOUCLIER_OPA_REUSSIE_S = 48 * 3_600;
+
+/** Ancienneté du compte pour lancer une OPA (contre les faux comptes ; gardée à 7 jours au début de l'étape 4). */
+export const ANCIENNETE_ATTAQUANT_S = 7 * 24 * 3_600;
+
+/** Rang à partir duquel on peut mener 2 OPA en même temps (Magnat). */
+export const RANG_DEUX_OPA = 3;
+
+/** OPA qu'un joueur peut mener en même temps : 1, ou 2 à partir du rang Magnat. */
+export function opaSortantesMax(rang: number): number {
+  return rang >= RANG_DEUX_OPA ? 2 : 1;
+}
+
+/** Un défenseur ne subit pas plus de 2 OPA en même temps. */
+export const OPA_RECUES_MAX = 2;
+
+/** Même attaquant → même défenseur : 7 jours d'attente après un échec (OPA défendue ou retirée). */
+export const DELAI_APRES_ECHEC_OPA_S = 7 * 24 * 3_600;
+
+/** Anti-acharnement : on ne vise pas un joueur dont le patrimoine est sous 25 % du sien. */
+export const PATRIMOINE_CIBLE_MIN_PCT = 25;
+
+/** Vrai si la cible est trop petite pour l'attaquant : NW_cible < 25 % × NW_attaquant. */
+export function cibleTropPetite(patrimoineCible: number, patrimoineAttaquant: number): boolean {
+  return patrimoineCible * 100 < patrimoineAttaquant * PATRIMOINE_CIBLE_MIN_PCT;
+}
+
+// --- Étape 4 : inactivité (5.6) ---
+
+/** Activité = toute requête connectée ; `last_active_at` est mis à jour au plus toutes les 5 min. */
+export const ACTIVITE_MAJ_S = 5 * 60;
+
+/** J+11 sans activité : message « tes territoires seront libérés dans 3 jours ». */
+export const AVERTISSEMENT_INACTIVITE_S = 11 * 24 * 3_600;
+
+/** J+14 sans activité : les territoires sont rachetés par l'État et redeviennent libres. */
+export const LIBERATION_INACTIVITE_S = 14 * 24 * 3_600;
+
+/** Part de V0 + B versée au joueur inactif quand l'État rachète un territoire. */
+export const TAUX_RACHAT_INACTIVITE_PCT = 50;
+
+/** Rachat pour inactivité : arrondi_100_inférieur( 50 % × (V0 + B) ) ; les fortifications ne comptent pas. */
+export function rachatInactivite(v0: number, investi: number): number {
+  return Math.floor(((v0 + investi) * TAUX_RACHAT_INACTIVITE_PCT) / 10_000) * 100;
 }

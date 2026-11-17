@@ -41,7 +41,7 @@ export function proprietaire(fiche: Pick<FicheCommune, 'state' | 'owner' | 'shie
     case 'free':
       return 'Libre';
     case 'mine':
-      return 'À toi';
+      return fiche.shieldUntil ? `À toi, sous bouclier jusqu’à ${heure(fiche.shieldUntil)}` : 'À toi';
     case 'rival':
       return `À ${pseudo}`;
     case 'shield':
