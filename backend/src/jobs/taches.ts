@@ -1,5 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { Base } from '../db/connexion.ts';
+import { creerInactivite } from '../modules/inactivity/inactivite.ts';
 import { creerEncaisseurSimple } from '../modules/income/revenus.ts';
 import { creerIssuesOpa } from '../modules/takeovers/issues.ts';
 
@@ -19,8 +20,12 @@ export interface Tache {
 
 export function creerTaches(db: Base): Tache[] {
   const { resoudreEchues } = creerIssuesOpa(db, creerEncaisseurSimple(db));
+  const { avertir, libererAbsents } = creerInactivite(db);
   return [
     { nom: 'resolve-takeovers', toutesLes: 60, executer: (maintenant) => ({ resolved: resoudreEchues(maintenant) }) },
+    // Toutes les heures plutôt qu'à heure fixe : chaque passage ne traite que ceux qui ont passé le cap.
+    { nom: 'warn-inactive', toutesLes: 3_600, executer: (maintenant) => ({ warned: avertir(maintenant) }) },
+    { nom: 'release-inactive', toutesLes: 3_600, executer: (maintenant) => ({ released: libererAbsents(maintenant) }) },
   ];
 }
 

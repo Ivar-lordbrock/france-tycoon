@@ -60,7 +60,12 @@ export function lireSession(
           id,
         );
       }
-      if (actif) db.prepare('UPDATE users SET last_active_at = ? WHERE id = ?').run(maintenant, ligne.userId);
+      // Un joueur libéré pour inactivité (`dormant`) qui revient redevient actif, avec son cash (5.6).
+      if (actif) {
+        db.prepare(
+          "UPDATE users SET last_active_at = ?, status = iif(status = 'dormant', 'active', status) WHERE id = ?",
+        ).run(maintenant, ligne.userId);
+      }
     }).immediate();
   }
   return { userId: ligne.userId, prolongee };

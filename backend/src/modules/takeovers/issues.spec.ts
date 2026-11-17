@@ -170,6 +170,12 @@ describe('accepter (POST /takeovers/:id/accept)', () => {
       shieldUntil: maintenant() + BOUCLIER_OPA_REUSSIE_S,
     });
     expect(messages(alice.id).map((m) => m.status)).toEqual(['accepted']);
+    const historique = db
+      .prepare(
+        'SELECT reason, from_user_id AS de, to_user_id AS vers, price, takeover_id AS opa FROM territory_ownership_history',
+      )
+      .all();
+    expect(historique).toEqual([{ reason: 'takeover', de: bruno.id, vers: alice.id, price: 39_400, opa: opa.id }]);
     expect(messages(bruno.id)).toEqual([]);
 
     const fiche = ficheCommuneSchema.parse((await requete('GET', '/territories/01001', alice.cookie)).json());
