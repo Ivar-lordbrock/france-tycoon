@@ -73,7 +73,7 @@
 | GET | `/me/territories` | 🔒 | → mes territoires avec valeur, revenu/h, chantiers |
 | POST | `/territories/:insee/buy` | 🔒💰 | → territoire + portefeuille. Prix = V0. Bouclier 12 h |
 | POST | `/territories/:insee/sell` | 🔒💰 | → 70 % de la valeur totale (vente à l'État). Interdit sur la capitale ou pendant une OPA |
-| GET | `/building-types` | | → catalogue (mis en cache) |
+| GET | `/building-types` | | → `{ buildingTypes }` : les types actifs (`typeBatimentSchema`), siège social en dernier. Public, cache 1 h. Une entrée se passe telle quelle à `coutNiveau`, `revenuNiveau`, `dureeChantier` (balance.ts) pour les aperçus |
 | POST | `/territories/:insee/buildings` | 🔒💰 | `{ typeCode }` → bâtiment en chantier (niveau 0 → 1) |
 | POST | `/buildings/:id/upgrade` | 🔒💰 | → chantier niveau L → L+1 |
 | POST | `/buildings/:id/cancel` | 🔒💰 | → annule le chantier en cours, **rembourse tout son coût** ; le bâtiment reste à son niveau (une 1re construction annulée supprime le bâtiment) |

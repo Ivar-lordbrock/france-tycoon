@@ -1,4 +1,11 @@
-import { CAPITAL_DEPART, PROTECTION_DEBUTANT_S, PSEUDO_MAX, PSEUDO_MIN } from '@france-tycoon/shared';
+import {
+  CAPITAL_DEPART,
+  FILES_CONSTRUCTION_DEPART,
+  PROTECTION_DEBUTANT_S,
+  PSEUDO_MAX,
+  PSEUDO_MIN,
+  TERRITOIRES_DEPART,
+} from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
 import { ErreurMetier } from '../../erreurs.ts';
 import { wallet } from '../wallet/wallet.ts';
@@ -45,8 +52,9 @@ export function connecterJoueur(
     const userId = db
       .prepare<unknown[], number>(`
         INSERT INTO users (google_id, email, pseudo, avatar_url, newbie_shield_until,
+          max_territories, build_queue_slots,
           income_collected_at, last_active_at, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         RETURNING id`)
       .pluck()
       .get(
@@ -55,6 +63,9 @@ export function connecterJoueur(
         pseudo,
         identite.avatarUrl ?? null,
         maintenant + PROTECTION_DEBUTANT_S,
+        // Les valeurs par défaut de la table (001) datent d'avant l'étape 3 : balance.ts décide.
+        TERRITOIRES_DEPART,
+        FILES_CONSTRUCTION_DEPART,
         maintenant,
         maintenant,
         maintenant,

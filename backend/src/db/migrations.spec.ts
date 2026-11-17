@@ -19,20 +19,33 @@ afterEach(() => {
 });
 
 describe('exécuteur de migrations', () => {
-  it('applique 001 et 002 du dépôt et les note dans schema_migrations', () => {
+  it('applique les migrations du dépôt et les note dans schema_migrations', () => {
     const db = ouvrirBase(':memory:');
     expect(versionDuSchema(db)).toBeNull();
 
     const { appliquees } = appliquerMigrations(db);
 
-    expect(appliquees).toEqual(['001_initial.sql', '002_seed.sql']);
-    expect(versionDuSchema(db)).toBe('002');
-    expect(db.prepare('SELECT count(*) FROM building_types').pluck().get()).toBe(6);
+    expect(appliquees).toEqual(['001_initial.sql', '002_seed.sql', '003_economie_etape3.sql']);
+    expect(versionDuSchema(db)).toBe('003');
+    expect(db.prepare('SELECT count(*) FROM building_types').pluck().get()).toBe(7);
     const traces = db.prepare('SELECT version, name, length(checksum) AS l FROM schema_migrations').all();
     expect(traces).toEqual([
       { version: '001', name: '001_initial.sql', l: 64 },
       { version: '002', name: '002_seed.sql', l: 64 },
+      { version: '003', name: '003_economie_etape3.sql', l: 64 },
     ]);
+  });
+
+  it('003 donne un territoire de plus aux joueurs déjà inscrits (4 au départ)', () => {
+    const [m001, m002] = lireMigrations();
+    if (!m001 || !m002) throw new Error('migrations 001 et 002 introuvables');
+    const avant003 = dossierMigrations({ [m001.name]: m001.sql, [m002.name]: m002.sql });
+    const db = ouvrirBase(':memory:');
+    appliquerMigrations(db, avant003);
+    db.exec("INSERT INTO users (google_id, email, pseudo) VALUES ('g1', 'a@exemple.fr', 'Alice')");
+
+    expect(appliquerMigrations(db).appliquees).toEqual(['003_economie_etape3.sql']);
+    expect(db.prepare('SELECT max_territories FROM users').pluck().get()).toBe(4);
   });
 
   it('ne rejoue rien au deuxième lancement', () => {

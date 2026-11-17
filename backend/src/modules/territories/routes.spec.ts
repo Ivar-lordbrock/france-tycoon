@@ -87,8 +87,10 @@ describe('GET /api/v1/territories/:insee', () => {
   it('limite de territoires atteinte : TERRITORY_LIMIT_REACHED', async () => {
     const db = baseAvecCommunes();
     const app = appDeTest(db);
+    insererCommunes(db, [{ insee: '42218', nom: 'Saint-Étienne', population: 173_000, valeur: 900_000 }]);
     const { cookie, id } = await connecter(app, 'Alice');
-    db.prepare("UPDATE territories SET owner_id = ? WHERE insee_code IN ('75056', '97209', '98735')").run(id);
+    // 4 territoires au départ (TERRITOIRES_DEPART) : la limite est atteinte au 4e.
+    db.prepare("UPDATE territories SET owner_id = ? WHERE insee_code IN ('75056', '97209', '98735', '42218')").run(id);
 
     const corps = ficheCommuneSchema.parse((await fiche(app, '01001', cookie)).json());
 

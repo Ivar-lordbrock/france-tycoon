@@ -171,7 +171,7 @@ describe('session, GET /me et POST /auth/logout', () => {
       user: { pseudo: 'Alice', markerColor: '#2563eb', avatarUrl: null },
       wallet: { cash: 30_000, gems: 0 },
       incomePerHour: 0,
-      territories: { owned: 0, max: 3 },
+      territories: { owned: 0, max: 4 },
       buildQueueSlots: 1,
       unreadNotifications: 0,
     });

@@ -84,6 +84,6 @@ describe('GET /api/v1/me : revenu et territoires', () => {
 
     const reponse = await app.inject({ method: 'GET', url: '/api/v1/me', headers: { cookie } });
 
-    expect(reponse.json()).toMatchObject({ incomePerHour: 218 + 936, territories: { owned: 2, max: 3 } });
+    expect(reponse.json()).toMatchObject({ incomePerHour: 218 + 936, territories: { owned: 2, max: 4 } });
   });
 });
