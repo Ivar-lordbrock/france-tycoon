@@ -1,6 +1,7 @@
 import { Compte } from './compte/Compte.tsx';
 import { BarreEtat } from './hud/BarreEtat.tsx';
 import { Legende } from './hud/Legende.tsx';
+import { Toasts } from './hud/Toasts.tsx';
 import { CarteFrance } from './map/CarteFrance.tsx';
 import { FicheCommune } from './panels/FicheCommune.tsx';
 import { Recherche } from './panels/Recherche.tsx';
@@ -40,6 +41,8 @@ export function App() {
           <SelecteurZones />
         </div>
       </div>
+
+      <Toasts />
     </div>
   );
 }

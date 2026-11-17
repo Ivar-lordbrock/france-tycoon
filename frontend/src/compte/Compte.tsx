@@ -2,6 +2,8 @@ import { type MoiReponse, PSEUDO_MAX, pseudoSchema } from '@france-tycoon/shared
 import { type FormEvent, useId, useState } from 'react';
 import { useCashEnDirect } from '../api/batiments.ts';
 import { useConfigConnexion, useConnexion, useDeconnexion, useModifierProfil, useMoi } from '../api/compte.ts';
+import { useFluxDirect } from '../api/direct.ts';
+import { CentreMessages } from '../hud/CentreMessages.tsx';
 import { ChantierEnCours } from '../hud/ChantierEnCours.tsx';
 import { MesOpa } from '../hud/MesOpa.tsx';
 import { ResumeRetour } from '../hud/ResumeRetour.tsx';
@@ -19,11 +21,19 @@ export function Compte() {
   if (!moi) return <Connexion />;
   return (
     <>
+      {/* Une clé par joueur : changer de compte rouvre le flux avec la bonne session. */}
+      <FluxDirect key={moi.user.id} />
       <BarreJoueur moi={moi} />
       <MesOpa />
       <ResumeRetour moi={moi} />
     </>
   );
+}
+
+/** Le flux en direct (OPA, chantiers, solde), tant que le joueur est connecté. */
+function FluxDirect() {
+  useFluxDirect();
+  return null;
 }
 
 function Connexion() {
@@ -102,11 +112,14 @@ function Avatar({ moi }: { moi: MoiReponse }) {
   );
 }
 
+type Volet = 'profil' | 'messages' | 'territoires';
+
 /** Barre du haut : qui je suis, mon cash (qui monte tout seul), mes gemmes, mon revenu, mon chantier, mes territoires. */
 function BarreJoueur({ moi }: { moi: MoiReponse }) {
-  const [ouvert, setOuvert] = useState<'profil' | 'territoires' | null>(null);
+  const [ouvert, setOuvert] = useState<Volet | null>(null);
   const id = useId();
-  const basculer = (volet: 'profil' | 'territoires') => setOuvert((o) => (o === volet ? null : volet));
+  const basculer = (volet: Volet) => setOuvert((o) => (o === volet ? null : volet));
+  const nonLus = moi.unreadNotifications;
   // Entre deux lectures de /me, le cash monte de revenu/h ÷ 3 600 chaque seconde (docs/04 § 4.4).
   const cash = useCashEnDirect() ?? moi.wallet.cash;
 
@@ -151,6 +164,27 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
       <ChantierEnCours possede={moi.territories.owned} />
       <button
         type="button"
+        onClick={() => basculer('messages')}
+        aria-expanded={ouvert === 'messages'}
+        aria-controls={`${id}-messages`}
+        className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
+      >
+        Messages
+        <span className="flex items-center gap-1.5 font-normal text-ardoise">
+          {nonLus > 0 && (
+            <span className="rounded-full bg-orange-500 px-1.5 text-xs font-bold text-white tabular-nums">
+              {nonLus > 99 ? '99+' : nonLus}
+              <span className="sr-only"> non lu{nonLus > 1 ? 's' : ''}</span>
+            </span>
+          )}
+          <Chevron ouvert={ouvert === 'messages'} />
+        </span>
+      </button>
+      {ouvert === 'messages' && (
+        <CentreMessages id={`${id}-messages`} nonLus={nonLus} onChoisi={() => setOuvert(null)} />
+      )}
+      <button
+        type="button"
         onClick={() => basculer('territoires')}
         aria-expanded={ouvert === 'territoires'}
         aria-controls={`${id}-territoires`}
@@ -159,19 +193,25 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
         Mes territoires
         <span className="flex items-center gap-1.5 font-normal text-ardoise tabular-nums">
           {moi.territories.owned} / {moi.territories.max}
-          <svg
-            viewBox="0 0 20 20"
-            className={`size-4 stroke-current stroke-2 transition-transform motion-reduce:transition-none ${ouvert === 'territoires' ? 'rotate-180' : ''}`}
-            fill="none"
-            aria-hidden="true"
-          >
-            <path d="m5 8 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <Chevron ouvert={ouvert === 'territoires'} />
         </span>
       </button>
       {ouvert === 'territoires' && <MesTerritoires id={`${id}-territoires`} onChoisi={() => setOuvert(null)} />}
       {ouvert === 'profil' && <Profil id={`${id}-profil`} moi={moi} />}
     </section>
+  );
+}
+
+function Chevron({ ouvert }: { ouvert: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      className={`size-4 stroke-current stroke-2 transition-transform motion-reduce:transition-none ${ouvert ? 'rotate-180' : ''}`}
+      fill="none"
+      aria-hidden="true"
+    >
+      <path d="m5 8 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
