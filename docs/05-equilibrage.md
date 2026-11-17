@@ -1,6 +1,6 @@
 # 5. Formules d'équilibrage
 
-Toutes les constantes ci-dessous vivent dans **un seul fichier**, `shared/src/balance.ts` (5.1 depuis l'étape 1 ; capital de départ, protection débutant, revenu du sol et valeur d'un territoire depuis l'étape 2 ; le reste à l'étape 3), importé par le serveur (qui fait foi), par le front (aperçus) et par le script d'import (valeurs des communes). Les paramètres propres à chaque bâtiment sont dans la table `building_types` ([002_seed.sql](../backend/src/db/migrations/002_seed.sql), valeurs remplacées par [003_economie_etape3.sql](../backend/src/db/migrations/003_economie_etape3.sql)).
+Toutes les constantes ci-dessous vivent dans **un seul fichier**, `shared/src/balance.ts` (5.1 depuis l'étape 1 ; capital de départ, protection débutant, revenu du sol et valeur d'un territoire depuis l'étape 2 ; bâtiments, revenus et limites à l'étape 3 ; OPA, patrimoine et inactivité à l'étape 4), importé par le serveur (qui fait foi), par le front (aperçus) et par le script d'import (valeurs des communes). Les paramètres propres à chaque bâtiment sont dans la table `building_types` ([002_seed.sql](../backend/src/db/migrations/002_seed.sql), valeurs remplacées par [003_economie_etape3.sql](../backend/src/db/migrations/003_economie_etape3.sql)).
 
 Notations : `P` population, `I` score d'infrastructures, `L` niveau, `arrondi_N` arrondi à N près, `plafond_N` arrondi au-dessus à N près, `⌊x⌋` partie entière.
 
@@ -119,7 +119,7 @@ Le **reste** évite de perdre les fractions : un joueur qui gagne 50 ₮/h et ag
 ## 5.4 Valeur, patrimoine, limites
 
 - **Valeur d'un territoire** : `V_T = V0 + B + F` (`valeurTerritoire`) — `B` = somme des `invested_cash` de ses bâtiments, `F` = fortifications (défenses d'OPA)
-- **Patrimoine** (classement) : `NW = cash + Σ V_T + séquestres d'OPA en cours` (les gemmes ne comptent pas)
+- **Patrimoine** (classement, anti-acharnement des OPA) : `NW = cash + Σ V_T + séquestres d'OPA en cours` (`patrimoine` ; les gemmes ne comptent pas)
 - **Achat** d'une commune libre : `V0`
 - **Vente à l'État** : `arrondi_100_inférieur( 70 % × V_T )` ; ses bâtiments sont **détruits** (chantier en cours compris) et la commune redevient libre au prix `V0` (même règle que l'inactivité, 5.6)
 - **Limite de territoires** : `max_territories = min( 12 ; 4 + niveau du siège + bonus de rang + emplacement acheté )` ; une OPA sortante en cours compte comme un territoire réservé. On démarre avec **4 territoires** (au lieu de 3, depuis que le siège s'arrête au niveau 5) : 4 + 5 + 2 + 1 = 12, le maximum reste atteignable
@@ -152,21 +152,23 @@ Le **reste** évite de perdre les fractions : un joueur qui gagne 50 ₮/h et ag
 | **Retirée** par l'attaquant | récupère `P_OPA − i` | reçoit `i` | rien ne change |
 | *Annulée par le système* (défenseur libéré pour inactivité, compte banni) | récupère tout | — | — |
 
+Formule : `montantsOpa` (balance.ts) ; les taux y sont en % entiers (150, 35, 5) : le calcul se fait en entiers, sans nombre à virgule.
+
 En patrimoine, une OPA réussie coûte `0,5 × V_T` à l'attaquant et rapporte `0,5 × V_T` au défenseur : on paie une **prime** pour prendre une place rare (la limite de territoires rend chaque commune précieuse). Pour l'attaquant, l'intérêt est le revenu et le prestige de la commune ; pour le défenseur, garder une commune bien construite coûte de la trésorerie.
 
 ### Conditions pour lancer une OPA (sinon code d'erreur, voir [04-api.md](04-api.md))
 
 - Le territoire a un propriétaire, qui n'est pas l'attaquant, et ce n'est **pas sa capitale**.
 - Pas de **bouclier** actif (72 h après une défense, 48 h après une OPA réussie, 12 h après un achat).
-- Le défenseur n'est plus en **protection débutant** (72 h) ; l'attaquant a un compte de **7 jours** minimum (anti-multi-comptes) et perd sa propre protection débutant s'il attaque.
-- **Anti-acharnement** : 1 OPA sortante à la fois (2 au rang Magnat) ; un défenseur ne peut pas subir plus de 2 OPA en même temps ; même attaquant → même défenseur : 7 jours d'attente après un échec ; impossible de viser un joueur dont le patrimoine est **inférieur à 25 %** du sien.
+- Le défenseur n'est plus en **protection débutant** (72 h) ; l'attaquant a un compte de **7 jours** minimum (anti-multi-comptes, `ANCIENNETE_ATTAQUANT_S` ; gardé à 7 jours au début de l'étape 4) et perd sa propre protection débutant s'il attaque.
+- **Anti-acharnement** : 1 OPA sortante à la fois (2 au rang Magnat) ; un défenseur ne peut pas subir plus de 2 OPA en même temps ; même attaquant → même défenseur : 7 jours d'attente après un échec (OPA **défendue ou retirée**) ; impossible de viser un joueur dont le patrimoine est **inférieur à 25 %** du sien (`cibleTropPetite`).
 - L'attaquant a une place libre (territoires + OPA en cours < `max_territories`) et le cash pour `P_OPA`.
 
 ## 5.6 Inactivité
 
 - Activité = toute requête connectée (`last_active_at` mis à jour au plus toutes les 5 min).
 - J+11 sans activité : notification « tes territoires seront libérés dans 3 jours ».
-- **J+14** : chaque territoire est racheté par l'État pour `arrondi_100_inférieur( 50 % × (V0 + B) )` (crédité au joueur, `inactivity_buyback`), ses bâtiments sont détruits, les OPA qui le visent sont annulées et remboursées, il redevient **libre au prix V0**. Le joueur passe `dormant` ; s'il revient, il garde son cash et repart.
+- **J+14** : chaque territoire est racheté par l'État pour `arrondi_100_inférieur( 50 % × (V0 + B) )` (`rachatInactivite` ; les fortifications ne comptent pas) (crédité au joueur, `inactivity_buyback`), ses bâtiments sont détruits, les OPA qui le visent sont annulées et remboursées, il redevient **libre au prix V0**. Le joueur passe `dormant` ; s'il revient, il garde son cash et repart.
 
 ## 5.7 Quêtes et tutoriel
 

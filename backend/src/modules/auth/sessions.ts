@@ -1,12 +1,11 @@
 import { createHash, randomBytes } from 'node:crypto';
+import { ACTIVITE_MAJ_S } from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
 
 /** Une session dure 30 jours et se prolonge quand on joue (docs/02, 2.7). */
 export const DUREE_SESSION_S = 30 * 86_400;
 /** On ne réécrit la date d'expiration qu'une fois par jour au plus. */
 const PROLONGER_APRES_S = 86_400;
-/** `users.last_active_at` est mis à jour toutes les 5 minutes au plus (5.6). */
-const ACTIVITE_APRES_S = 300;
 
 export const NOM_COOKIE = 'sid';
 
@@ -51,7 +50,7 @@ export function lireSession(
   if (!ligne) return null;
 
   const prolongee = ligne.expiresAt - maintenant < DUREE_SESSION_S - PROLONGER_APRES_S;
-  const actif = maintenant - ligne.lastActiveAt >= ACTIVITE_APRES_S;
+  const actif = maintenant - ligne.lastActiveAt >= ACTIVITE_MAJ_S;
   if (prolongee || actif) {
     db.transaction(() => {
       if (prolongee) {

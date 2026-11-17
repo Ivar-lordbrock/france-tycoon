@@ -4,6 +4,7 @@ export * from './api/carte.ts';
 export * from './api/economie.ts';
 export * from './api/erreurs.ts';
 export * from './api/notifications.ts';
+export * from './api/opa.ts';
 export * from './api/territoires.ts';
 export * from './balance.ts';
 export * from './zones.ts';

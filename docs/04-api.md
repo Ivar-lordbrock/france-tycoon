@@ -110,9 +110,9 @@
 
 | Méthode | Route | | Corps → Réponse |
 |---|---|---|---|
-| GET | `/me/notifications` | 🔒 | → liste paginée |
+| GET | `/me/notifications?before=<id>&limit=20` | 🔒 | → `{ notifications, nextCursor, unreadNotifications }`, les plus récents d'abord (50 au plus par page). Types (`kind`) : `building_done`, `takeover_received`, `takeover_resolved`, `inactivity_warning`, `inactivity_released` ; contenu de chacun dans `shared/src/api/notifications.ts` |
 | POST | `/me/notifications/read` | 🔒 | `{ ids[] }` (1 à 100) ou `{ all: true }` → `{ unreadNotifications }` ; seulement ses propres messages |
-| GET | `/events` | 🔒 | Flux SSE : `takeover.received`, `takeover.resolved`, `building.done`, `quest.completed`, `wallet.changed` |
+| GET | `/events` | 🔒 | Flux SSE (`event: <type>` puis `data: <JSON>`) : `takeover.received`, `takeover.resolved`, `building.done` (le message du centre de notifications), `wallet.changed` (`{ cash, gems, incomePerHour }`) ; `quest.completed` à l'étape 5 |
 
 ### Boutique (V2, renvoie `FEATURE_DISABLED` tant que `FEATURE_SHOP=false`)
 

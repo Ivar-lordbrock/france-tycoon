@@ -27,6 +27,16 @@ Déjà prévu par la doc, inchangé : pas d'accélération payante en V1, revenu
 
 Restent des idées pour plus tard : port, aéroport et musée comme bâtiments ; notifications du navigateur quand un chantier finit ; bâtiments visibles sur la carte.
 
+### Étape 4 — OPA et inactivité (17/11/2026)
+
+Pas d'idée nouvelle dans ce fichier pour l'étape 4 : on garde les règles déjà écrites dans [05-equilibrage.md](05-equilibrage.md#55-opa-rachat-hostile) (5.5 et 5.6).
+
+| Sujet | Décision |
+|---|---|
+| Ancienneté pour lancer une OPA | **7 jours**, comme prévu (3 jours proposés pour que les testeurs puissent attaquer plus tôt : refusé) |
+| « Échec » qui bloque 7 jours le même attaquant contre le même défenseur | OPA **défendue ou retirée** (pas une OPA annulée par le système) |
+| Rachat pour inactivité | 50 % de `V0 + B`, sans les fortifications |
+
 ## Bâtiments : 5 niveaux, chantiers longs et de plus en plus chers
 
 *Notée le 16/11/2026. **Adoptée le 17/11/2026** (voir « Décisions prises » ci-dessus).*
