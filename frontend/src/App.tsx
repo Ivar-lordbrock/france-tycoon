@@ -1,5 +1,7 @@
+import { Compte } from './compte/Compte.tsx';
 import { BarreEtat } from './hud/BarreEtat.tsx';
 import { CarteFrance } from './map/CarteFrance.tsx';
+import { FicheCommune } from './panels/FicheCommune.tsx';
 import { Recherche } from './panels/Recherche.tsx';
 import { SelecteurZones } from './panels/SelecteurZones.tsx';
 
@@ -20,6 +22,12 @@ export function App() {
         <div className="max-md:hidden">
           <SelecteurZones />
         </div>
+      </div>
+
+      {/* À droite sur grand écran ; sous la recherche sur téléphone. */}
+      <div className="pointer-events-none absolute inset-x-4 top-[6.75rem] z-[1000] flex max-h-[calc(100dvh-10rem)] flex-col gap-3 md:top-4 md:left-auto md:w-80">
+        <Compte />
+        <FicheCommune />
       </div>
 
       <div className="pointer-events-none absolute inset-x-4 bottom-7 z-[1000] flex flex-col items-start gap-2">

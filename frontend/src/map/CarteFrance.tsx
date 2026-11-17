@@ -72,7 +72,7 @@ export function CarteFrance() {
       maxZoom={18}
     >
       <TileLayer url={URL_TUILES} attribution={ATTRIBUTION_TUILES} maxZoom={19} />
-      <ZoomControl position="topright" zoomInTitle="Zoomer" zoomOutTitle="Dézoomer" />
+      <ZoomControl position="bottomright" zoomInTitle="Zoomer" zoomOutTitle="Dézoomer" />
       <SuiviCarte />
       <Pane name="masque" style={{ zIndex: 350 }}>
         <Masque />
