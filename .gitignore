@@ -56,3 +56,6 @@ desktop.ini
 
 # --- Claude Code : réglages perso (les skills du projet, eux, sont partagés) ---
 .claude/settings.local.json
+
+# --- Carte graphify (locale, refaite sur chaque poste) ---
+graphify-out/
