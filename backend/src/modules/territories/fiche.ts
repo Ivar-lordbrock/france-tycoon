@@ -5,11 +5,13 @@ import {
   type EtatTerritoire,
   equipementsRetenus,
   type FicheCommune,
+  prixVenteEtat,
   revenuSol,
   valeurTerritoire,
   type ZoneCode,
 } from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
+import { creerLecteurJoueurAchat, raisonsAchat, raisonsVente } from './achat-vente.ts';
 
 interface LigneTerritoire {
   id: number;
@@ -67,11 +69,7 @@ export function creerLecteurFiche(db: Base) {
   const opaEnCours = db.prepare<[number], { id: number; endsAt: number }>(
     "SELECT id, expires_at AS endsAt FROM takeovers WHERE territory_id = ? AND status = 'pending'",
   );
-  const joueur = db.prepare<[number], { cash: number; maxTerritories: number; occupes: number }>(`
-    SELECT u.cash, u.max_territories AS maxTerritories,
-      (SELECT count(*) FROM territories WHERE owner_id = u.id)
-        + (SELECT count(*) FROM takeovers WHERE attacker_id = u.id AND status = 'pending') AS occupes
-    FROM users AS u WHERE u.id = ?`);
+  const joueur = creerLecteurJoueurAchat(db);
 
   /** La fiche d'une commune vue par `moi` (ou par un visiteur), `null` si le code INSEE est inconnu. */
   return function lireFiche(insee: string, moi: number | null, maintenant: number): FicheCommune | null {
@@ -94,15 +92,15 @@ export function creerLecteurFiche(db: Base) {
     else if (bouclier) state = 'shield';
     else state = 'rival';
 
-    // Achat d'une commune libre (route à l'étape 3) : prix = V0.
-    const buyReasons: CodeErreur[] = [];
-    if (t.ownerId !== null) buyReasons.push('TERRITORY_NOT_FREE');
-    if (moi === null) buyReasons.push('UNAUTHENTICATED');
-    else if (t.ownerId === null) {
-      const j = joueur.get(moi);
-      if (j && j.occupes >= j.maxTerritories) buyReasons.push('TERRITORY_LIMIT_REACHED');
-      if (j && j.cash < t.baseValue) buyReasons.push('INSUFFICIENT_FUNDS');
-    }
+    // Achat d'une commune libre (prix = V0) et vente à l'État : mêmes règles que les routes.
+    const buyReasons: CodeErreur[] = raisonsAchat(
+      t.ownerId,
+      moi,
+      moi !== null && t.ownerId === null ? joueur.get(moi) : undefined,
+      t.baseValue,
+    );
+    const sellReasons = raisonsVente(t.ownerId, moi, t.isCapital === 1, opa !== null);
+    const totalValue = valeurTerritoire(t.baseValue, investi, t.fortification);
     // OPA : ouvertes à l'étape 4 ; d'ici là, seulement signalées comme indisponibles chez un rival.
     const chezUnRival = t.ownerId !== null && t.ownerId !== moi;
 
@@ -118,7 +116,7 @@ export function creerLecteurFiche(db: Base) {
       infraScore: t.infraScore,
       equipments: equipementsRetenus(comptes),
       baseValue: t.baseValue,
-      totalValue: valeurTerritoire(t.baseValue, investi, t.fortification),
+      totalValue,
       // Revenu du sol (5.3) ; celui des bâtiments arrive avec l'étape 3.
       incomePerHour: revenuSol(t.baseValue),
       buildingSlots: { total: t.slots, used: liste.reduce((total, b) => total + b.slotSize, 0) },
@@ -140,6 +138,9 @@ export function creerLecteurFiche(db: Base) {
         canBuy: buyReasons.length === 0,
         buyPrice: t.ownerId === null ? t.baseValue : null,
         buyReasons,
+        canSell: sellReasons.length === 0,
+        sellPrice: moi !== null && t.ownerId === moi ? prixVenteEtat(totalValue) : null,
+        sellReasons,
         canTakeover: false,
         takeoverReasons: chezUnRival ? ['FEATURE_DISABLED'] : [],
       },

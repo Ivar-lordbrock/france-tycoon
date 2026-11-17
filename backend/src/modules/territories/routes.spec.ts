@@ -58,6 +58,9 @@ describe('GET /api/v1/territories/:insee', () => {
       canBuy: false,
       buyPrice: 21_800,
       buyReasons: ['UNAUTHENTICATED'],
+      canSell: false,
+      sellPrice: null,
+      sellReasons: ['UNAUTHENTICATED'],
       canTakeover: false,
       takeoverReasons: [],
     });
