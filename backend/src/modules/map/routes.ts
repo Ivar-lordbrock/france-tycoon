@@ -27,7 +27,7 @@ export const routesCarte: FastifyPluginAsyncZod = async (app) => {
   });
 
   app.get('/territories', { schema: { querystring: territoiresQuerySchema } }, (req, reply) => {
-    const { json, total, tronque } = requetes.communesVisibles(req.query.bbox, req.query.zoom);
+    const { json, total, tronque } = requetes.communesVisibles(req.query.bbox, req.query.zoom, req.joueur?.id ?? null);
     if (tronque) req.log.warn({ bbox: req.query.bbox, zoom: req.query.zoom }, 'réponse carte tronquée');
     reply
       .header('cache-control', 'private, no-cache')

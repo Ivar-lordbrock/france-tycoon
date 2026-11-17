@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { emplacements, facteurTaille, scoreInfra, valeurBase } from './balance.ts';
+import {
+  CAPITAL_DEPART,
+  emplacements,
+  facteurTaille,
+  revenuSol,
+  scoreInfra,
+  valeurBase,
+  valeurTerritoire,
+} from './balance.ts';
 
 // Tableau « Exemples » de docs/05-equilibrage.md, section 5.1.
 const exemples = [
@@ -53,5 +61,23 @@ describe('score d’infrastructures', () => {
       monument: { bpe: 4 }, // 0 (pas d'OSM)
     });
     expect(i).toBe(10 + 4 + 40);
+  });
+});
+
+describe('revenu du sol et valeur d’un territoire (5.3, 5.4)', () => {
+  it('R_sol = 1 % de V0, arrondi (colonne « Revenu du sol /h » de 5.1)', () => {
+    expect(revenuSol(21_800)).toBe(218);
+    expect(revenuSol(93_600)).toBe(936);
+    expect(revenuSol(34_886_300)).toBe(348_863);
+  });
+
+  it('V_T = V0 + B + F', () => {
+    expect(valeurTerritoire(21_800, 4_430, 0)).toBe(26_230);
+    expect(valeurTerritoire(21_800, 0, 10_500)).toBe(32_300);
+  });
+
+  it('capital de départ : 30 000 ₮, de quoi acheter L’Abergement-Clémenciat', () => {
+    expect(CAPITAL_DEPART).toBe(30_000);
+    expect(CAPITAL_DEPART).toBeGreaterThan(valeurBase(859, 7));
   });
 });

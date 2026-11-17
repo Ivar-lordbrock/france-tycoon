@@ -6,6 +6,8 @@ export interface CommuneDeTest {
   departement?: string;
   zone?: string;
   population?: number;
+  /** V0 (3 000 par défaut). */
+  valeur?: number;
   /** Carré [ouest, sud, côté] en degrés. */
   carre?: [number, number, number];
 }
@@ -26,7 +28,7 @@ export function insererCommunes(db: Base, communes: CommuneDeTest[]): void {
   const territoire = db.prepare<Record<string, unknown>, number>(`
     INSERT INTO territories (insee_code, name, department_code, region_type, zone_code, population,
       center_lat, center_lng, base_value, building_slots)
-    VALUES (@insee, @nom, @departement, @typeRegion, @zone, @population, @lat, @lng, 3000, 3)
+    VALUES (@insee, @nom, @departement, @typeRegion, @zone, @population, @lat, @lng, @valeur, 3)
     RETURNING id`);
   const contours = db.prepare('INSERT INTO territory_geometries VALUES (?, ?, ?)');
   const boite = db.prepare('INSERT INTO territories_rtree VALUES (?, ?, ?, ?, ?)');
@@ -38,6 +40,7 @@ export function insererCommunes(db: Base, communes: CommuneDeTest[]): void {
       departement = '42',
       zone = 'MET',
       population = 100,
+      valeur = 3000,
       carre = CARRE_PAR_DEFAUT,
     } of communes) {
       const [ouest, sud, cote] = carre;
@@ -47,6 +50,7 @@ export function insererCommunes(db: Base, communes: CommuneDeTest[]): void {
         departement,
         zone,
         population,
+        valeur,
         typeRegion: departement.length === 3 ? 'outre_mer' : 'metropole',
         lat: sud + cote / 2,
         lng: ouest + cote / 2,
