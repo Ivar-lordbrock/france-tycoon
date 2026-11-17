@@ -1,11 +1,9 @@
 import type { MonTerritoire } from '@france-tycoon/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { optionsFiche } from '../api/compte.ts';
 import { useMesTerritoires } from '../api/territoires.ts';
-import { useCarte } from '../etat/carte.ts';
 import { useMaintenant } from '../etat/horloge.ts';
-import { allerVersCentre } from '../map/navigation.ts';
+import { allerALaCommune } from './aller-a-la-commune.ts';
 import { tycoons } from './fiche-texte.ts';
 import { detailsTerritoire } from './territoires-texte.ts';
 
@@ -13,17 +11,11 @@ import { detailsTerritoire } from './territoires-texte.ts';
 export function MesTerritoires({ id, onChoisi }: { id: string; onChoisi: () => void }) {
   const { data, isPending, isError } = useMesTerritoires(true);
   const maintenant = useMaintenant(30_000);
-  const carte = useCarte((etat) => etat.carte);
   const client = useQueryClient();
 
-  const choisir = async (t: MonTerritoire) => {
-    const { definirSelection, definirVueActive } = useCarte.getState();
-    definirSelection(t.insee);
-    definirVueActive(t.zone);
+  const choisir = (t: MonTerritoire) => {
     onChoisi();
-    // Le centre de la commune est dans sa fiche, qu'on lit de toute façon pour l'afficher.
-    const fiche = await client.fetchQuery(optionsFiche(t.insee)).catch(() => null);
-    if (fiche && carte) allerVersCentre(carte, fiche.center, t.zone);
+    void allerALaCommune(client, t.insee, { zone: t.zone });
   };
 
   let contenu: ReactNode;
