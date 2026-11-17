@@ -37,13 +37,15 @@ export function useMoi() {
   });
 }
 
+/** Lecture d'une fiche, partagée par `useFiche` et la liste « Mes territoires » (`fetchQuery`). */
+export const optionsFiche = (insee: string | null) => ({
+  queryKey: ['fiche', insee],
+  queryFn: ({ signal }: { signal: AbortSignal }) => lireJson<FicheCommune>(`/api/v1/territories/${insee}`, signal),
+  staleTime: 15_000,
+});
+
 export function useFiche(insee: string | null) {
-  return useQuery({
-    queryKey: ['fiche', insee],
-    queryFn: ({ signal }) => lireJson<FicheCommune>(`/api/v1/territories/${insee}`, signal),
-    enabled: insee !== null,
-    staleTime: 15_000,
-  });
+  return useQuery({ ...optionsFiche(insee), enabled: insee !== null });
 }
 
 /** Après connexion ou déconnexion : profil, fiches et couleurs de la carte (« à moi ») changent. */

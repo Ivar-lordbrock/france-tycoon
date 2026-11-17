@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ErreurApi, lireJson } from './client.ts';
+import { ErreurApi, envoyerJson, lireJson, messageErreur, nouvelleCle } from './client.ts';
 
 const reponse = (statut: number, corps: unknown) =>
   new Response(JSON.stringify(corps), { status: statut, headers: { 'content-type': 'application/json' } });
@@ -27,5 +27,29 @@ describe('client de l’API', () => {
       code: 'HTTP_ERROR',
       message: 'Le serveur a répondu 502.',
     });
+  });
+
+  it('envoie la clé Idempotency-Key quand on la donne', async () => {
+    const appel = vi.fn(async () => reponse(200, { ok: true }));
+    await envoyerJson('/api/v1/territories/01001/buy', 'POST', undefined, { cle: 'achat-0001', appel });
+    expect(appel).toHaveBeenCalledWith(
+      '/api/v1/territories/01001/buy',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { accept: 'application/json', 'idempotency-key': 'achat-0001' },
+        body: undefined,
+      }),
+    );
+  });
+
+  it('fabrique des clés différentes, acceptées par le serveur (8 à 100 caractères)', () => {
+    const a = nouvelleCle();
+    expect(a).toMatch(/^[\w-]{8,100}$/);
+    expect(nouvelleCle()).not.toBe(a);
+  });
+
+  it('montre le message du serveur, ou une phrase simple si le serveur ne répond pas', () => {
+    expect(messageErreur(new ErreurApi(409, 'INSUFFICIENT_FUNDS', 'Il manque 1 200 ₮'))).toBe('Il manque 1 200 ₮');
+    expect(messageErreur(new TypeError('Failed to fetch'))).toMatch(/^Le serveur ne répond pas/);
   });
 });
