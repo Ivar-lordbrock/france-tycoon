@@ -5,6 +5,7 @@ import { brancherGestionErreurs } from './erreurs.ts';
 import { routesAdmin } from './modules/admin/routes.ts';
 import { brancherSessions } from './modules/auth/requete.ts';
 import { type OptionsAuth, routesAuth } from './modules/auth/routes.ts';
+import { routesCatalogueBatiments } from './modules/buildings/routes.ts';
 import { routesCarte } from './modules/map/routes.ts';
 import { routesMoi } from './modules/me/routes.ts';
 import { routesTerritoires } from './modules/territories/routes.ts';
@@ -35,6 +36,7 @@ export function construireApp({ db, logger = false, auth = {} }: OptionsApp) {
 
   app.register(routesAdmin, { prefix: '/api/v1/admin' });
   app.register(routesAuth, { prefix: '/api/v1/auth', ...optionsAuth });
+  app.register(routesCatalogueBatiments, { prefix: '/api/v1/building-types' });
   app.register(routesMoi, { prefix: '/api/v1/me' });
   app.register(routesCarte, { prefix: '/api/v1/map' });
   app.register(routesTerritoires, { prefix: '/api/v1/territories' });

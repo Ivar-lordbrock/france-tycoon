@@ -1,6 +1,6 @@
 # 5. Formules d'équilibrage
 
-Toutes les constantes ci-dessous vivent dans **un seul fichier**, `shared/src/balance.ts` (5.1 depuis l'étape 1 ; capital de départ, protection débutant, revenu du sol et valeur d'un territoire depuis l'étape 2 ; le reste à l'étape 3), importé par le serveur (qui fait foi), par le front (aperçus) et par le script d'import (valeurs des communes). Les paramètres propres à chaque bâtiment sont dans la table `building_types` ([002_seed.sql](../backend/src/db/migrations/002_seed.sql)).
+Toutes les constantes ci-dessous vivent dans **un seul fichier**, `shared/src/balance.ts` (5.1 depuis l'étape 1 ; capital de départ, protection débutant, revenu du sol et valeur d'un territoire depuis l'étape 2 ; le reste à l'étape 3), importé par le serveur (qui fait foi), par le front (aperçus) et par le script d'import (valeurs des communes). Les paramètres propres à chaque bâtiment sont dans la table `building_types` ([002_seed.sql](../backend/src/db/migrations/002_seed.sql), valeurs remplacées par [003_economie_etape3.sql](../backend/src/db/migrations/003_economie_etape3.sql)).
 
 Notations : `P` population, `I` score d'infrastructures, `L` niveau, `arrondi_N` arrondi à N près, `plafond_N` arrondi au-dessus à N près, `⌊x⌋` partie entière.
 
@@ -81,7 +81,7 @@ Pour un bâtiment de type b au niveau L (1 à 5), sur un territoire de facteur f
 | Chantier | 10 min | 20 min | 40 min | 1 h 20 | 2 h 40 |
 
 - Siège social : 40 000 → 100 000 → 250 000 → 625 000 → 1,56 M.
-- Les valeurs de [002_seed.sql](../backend/src/db/migrations/002_seed.sql) (10 niveaux, ×1,4, durées ×1,5, pas de gare) sont remplacées à l'étape 3 par une nouvelle migration (les migrations sont en ajout seul). Attention : dans la nouvelle formule, `income_growth` (1,7) n'est plus multiplié par L.
+- Les valeurs de [002_seed.sql](../backend/src/db/migrations/002_seed.sql) (10 niveaux, ×1,4, durées ×1,5, pas de gare) sont remplacées par [003_economie_etape3.sql](../backend/src/db/migrations/003_economie_etape3.sql) (les migrations sont en ajout seul). Attention : dans la nouvelle formule, `income_growth` (1,7) n'est plus multiplié par L. Le tableau ci-dessus est vérifié par `backend/src/modules/buildings/routes.spec.ts` (catalogue servi + formules de balance.ts) : changer la migration, ce tableau et ce test ensemble.
 - Gare : coût et bonus à régler pendant la bêta (étape 6).
 
 Règles :

@@ -36,7 +36,8 @@ function freshDb() {
 test('les catalogues sont remplis', () => {
   const db = freshDb();
   const count = (t) => db.prepare(`SELECT count(*) AS n FROM ${t}`).get().n;
-  assert.equal(count('building_types'), 6);
+  assert.equal(count('building_types'), 7);
+  assert.equal(db.prepare('SELECT max(max_level) AS n FROM building_types').get().n, 5, '5 niveaux au plus (003)');
   assert.equal(count('tutorials'), 10);
   assert.ok(count('daily_quests') >= 9);
   assert.equal(
@@ -92,7 +93,13 @@ const forbidden = {
   'chantier sans date de fin':
     'INSERT INTO buildings (territory_id, building_type_id, level, target_level) VALUES (1, 1, 0, 1)',
   'sauter un niveau':
-    'INSERT INTO buildings (territory_id, building_type_id, level, target_level, works_ends_at) VALUES (1, 1, 1, 3, unixepoch())',
+    'INSERT INTO buildings (territory_id, building_type_id, level, target_level, works_ends_at, works_cost) VALUES (1, 1, 1, 3, unixepoch(), 100)',
+  'chantier sans prix payé':
+    'INSERT INTO buildings (territory_id, building_type_id, level, target_level, works_ends_at) VALUES (1, 1, 0, 1, unixepoch())',
+  'prix de chantier sans chantier':
+    'INSERT INTO buildings (territory_id, building_type_id, level, works_cost) VALUES (1, 1, 1, 100)',
+  'chantier gratuit':
+    'INSERT INTO buildings (territory_id, building_type_id, level, target_level, works_ends_at, works_cost) VALUES (1, 1, 0, 1, unixepoch(), 0)',
   'capitale sans propriétaire': 'UPDATE territories SET is_capital = 1 WHERE id = 2',
   'pseudo trop court': "INSERT INTO users (google_id, email, pseudo) VALUES ('g3', 'c@exemple.fr', 'Al')",
   'pseudo déjà pris (casse différente)':
@@ -116,6 +123,18 @@ test('une OPA défendue libère la place pour une nouvelle', () => {
       'INSERT INTO takeovers (territory_id, attacker_id, defender_id, territory_value, offer_amount, defense_cost, break_fee, expires_at) VALUES (1, 2, 1, 1, 1, 1, 0, unixepoch() + 10)',
     ),
   );
+});
+
+test('un chantier noté avec son prix est accepté, puis terminé', () => {
+  const db = freshDb();
+  assert.doesNotThrow(() => {
+    db.exec(
+      'INSERT INTO buildings (territory_id, building_type_id, level, target_level, works_started_at, works_ends_at, works_cost, invested_cash) VALUES (1, 1, 0, 1, unixepoch(), unixepoch() + 600, 4430, 4430)',
+    );
+    db.exec(
+      'UPDATE buildings SET level = 1, target_level = NULL, works_ends_at = NULL, works_cost = NULL WHERE id = 1',
+    );
+  });
 });
 
 test('les tâches planifiées utilisent leurs index', () => {

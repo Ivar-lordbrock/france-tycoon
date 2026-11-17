@@ -4,7 +4,8 @@ Le schéma exact, exécutable, est dans le code :
 
 - [`backend/src/db/migrations/001_initial.sql`](../backend/src/db/migrations/001_initial.sql) — 19 tables `STRICT`, index, déclencheurs
 - [`backend/src/db/migrations/002_seed.sql`](../backend/src/db/migrations/002_seed.sql) — catalogues : bâtiments, tutoriel, quêtes, boutique
-- [`backend/src/db/schema.test.mjs`](../backend/src/db/schema.test.mjs) — 24 tests (`node --test backend/`), lancés par la CI à chaque push
+- [`backend/src/db/migrations/003_economie_etape3.sql`](../backend/src/db/migrations/003_economie_etape3.sql) — étape 3 : bâtiments à 5 niveaux et gare, prix du chantier (`works_cost`), 4 territoires au départ
+- [`backend/src/db/schema.test.mjs`](../backend/src/db/schema.test.mjs) — 28 tests (`node --test backend/`), lancés par la CI à chaque push
 
 > Cette page explique le schéma. En cas de doute, **le fichier SQL fait foi**.
 
@@ -77,6 +78,7 @@ erDiagram
     int level
     int target_level
     int works_ends_at
+    int works_cost
     int invested_cash "B"
   }
   takeovers {
@@ -108,7 +110,7 @@ erDiagram
 **`users`** — un joueur = un compte Google.
 - Identité : `google_id` (le `sub` du jeton), `email`, `pseudo` (unique, insensible à la casse, 3–24 caractères), `avatar_url`.
 - Portefeuille : `cash ≥ 0`, `premium_currency ≥ 0` (la base refuse un solde négatif).
-- Limites : `max_territories` (1–12), `extra_territory_slots` (0–1, boutique V2), `build_queue_slots` (1–3), `rank_level`.
+- Limites : `max_territories` (1–12), `extra_territory_slots` (0–1, boutique V2), `build_queue_slots` (1–3), `rank_level`. La création de compte écrit elle-même `max_territories = 4` et `build_queue_slots = 1` (`TERRITOIRES_DEPART`, `FILES_CONSTRUCTION_DEPART` de balance.ts) : la valeur par défaut de la colonne (3, migration 001) date d'avant l'étape 3 ; la migration 003 a donné +1 aux joueurs déjà inscrits.
 - Économie : `income_collected_at` (point de départ du calcul des revenus hors ligne), `net_worth` (patrimoine en cache pour le classement).
 - Protection : `newbie_shield_until` = inscription + 72 h.
 - Index : `(status, last_active_at)` pour la tâche d'inactivité ; `net_worth DESC` (joueurs actifs) pour le classement.
@@ -144,12 +146,13 @@ LIMIT 3000;
 
 ### Bâtiments
 
-**`building_types`** — catalogue (7 types en V1 : résidence, commerce, usine, quartier d'affaires, équipement public, gare, siège social ; niveau 5 au maximum). Contient tous les paramètres d'équilibrage : coût, croissance du coût, revenu, bonus en %, temps de construction, niveau max, emplacements occupés, limites par territoire et par joueur, population minimale.
+**`building_types`** — catalogue (7 types en V1 : résidence, commerce, usine, quartier d'affaires, équipement public, gare, siège social ; niveau 5 au maximum). Contient tous les paramètres d'équilibrage : coût, croissance du coût, revenu, bonus en %, temps de construction, niveau max, emplacements occupés, limites par territoire et par joueur, population minimale. Valeurs de 002, remplacées par 003 (docs/05, 5.2) ; servies telles quelles par `GET /building-types`.
 
 **`buildings`** — un bâtiment posé sur un territoire.
 - `level` = niveau **actif** (0 pendant la toute première construction).
-- Chantier en cours : `target_level = level + 1` et `works_ends_at` renseignés (la base impose les deux ensemble, et interdit de sauter un niveau).
-- `invested_cash` = total dépensé (B), compte dans la valeur du territoire.
+- Chantier en cours : `target_level = level + 1`, `works_ends_at` et `works_cost` renseignés (la base impose les trois ensemble, et interdit de sauter un niveau).
+- `works_cost` = prix payé pour le chantier en cours (> 0) : une annulation rend exactement ce montant, même si f_T a changé depuis (nouvel import).
+- `invested_cash` = total dépensé (B), chantier en cours compris ; compte dans la valeur du territoire.
 - Pas de colonne « propriétaire » : c'est celui du territoire (les bâtiments suivent le territoire lors d'une OPA).
 
 ### PvP
