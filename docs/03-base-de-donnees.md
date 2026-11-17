@@ -6,6 +6,7 @@ Le schéma exact, exécutable, est dans le code :
 - [`backend/src/db/migrations/002_seed.sql`](../backend/src/db/migrations/002_seed.sql) — catalogues : bâtiments, tutoriel, quêtes, boutique
 - [`backend/src/db/migrations/003_economie_etape3.sql`](../backend/src/db/migrations/003_economie_etape3.sql) — étape 3 : bâtiments à 5 niveaux et gare, prix du chantier (`works_cost`), 4 territoires au départ
 - [`backend/src/db/migrations/004_reste_revenus.sql`](../backend/src/db/migrations/004_reste_revenus.sql) — étape 3 : reste des revenus (`income_remainder`), pour ne perdre aucune fraction de ₮
+- [`backend/src/db/migrations/005_deplacement_capitale.sql`](../backend/src/db/migrations/005_deplacement_capitale.sql) — étape 3 : date du dernier déplacement de capitale (`capital_moved_at`), pour la limite d'une fois tous les 7 jours
 - [`backend/src/db/schema.test.mjs`](../backend/src/db/schema.test.mjs) — 30 tests (`node --test backend/`), lancés par la CI à chaque push
 
 > Cette page explique le schéma. En cas de doute, **le fichier SQL fait foi**.
@@ -56,6 +57,7 @@ erDiagram
     int build_queue_slots
     int income_collected_at
     int income_remainder
+    int capital_moved_at
     int net_worth
     int newbie_shield_until
     int last_active_at
@@ -112,8 +114,9 @@ erDiagram
 **`users`** — un joueur = un compte Google.
 - Identité : `google_id` (le `sub` du jeton), `email`, `pseudo` (unique, insensible à la casse, 3–24 caractères), `avatar_url`.
 - Portefeuille : `cash ≥ 0`, `premium_currency ≥ 0` (la base refuse un solde négatif).
-- Limites : `max_territories` (1–12), `extra_territory_slots` (0–1, boutique V2), `build_queue_slots` (1–3), `rank_level`. La création de compte écrit elle-même `max_territories = 4` et `build_queue_slots = 1` (`TERRITOIRES_DEPART`, `FILES_CONSTRUCTION_DEPART` de balance.ts) : la valeur par défaut de la colonne (3, migration 001) date d'avant l'étape 3 ; la migration 003 a donné +1 aux joueurs déjà inscrits.
+- Limites : `max_territories` (1–12), `extra_territory_slots` (0–1, boutique V2), `build_queue_slots` (1–3), `rank_level`. `max_territories` est recalculé à chaque chantier fini (siège social : +1 par niveau, `buildings/limites.ts`). La création de compte écrit elle-même `max_territories = 4` et `build_queue_slots = 1` (`TERRITOIRES_DEPART`, `FILES_CONSTRUCTION_DEPART` de balance.ts) : la valeur par défaut de la colonne (3, migration 001) date d'avant l'étape 3 ; la migration 003 a donné +1 aux joueurs déjà inscrits.
 - Économie : `income_collected_at` (point de départ du calcul des revenus hors ligne), `income_remainder` (0 à 3 599 : la fraction de ₮ pas encore versée, en ₮ × secondes, migration 004), `net_worth` (patrimoine en cache pour le classement).
+- Capitale : `capital_moved_at` (NULL = jamais déplacée ; construire le siège ne compte pas comme un déplacement, migration 005). Prochain déplacement possible 7 jours après.
 - Protection : `newbie_shield_until` = inscription + 72 h.
 - Index : `(status, last_active_at)` pour la tâche d'inactivité ; `net_worth DESC` (joueurs actifs) pour le classement.
 

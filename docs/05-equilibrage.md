@@ -86,10 +86,12 @@ Pour un bâtiment de type b au niveau L (1 à 5), sur un territoire de facteur f
 
 Règles :
 - Un chantier occupe une **file de construction**. **Une seule file** par joueur ; une 2ᵉ s'achètera plus tard (boutique, voir 5.8). Pendant une amélioration, le bâtiment continue de produire au niveau actuel.
-- Premier chantier du tutoriel : 10 secondes.
+- Premier chantier du tutoriel : 10 secondes (`DUREE_CHANTIER_TUTORIEL_S`), seulement pour le tout premier chantier du joueur et tant que le tutoriel n'est ni fini ni passé.
 - **Annuler un chantier** : rembourse **tout** son coût ; le bâtiment reste à son niveau actuel (une première construction annulée supprime le bâtiment). La file se libère.
 - Le coût d'un chantier compte dans `invested_cash` dès qu'il est payé ; une annulation le retire.
-- Démolition : rembourse 30 % de `invested_cash`.
+- Démolition : rembourse 30 % de `invested_cash`. Pas pendant un chantier (l'annuler d'abord). Le siège social ne se démolit pas.
+- **Siège social et capitale** : sa commune devient la capitale dès le début du chantier ; annuler sa première construction enlève la capitale. Le +1 territoire par niveau compte quand le chantier est fini.
+- **Déplacer la capitale** : le siège (niveau compris) part sur une autre de mes communes, s'il y a 2 emplacements libres et pas d'OPA en cours ; **une fois tous les 7 jours** (`DELAI_DEPLACEMENT_CAPITALE_S`). Construire le siège ne compte pas comme un déplacement. Pas pendant un chantier du siège.
 - Pas d'accélération payante des chantiers en V1.
 
 ## 5.3 Revenus passifs

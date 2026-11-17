@@ -1,11 +1,6 @@
-import {
-  type Chantier,
-  type MesTerritoires,
-  type MonTerritoire,
-  valeurTerritoire,
-  type ZoneCode,
-} from '@france-tycoon/shared';
+import { type MesTerritoires, type MonTerritoire, valeurTerritoire, type ZoneCode } from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
+import { creerLecteurChantiers } from '../buildings/file.ts';
 import { creerLecteurRevenus, revenuDuTerritoire } from '../income/revenus.ts';
 
 interface LigneTerritoire {
@@ -36,20 +31,12 @@ export function creerLecteurMesTerritoires(db: Base) {
     FROM territories AS t
     WHERE t.owner_id = ?
     ORDER BY t.is_capital DESC, t.acquired_at, t.id`);
-  const chantiers = db.prepare<[number], Chantier>(`
-    SELECT b.id AS buildingId, t.insee_code AS territoryInsee, t.name AS territoryName,
-      bt.code AS typeCode, bt.name, b.target_level AS targetLevel,
-      coalesce(b.works_started_at, b.updated_at) AS startedAt, b.works_ends_at AS endsAt, b.works_cost AS cost
-    FROM buildings AS b
-    JOIN territories AS t ON t.id = b.territory_id
-    JOIN building_types AS bt ON bt.id = b.building_type_id
-    WHERE t.owner_id = ? AND b.target_level IS NOT NULL
-    ORDER BY b.works_ends_at, b.id`);
+  const lireChantiers = creerLecteurChantiers(db);
   const limite = db.prepare<[number], number>('SELECT max_territories FROM users WHERE id = ?').pluck();
   const lireRevenus = creerLecteurRevenus(db);
 
   return function lireMesTerritoires(moi: number, maintenant: number): MesTerritoires {
-    const parCommune = Map.groupBy(chantiers.all(moi), (c) => c.territoryInsee);
+    const parCommune = Map.groupBy(lireChantiers(moi), (c) => c.territoryInsee);
     const revenus = lireRevenus(moi);
     const territories = territoires.all(moi).map(
       (t): MonTerritoire => ({

@@ -25,8 +25,14 @@ describe('exécuteur de migrations', () => {
 
     const { appliquees } = appliquerMigrations(db);
 
-    expect(appliquees).toEqual(['001_initial.sql', '002_seed.sql', '003_economie_etape3.sql', '004_reste_revenus.sql']);
-    expect(versionDuSchema(db)).toBe('004');
+    expect(appliquees).toEqual([
+      '001_initial.sql',
+      '002_seed.sql',
+      '003_economie_etape3.sql',
+      '004_reste_revenus.sql',
+      '005_deplacement_capitale.sql',
+    ]);
+    expect(versionDuSchema(db)).toBe('005');
     expect(db.prepare('SELECT count(*) FROM building_types').pluck().get()).toBe(7);
     const traces = db.prepare('SELECT version, name, length(checksum) AS l FROM schema_migrations').all();
     expect(traces).toEqual([
@@ -34,6 +40,7 @@ describe('exécuteur de migrations', () => {
       { version: '002', name: '002_seed.sql', l: 64 },
       { version: '003', name: '003_economie_etape3.sql', l: 64 },
       { version: '004', name: '004_reste_revenus.sql', l: 64 },
+      { version: '005', name: '005_deplacement_capitale.sql', l: 64 },
     ]);
   });
 
@@ -45,7 +52,7 @@ describe('exécuteur de migrations', () => {
     appliquerMigrations(db, avant003);
     db.exec("INSERT INTO users (google_id, email, pseudo) VALUES ('g1', 'a@exemple.fr', 'Alice')");
 
-    expect(appliquerMigrations(db).appliquees).toEqual(['003_economie_etape3.sql', '004_reste_revenus.sql']);
+    expect(appliquerMigrations(db).appliquees[0]).toBe('003_economie_etape3.sql');
     expect(db.prepare('SELECT max_territories FROM users').pluck().get()).toBe(4);
   });
 

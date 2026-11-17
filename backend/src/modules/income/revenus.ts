@@ -9,6 +9,7 @@ import {
   revenuTerritoire,
 } from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
+import { creerRecalculLimite } from '../buildings/limites.ts';
 import { wallet } from '../wallet/wallet.ts';
 
 // Moteur des revenus passifs (docs/05-equilibrage.md, 5.3) : revenu par heure et encaissement par morceaux.
@@ -151,6 +152,7 @@ export function creerEncaisseur(db: Base) {
   const noter = db.prepare<[number, number, number]>(
     'UPDATE users SET income_collected_at = ?, income_remainder = ? WHERE id = ?',
   );
+  const recalculerLimite = creerRecalculLimite(db);
 
   return function encaisser(moi: number, maintenant: number): Encaissement {
     if (!db.inTransaction) throw new Error('encaisser doit être appelé dans une transaction');
@@ -180,6 +182,9 @@ export function creerEncaisseur(db: Base) {
       notifier.run(moi, JSON.stringify(fini), finishedAt);
       return fini;
     });
+
+    // Un siège social qui monte de niveau donne un territoire de plus.
+    if (finished.length > 0) recalculerLimite(moi);
 
     let cash = j.cash;
     if (gain > 0) {
