@@ -1,5 +1,6 @@
-import { type MoiReponse, type Profil, revenuSol } from '@france-tycoon/shared';
+import type { ChantierFini, MoiReponse, Profil } from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
+import { creerLecteurRevenus, revenuDuJoueur } from '../income/revenus.ts';
 
 interface LigneProfil {
   id: number;
@@ -18,41 +19,49 @@ export function lireProfil(db: Base, userId: number): Profil {
   return profil;
 }
 
-/** GET /me : profil, portefeuille, revenu par heure, limites, notifications non lues. */
-export function lireMoi(db: Base, userId: number): MoiReponse {
-  const ligne = db
-    .prepare<
-      [number],
-      LigneProfil & {
-        cash: number;
-        gems: number;
-        maxTerritories: number;
-        buildQueueSlots: number;
-        newbieShieldUntil: number;
-        unread: number;
-      }
-    >(`
-      SELECT ${COLONNES_PROFIL},
-        cash, premium_currency AS gems, max_territories AS maxTerritories, build_queue_slots AS buildQueueSlots,
-        newbie_shield_until AS newbieShieldUntil,
-        (SELECT count(*) FROM notifications AS n WHERE n.user_id = u.id AND n.read_at IS NULL) AS unread
-      FROM users AS u WHERE id = ?`)
-    .get(userId);
-  if (!ligne) throw new Error(`Joueur inconnu : ${userId}`);
+interface LigneMoi extends LigneProfil {
+  cash: number;
+  gems: number;
+  maxTerritories: number;
+  buildQueueSlots: number;
+  newbieShieldUntil: number;
+  unread: number;
+}
 
-  // Revenu du sol de chaque territoire (5.3) ; les bâtiments s'y ajoutent à l'étape 3.
-  const valeurs = db
-    .prepare<[number], number>('SELECT base_value FROM territories WHERE owner_id = ?')
-    .pluck()
-    .all(userId);
-  const { cash, gems, maxTerritories, buildQueueSlots, newbieShieldUntil, unread, ...user } = ligne;
-  return {
-    user,
-    wallet: { cash, gems },
-    incomePerHour: valeurs.reduce((total, v0) => total + revenuSol(v0), 0),
-    territories: { owned: valeurs.length, max: maxTerritories },
-    buildQueueSlots,
-    newbieShieldUntil,
-    unreadNotifications: unread,
+/** Nombre maximum de chantiers finis dans le résumé au retour. */
+const RESUME_MAX = 50;
+
+/** GET /me : profil, portefeuille, revenu par heure, limites, notifications non lues, résumé au retour. */
+export function creerLecteurMoi(db: Base) {
+  const moi = db.prepare<[number], LigneMoi>(`
+    SELECT ${COLONNES_PROFIL},
+      cash, premium_currency AS gems, max_territories AS maxTerritories, build_queue_slots AS buildQueueSlots,
+      newbie_shield_until AS newbieShieldUntil,
+      (SELECT count(*) FROM notifications AS n WHERE n.user_id = u.id AND n.read_at IS NULL) AS unread
+    FROM users AS u WHERE id = ?`);
+  const finis = db.prepare<[number, number], { id: number; payload: string }>(`
+    SELECT id, payload FROM notifications
+    WHERE user_id = ? AND kind = 'building_done' AND read_at IS NULL
+    ORDER BY created_at, id
+    LIMIT ?`);
+  const lireTerritoires = creerLecteurRevenus(db);
+
+  return function lireMoi(userId: number, maintenant: number): MoiReponse {
+    const ligne = moi.get(userId);
+    if (!ligne) throw new Error(`Joueur inconnu : ${userId}`);
+    const territoires = [...lireTerritoires(userId).values()];
+    const { cash, gems, maxTerritories, buildQueueSlots, newbieShieldUntil, unread, ...user } = ligne;
+    return {
+      user,
+      wallet: { cash, gems },
+      incomePerHour: revenuDuJoueur(territoires, maintenant),
+      territories: { owned: territoires.length, max: maxTerritories },
+      buildQueueSlots,
+      newbieShieldUntil,
+      unreadNotifications: unread,
+      finishedWorks: finis
+        .all(userId, RESUME_MAX)
+        .map(({ id, payload }) => ({ ...(JSON.parse(payload) as ChantierFini), notificationId: id })),
+    };
   };
 }

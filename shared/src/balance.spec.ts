@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  apportBatiment,
   bonusNiveau,
   bonusTerritoiresRang,
   CAPITAL_DEPART,
@@ -14,9 +15,11 @@ import {
   NIVEAU_MAX_BATIMENT,
   type ParametresBatiment,
   PLAFOND_HORS_LIGNE_S,
+  partagerCumul,
   prixVenteEtat,
   RANGS,
   remboursementDemolition,
+  revenuCumule,
   revenuJoueur,
   revenuNiveau,
   revenuSol,
@@ -257,6 +260,37 @@ describe('calcul hors ligne par morceaux (5.3)', () => {
   it('rien à gagner si aucun temps n’est passé', () => {
     expect(gainParMorceaux(100, 100, 1_000)).toBe(0);
     expect(gainParMorceaux(100, 50, 1_000)).toBe(0);
+  });
+
+  it('revenu cumulé : Σ R × Δt en ₮ × secondes, sans arrondi', () => {
+    expect(revenuCumule(0, 30, 50)).toBe(1_500);
+    expect(revenuCumule(0, h, 1_000, [{ a: h / 2, revenuParHeure: 2_000 }])).toBe(1_500 * h);
+    expect(revenuCumule(0, 72 * h, 10)).toBe(10 * 48 * h);
+  });
+
+  it('les fractions de ₮ restent pour le prochain encaissement', () => {
+    // 50 ₮/h encaissés toutes les 30 s : 0 ₮ chaque fois, mais rien n'est perdu au bout d'une heure.
+    let reste = 0;
+    let encaisse = 0;
+    for (let i = 0; i < 120; i++) {
+      const partage = partagerCumul(revenuCumule(0, 30, 50), reste);
+      encaisse += partage.gain;
+      reste = partage.reste;
+    }
+    expect(encaisse).toBe(50);
+    expect(reste).toBe(0);
+    expect(partagerCumul(7_199, 0)).toEqual({ gain: 1, reste: 3_599 });
+  });
+});
+
+describe('apport d’un bâtiment à son territoire', () => {
+  it('revenu et bonus du niveau ; rien au niveau 0', () => {
+    expect(apportBatiment(residence, 2, 1)).toEqual({
+      revenuParHeure: revenuNiveau(residence, 2, 1),
+      bonusPct: 0,
+    });
+    expect(apportBatiment(gare, 3, 1)).toEqual({ revenuParHeure: 0, bonusPct: 30 });
+    expect(apportBatiment(gare, 0, 1)).toEqual({ revenuParHeure: 0, bonusPct: 0 });
   });
 });
 

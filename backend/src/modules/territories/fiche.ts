@@ -6,11 +6,17 @@ import {
   equipementsRetenus,
   type FicheCommune,
   prixVenteEtat,
-  revenuSol,
   valeurTerritoire,
   type ZoneCode,
 } from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
+import {
+  COLONNES_REVENU,
+  chantierFini,
+  type LigneBatimentRevenu,
+  revenuDuTerritoire,
+  versBatimentRevenu,
+} from '../income/revenus.ts';
 import { creerLecteurJoueurAchat, raisonsAchat, raisonsVente } from './achat-vente.ts';
 
 interface LigneTerritoire {
@@ -36,13 +42,10 @@ interface LigneTerritoire {
   ownerAvatar: string | null;
 }
 
-interface LigneBatiment {
+interface LigneBatiment extends LigneBatimentRevenu {
   id: number;
   typeCode: string;
   name: string;
-  level: number;
-  targetLevel: number | null;
-  worksEndsAt: number | null;
   slotSize: number;
   invested: number;
 }
@@ -62,7 +65,7 @@ export function creerLecteurFiche(db: Base) {
   );
   const batiments = db.prepare<[number], LigneBatiment>(`
     SELECT b.id, bt.code AS typeCode, bt.name, b.level, b.target_level AS targetLevel,
-      b.works_ends_at AS worksEndsAt, bt.slot_size AS slotSize, b.invested_cash AS invested
+      b.works_ends_at AS worksEndsAt, bt.slot_size AS slotSize, b.invested_cash AS invested, ${COLONNES_REVENU}
     FROM buildings AS b JOIN building_types AS bt ON bt.id = b.building_type_id
     WHERE b.territory_id = ?
     ORDER BY b.id`);
@@ -80,7 +83,7 @@ export function creerLecteurFiche(db: Base) {
     for (const { category, source, count } of stats.all(t.id)) {
       comptes[category] = { ...comptes[category], [source]: count };
     }
-    const liste = batiments.all(t.id);
+    const liste = batiments.all(t.id).map(versBatimentRevenu);
     const investi = liste.reduce((total, b) => total + b.invested, 0);
     const opa = opaEnCours.get(t.id) ?? null;
     const bouclier = t.shieldUntil !== null && t.shieldUntil > maintenant ? t.shieldUntil : null;
@@ -117,8 +120,7 @@ export function creerLecteurFiche(db: Base) {
       equipments: equipementsRetenus(comptes),
       baseValue: t.baseValue,
       totalValue,
-      // Revenu du sol (5.3) ; celui des bâtiments arrive avec l'étape 3.
-      incomePerHour: revenuSol(t.baseValue),
+      incomePerHour: revenuDuTerritoire(t.baseValue, liste, maintenant),
       buildingSlots: { total: t.slots, used: liste.reduce((total, b) => total + b.slotSize, 0) },
       state,
       owner:
@@ -133,7 +135,26 @@ export function creerLecteurFiche(db: Base) {
       isCapital: t.isCapital === 1,
       shieldUntil: bouclier,
       takeover: opa,
-      buildings: liste.map(({ slotSize: _taille, invested: _investi, ...b }) => b),
+      // Un chantier fini s'affiche terminé, même si son propriétaire n'est pas encore revenu le valider.
+      buildings: liste.map((b) =>
+        chantierFini(b, maintenant)
+          ? {
+              id: b.id,
+              typeCode: b.typeCode,
+              name: b.name,
+              level: b.targetLevel ?? b.level,
+              targetLevel: null,
+              worksEndsAt: null,
+            }
+          : {
+              id: b.id,
+              typeCode: b.typeCode,
+              name: b.name,
+              level: b.level,
+              targetLevel: b.targetLevel,
+              worksEndsAt: b.worksEndsAt,
+            },
+      ),
       actions: {
         canBuy: buyReasons.length === 0,
         buyPrice: t.ownerId === null ? t.baseValue : null,

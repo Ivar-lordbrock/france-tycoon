@@ -46,11 +46,16 @@ async function partie() {
 }
 
 /** Une Résidence niveau 1 en chantier vers le niveau 2 (prix payé 8 860), au village. */
+/** Début et fin d'un chantier qui n'est pas encore fini (en 2033). */
+const DEBUT_CHANTIER = 2_000_000_000;
+const FIN_CHANTIER = DEBUT_CHANTIER + 1_200;
+
 function residenceEnChantier(db: Base) {
   db.exec(`
     INSERT INTO buildings (territory_id, building_type_id, level, target_level, works_started_at, works_ends_at,
       works_cost, invested_cash)
-    SELECT t.id, bt.id, 1, 2, 1000, 2200, 8860, 4430 + 8860 FROM territories AS t, building_types AS bt
+    SELECT t.id, bt.id, 1, 2, ${DEBUT_CHANTIER}, ${FIN_CHANTIER}, 8860, 4430 + 8860
+    FROM territories AS t, building_types AS bt
     WHERE t.insee_code = '01001' AND bt.code = 'residence'`);
 }
 
@@ -291,8 +296,8 @@ describe('GET /api/v1/me/territories', () => {
           typeCode: 'residence',
           name: 'Résidence',
           targetLevel: 2,
-          startedAt: 1000,
-          endsAt: 2200,
+          startedAt: DEBUT_CHANTIER,
+          endsAt: FIN_CHANTIER,
           cost: 8_860,
         },
       ],

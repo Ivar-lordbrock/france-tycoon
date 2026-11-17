@@ -100,6 +100,8 @@ const forbidden = {
     'INSERT INTO buildings (territory_id, building_type_id, level, works_cost) VALUES (1, 1, 1, 100)',
   'chantier gratuit':
     'INSERT INTO buildings (territory_id, building_type_id, level, target_level, works_ends_at, works_cost) VALUES (1, 1, 0, 1, unixepoch(), 0)',
+  'reste de revenu d’un ₮ ou plus': 'UPDATE users SET income_remainder = 3600 WHERE id = 1',
+  'reste de revenu négatif': 'UPDATE users SET income_remainder = -1 WHERE id = 1',
   'capitale sans propriétaire': 'UPDATE territories SET is_capital = 1 WHERE id = 2',
   'pseudo trop court': "INSERT INTO users (google_id, email, pseudo) VALUES ('g3', 'c@exemple.fr', 'Al')",
   'pseudo déjà pris (casse différente)':

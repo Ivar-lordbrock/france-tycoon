@@ -10,6 +10,7 @@ import {
 } from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
 import { ErreurMetier } from '../../erreurs.ts';
+import { creerEncaisseur } from '../income/revenus.ts';
 import { mouvementDejaFait } from '../wallet/idempotence.ts';
 import { wallet } from '../wallet/wallet.ts';
 
@@ -102,6 +103,7 @@ export function creerAchatVente(db: Base, lireFiche: LireFiche) {
   const portefeuille = db.prepare<[number], Portefeuille>(
     'SELECT cash, premium_currency AS gems FROM users WHERE id = ?',
   );
+  const encaisser = creerEncaisseur(db);
 
   function trouver(insee: string): LigneCommune {
     const c = commune.get(insee);
@@ -127,6 +129,7 @@ export function creerAchatVente(db: Base, lireFiche: LireFiche) {
   /** POST /territories/:insee/buy : prix = V0, bouclier de 12 h. */
   function acheter(moi: number, insee: string, maintenant: number, cle?: string): AchatReponse {
     db.transaction(() => {
+      encaisser(moi, maintenant); // encaisse d'abord : les revenus en attente comptent pour payer
       const c = trouver(insee);
       if (rejeu(cle, c.id)) return; // déjà acheté avec cette clé : on renvoie l'état actuel
       const joueur = lireJoueur.get(moi);
@@ -168,6 +171,7 @@ export function creerAchatVente(db: Base, lireFiche: LireFiche) {
   function vendre(moi: number, insee: string, maintenant: number, cle?: string): VenteReponse {
     const saleAmount = db
       .transaction((): number => {
+        encaisser(moi, maintenant); // encaisse d'abord, avant que la commune et ses bâtiments ne partent
         const c = trouver(insee);
         const deja = rejeu(cle, c.id);
         if (deja) return deja.amount;
