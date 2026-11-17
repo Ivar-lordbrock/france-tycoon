@@ -8,4 +8,6 @@
 
 `bpe` et `osm` recalculent ensuite I, V0 et les emplacements de toutes les communes avec `shared/src/balance.ts`, sans toucher aux propriétaires ni aux bâtiments. Chaque étape est rejouable.
 
+Si Overpass est surchargé (erreur 429 ou 5xx cinq fois de suite), `import:osm` s'arrête : il suffit de le relancer, les départements déjà reçus sont relus depuis `data/raw/osm/` sans nouvelle requête.
+
 Les téléchargements bruts vont dans `data/raw/` (ignoré par Git). Respecter les services : 1 requête/seconde sur l'API Geo, pauses sur Overpass.
