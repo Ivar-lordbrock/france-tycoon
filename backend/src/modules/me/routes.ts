@@ -1,5 +1,8 @@
 import {
+  capitaleReponseSchema,
+  deplacerCapitaleCorpsSchema,
   encaissementReponseSchema,
+  fileConstructionSchema,
   lireNotificationsCorpsSchema,
   lireNotificationsReponseSchema,
   mesTerritoiresSchema,
@@ -9,7 +12,9 @@ import {
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ErreurMetier } from '../../erreurs.ts';
 import { exigerJoueur } from '../auth/requete.ts';
+import { creerLecteurChantiers } from '../buildings/file.ts';
 import { creerEncaisseur } from '../income/revenus.ts';
+import { creerDeplacementCapitale } from './capitale.ts';
 import { creerLecteurMoi } from './requetes.ts';
 import { creerLecteurMesTerritoires } from './territoires.ts';
 
@@ -20,6 +25,9 @@ export const routesMoi: FastifyPluginAsyncZod = async (app) => {
   const lireMoi = creerLecteurMoi(app.db);
   const lireMesTerritoires = creerLecteurMesTerritoires(app.db);
   const encaisser = creerEncaisseur(app.db);
+  const lireChantiers = creerLecteurChantiers(app.db);
+  const deplacerCapitale = creerDeplacementCapitale(app.db);
+  const files = app.db.prepare<[number], number>('SELECT build_queue_slots FROM users WHERE id = ?').pluck();
   const pseudoPris = app.db
     .prepare<[string, number], number>('SELECT 1 FROM users WHERE pseudo = ? AND id <> ?')
     .pluck();
@@ -62,6 +70,22 @@ export const routesMoi: FastifyPluginAsyncZod = async (app) => {
       })
       .immediate();
   });
+
+  app.get('/construction-queue', { schema: { response: { 200: fileConstructionSchema } } }, (req) => {
+    const id = exigerJoueur(req);
+    return app.db
+      .transaction(() => {
+        encaisser(id, maintenant()); // termine les chantiers finis : il ne reste que ceux en cours
+        return { slots: files.get(id) ?? 1, works: lireChantiers(id) };
+      })
+      .immediate();
+  });
+
+  app.post(
+    '/capital',
+    { schema: { body: deplacerCapitaleCorpsSchema, response: { 200: capitaleReponseSchema } } },
+    (req) => deplacerCapitale(exigerJoueur(req), req.body.insee, maintenant()),
+  );
 
   app.post('/collect', { schema: { response: { 200: encaissementReponseSchema } } }, (req) => {
     const id = exigerJoueur(req);
