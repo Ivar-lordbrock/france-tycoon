@@ -168,7 +168,7 @@ En patrimoine, une OPA réussie coûte `0,5 × V_T` à l'attaquant et rapporte `
 
 - Activité = toute requête connectée (`last_active_at` mis à jour au plus toutes les 5 min).
 - J+11 sans activité : notification « tes territoires seront libérés dans 3 jours ».
-- **J+14** : chaque territoire est racheté par l'État pour `arrondi_100_inférieur( 50 % × (V0 + B) )` (`rachatInactivite` ; les fortifications ne comptent pas) (crédité au joueur, `inactivity_buyback`), ses bâtiments sont détruits, les OPA qui le visent sont annulées et remboursées, il redevient **libre au prix V0**. Le joueur passe `dormant` ; s'il revient, il garde son cash et repart.
+- **J+14** : chaque territoire est racheté par l'État pour `arrondi_100_inférieur( 50 % × (V0 + B) )` (`rachatInactivite` ; les fortifications ne comptent pas) (crédité au joueur, `inactivity_buyback`), ses bâtiments sont détruits, les OPA qui le visent sont annulées et remboursées, il redevient **libre au prix V0**. Le joueur passe `dormant` ; s'il revient (première requête connectée), il redevient `active`, garde son cash et repart. Ses revenus en attente (48 h au plus) lui sont versés avant le rachat.
 
 ## 5.7 Quêtes et tutoriel
 

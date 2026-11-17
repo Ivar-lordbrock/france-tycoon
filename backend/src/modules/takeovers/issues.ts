@@ -8,7 +8,7 @@ import type { Base } from '../../db/connexion.ts';
 import { creerRecalculLimite } from '../buildings/limites.ts';
 import { wallet } from '../wallet/wallet.ts';
 
-// Les issues d'une OPA (docs/05, 5.5) : défendue, acceptée, réussie au bout de 24 h, retirée.
+// Les issues d'une OPA (docs/05, 5.5) : défendue, acceptée, réussie au bout de 24 h, retirée, annulée par le système.
 // Chaque issue tourne dans la transaction de l'appelant, avec un statut `pending` vérifié avant.
 
 /** Ce qu'il faut savoir d'une OPA pour la terminer. */
@@ -52,6 +52,9 @@ export function creerIssuesOpa(db: Base, encaisserSimple: EncaisseurSimple) {
   const fortifier = db.prepare<[number, number, number]>(
     'UPDATE territories SET fortification_value = fortification_value + ?, shield_until = ? WHERE id = ?',
   );
+  const noterHistorique = db.prepare<[number, number, number, number, number, number]>(`
+    INSERT INTO territory_ownership_history (territory_id, from_user_id, to_user_id, reason, price, takeover_id, created_at)
+    VALUES (?, ?, ?, 'takeover', ?, ?, ?)`);
   const pseudo = db.prepare<[number], string>('SELECT pseudo FROM users WHERE id = ?').pluck();
   const notifier = db.prepare<[number, string, number]>(
     "INSERT INTO notifications (user_id, kind, payload, created_at) VALUES (?, 'takeover_resolved', ?, ?)",
@@ -108,6 +111,7 @@ export function creerIssuesOpa(db: Base, encaisserSimple: EncaisseurSimple) {
       defenseur: o.defenderId,
     });
     if (bouge.changes !== 1) throw new Error(`OPA ${o.id} : la commune n’est plus au défenseur`);
+    noterHistorique.run(o.territoryId, o.defenderId, o.attackerId, o.offerAmount, o.id, instant);
     // Un siège social sur la commune change la limite de territoires des deux joueurs.
     recalculerLimite(o.defenderId);
     recalculerLimite(o.attackerId);
@@ -138,6 +142,22 @@ export function creerIssuesOpa(db: Base, encaisserSimple: EncaisseurSimple) {
     verifierTransaction(o);
     payerIndemnite(o, cle);
     terminer(o, 'cancelled', instant, ['defender']);
+  }
+
+  /**
+   * Annulée par le système (défenseur libéré pour inactivité, compte banni) : l'attaquant récupère
+   * toute son offre, rien pour le défenseur.
+   */
+  function annuler(o: OpaATerminer, instant: number) {
+    verifierTransaction(o);
+    wallet.apply(db, {
+      userId: o.attackerId,
+      currency: 'cash',
+      amount: o.offerAmount,
+      reason: 'takeover_refund',
+      ref: ref(o),
+    });
+    terminer(o, 'voided', instant, ['attacker']);
   }
 
   /** Offre rendue à l'attaquant moins l'indemnité ; l'indemnité au défenseur. */
@@ -176,5 +196,5 @@ export function creerIssuesOpa(db: Base, encaisserSimple: EncaisseurSimple) {
     return db.inTransaction ? resoudre() : db.transaction(resoudre).immediate();
   }
 
-  return { lire: (id: number) => lire.get(id), transferer, defendre, retirer, resoudreEchues };
+  return { lire: (id: number) => lire.get(id), transferer, defendre, retirer, annuler, resoudreEchues };
 }

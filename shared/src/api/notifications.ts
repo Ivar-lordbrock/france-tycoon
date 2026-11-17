@@ -47,6 +47,7 @@ export type ContenuOpaTerminee = z.infer<typeof contenuOpaTermineeSchema>;
 
 /** J+11 sans activité : les territoires seront libérés à `releaseAt`. */
 export const contenuAvertissementInactiviteSchema = z.object({ releaseAt: entier });
+export type ContenuAvertissementInactivite = z.infer<typeof contenuAvertissementInactiviteSchema>;
 
 /** J+14 : l'État a racheté les territoires du joueur absent ; il garde son cash. */
 export const contenuLiberationInactiviteSchema = z.object({
@@ -54,6 +55,7 @@ export const contenuLiberationInactiviteSchema = z.object({
   /** Total versé (5.6 : 50 % de V0 + bâtiments, par territoire). */
   amount: entier.nonnegative(),
 });
+export type ContenuLiberationInactivite = z.infer<typeof contenuLiberationInactiviteSchema>;
 
 const message = { id: entier.positive(), createdAt: entier, readAt: entier.nullable() };
 
