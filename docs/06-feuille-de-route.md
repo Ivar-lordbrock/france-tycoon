@@ -52,6 +52,8 @@ Décisions prises le 17/11/2026 (détail dans [idees.md](idees.md#décisions-pri
 
 Décisions prises le 17/11/2026 ([idees.md](idees.md#décisions-prises)) : les règles de [5.5](05-equilibrage.md#55-opa-rachat-hostile) et [5.6](05-equilibrage.md#56-inactivité) sont gardées telles quelles, dont l'ancienneté de **7 jours** pour lancer une OPA. Contrat dans `shared/src/api/opa.ts` et `notifications.ts`.
 
+**Faite** le 17/11/2026 en 7 paquets (PR #25 à #31), version **v0.4.0**. Essayé à la main avec deux comptes : lancer, défendre, retirer, messages en direct. Vérifié seulement par les tests : accepter, 24 h sans réponse, inactivité.
+
 | Dev A | Dev B |
 |---|---|
 | OPA : devis, lancement (séquestre), défense, acceptation, retrait, toutes les conditions de 5.5 | Fenêtre de devis d'OPA (montants, raisons d'inéligibilité) |
@@ -63,6 +65,8 @@ Décisions prises le 17/11/2026 ([idees.md](idees.md#décisions-prises)) : les r
 **Fini quand** : deux comptes de test jouent une OPA complète dans chacune des issues, et un compte inactif voit ses communes libérées.
 
 ## Étape 5 — Rétention : tutoriel, quêtes, classement
+
+Décisions prises le 17/11/2026 ([idees.md](idees.md#décisions-prises)) : un **bouton « Encaisser »** dans la barre du haut (seul ce clic compte pour le tutoriel et la quête « Trésorier »), un **rang qui ne redescend jamais**, le tutoriel **proposé une fois aux joueurs déjà inscrits** (avec « Passer »). Contrat dans `shared/src/api/quetes.ts`, `tutoriel.ts` et `classement.ts`.
 
 | Dev A | Dev B |
 |---|---|

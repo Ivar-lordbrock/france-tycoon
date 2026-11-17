@@ -39,6 +39,7 @@
 | `NO_WORKS_IN_PROGRESS` | 409 | Annuler un chantier alors qu'il n'y en a pas |
 | `CAPITAL_COOLDOWN` | 409 | Déplacer sa capitale moins de 7 jours après le dernier déplacement |
 | `PSEUDO_TAKEN` | 409 | Pseudo déjà pris par un autre joueur (majuscules ignorées) |
+| `QUEST_NOT_CLAIMABLE` | 409 | Réclamer une quête pas encore finie ou déjà réclamée ; `details.reason` (`not_completed`, `already_claimed`) |
 | `VALIDATION_ERROR` | 400 | Corps de requête invalide |
 | `RATE_LIMITED` | 429 | Trop de requêtes |
 | `FEATURE_DISABLED` | 404 | Boutique en V1, connexion Google pas configurée |
@@ -100,14 +101,16 @@ Réponses : `FORBIDDEN` si ce n'est pas son rôle (le défenseur défend ou acce
 
 | Méthode | Route | | Corps → Réponse |
 |---|---|---|---|
-| GET | `/me/quests` | 🔒 | → les 3 quêtes du jour (tirées au premier appel de la journée, heure de Paris) |
-| POST | `/me/quests/:id/claim` | 🔒💰 | → récompense versée (`quest_reward`) |
-| GET | `/tutorial` | 🔒 | → étapes + étapes faites |
-| POST | `/tutorial/:stepKey/complete` | 🔒 | Seulement pour les étapes `validated_by = 'client'` ; les autres sont validées par le serveur quand l'action a lieu |
-| POST | `/tutorial/skip` | 🔒 | → passe le tutoriel (pas de récompense) |
-| POST | `/events/track` | 🔒 | `{ type: 'territory_visited' \| 'zone_visited' \| 'leaderboard_viewed', ref }` → fait avancer quêtes et tutoriel (limité à 60/min) |
-| GET | `/leaderboard?scope=national\|metropole\|outre_mer\|region:84&cursor=` | | → `{ rank, pseudo, avatar, netWorth, territories, rankLevel }`, + ma position si connecté |
-| GET | `/players/:pseudo` | | → profil public : patrimoine, rang, territoires |
+| GET | `/me/quests` | 🔒 | → `{ date, resetsAt, quests[] }` : les 3 quêtes du jour (1 facile, 1 moyenne, 1 difficile), tirées au premier appel de la journée (heure de Paris, `date` = `AAAA-MM-JJ`) ; `resetsAt` = prochain minuit à Paris. Chaque quête : `{ id, slot, code, title, description, difficulty, eventType, target, progress, rewardCash, rewardGems, completedAt, claimedAt }` |
+| POST | `/me/quests/:id/claim` | 🔒💰 | → `{ quest, wallet }` : récompense versée (`quest_reward`). Erreurs : `NOT_FOUND` (pas à moi), `QUEST_NOT_CLAIMABLE` (pas finie ou déjà réclamée) |
+| GET | `/tutorial` | 🔒 | → `{ steps[], completedAt, skipped }` ; chaque étape : `{ key, position, title, body, anchor, validatedBy, rewardCash, rewardGems, completedAt }` |
+| POST | `/tutorial/:stepKey/complete` | 🔒 | → même réponse + `wallet`. Seulement pour les étapes `validatedBy = 'client'` (`FORBIDDEN` sinon, `NOT_FOUND` si la clé est inconnue) ; les autres sont validées par le serveur quand l'action a lieu. Rejouer une étape faite ne fait rien |
+| POST | `/tutorial/skip` | 🔒 | → même réponse que `GET /tutorial` : passe le tutoriel (pas de récompense pour les étapes non faites) |
+| POST | `/events/track` | 🔒 | `{ type: 'territory_visited' \| 'zone_visited' \| 'leaderboard_viewed', ref }` → 204 : fait avancer quêtes et tutoriel (limité à 60/min). Une même commune ou zone ne compte qu'une fois par jour |
+| GET | `/leaderboard?scope=national\|metropole\|outre_mer\|region:84&cursor=` | | → `{ scope, players[], nextCursor, me, updatedAt }` ; chaque ligne : `{ rank, pseudo, avatar, markerColor, netWorth, territories, rankLevel }`, 50 par page ; `me` = ma ligne si je suis connecté et dans la portée ; `updatedAt` = dernier passage de la tâche `leaderboard`. Hors national : les joueurs qui possèdent au moins une commune dans la portée, classés par patrimoine total |
+| GET | `/players/:pseudo` | | → `{ pseudo, avatar, markerColor, rankLevel, netWorth, nationalRank, createdAt, territories[] }` : profil public (ni cash, ni gemmes). `NOT_FOUND` si le pseudo est inconnu ou le compte banni |
+
+Contrat : `shared/src/api/quetes.ts`, `tutoriel.ts`, `classement.ts` ; règles dans [05-equilibrage.md](05-equilibrage.md#57-quêtes-et-tutoriel) (5.4 et 5.7).
 
 ### Notifications et temps réel
 

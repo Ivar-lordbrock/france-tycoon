@@ -47,6 +47,32 @@ export const COLLECTIVITES_OUTRE_MER: ReadonlyArray<{ code: string; nom: string 
   { code: '988', nom: 'Nouvelle-Calédonie' },
 ];
 
+/**
+ * Régions (colonne `territories.region_code`) : les 18 régions, puis les collectivités d'outre-mer,
+ * qui ont leur propre code. Sert au classement par région (étape 5).
+ */
+export const REGIONS: ReadonlyArray<{ code: string; nom: string }> = [
+  { code: '11', nom: 'Île-de-France' },
+  { code: '24', nom: 'Centre-Val de Loire' },
+  { code: '27', nom: 'Bourgogne-Franche-Comté' },
+  { code: '28', nom: 'Normandie' },
+  { code: '32', nom: 'Hauts-de-France' },
+  { code: '44', nom: 'Grand Est' },
+  { code: '52', nom: 'Pays de la Loire' },
+  { code: '53', nom: 'Bretagne' },
+  { code: '75', nom: 'Nouvelle-Aquitaine' },
+  { code: '76', nom: 'Occitanie' },
+  { code: '84', nom: 'Auvergne-Rhône-Alpes' },
+  { code: '93', nom: 'Provence-Alpes-Côte d’Azur' },
+  { code: '94', nom: 'Corse' },
+  { code: '01', nom: 'Guadeloupe' },
+  { code: '02', nom: 'Martinique' },
+  { code: '03', nom: 'Guyane' },
+  { code: '04', nom: 'La Réunion' },
+  { code: '06', nom: 'Mayotte' },
+  ...COLLECTIVITES_OUTRE_MER,
+];
+
 const DEPARTEMENTS_EXCLUS = new Set(['984', '989']);
 
 /**

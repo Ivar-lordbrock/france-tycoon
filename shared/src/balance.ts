@@ -4,6 +4,7 @@
 // Étape 2 : capital de départ, protection débutant, revenu du sol (5.3), valeur d'un territoire (5.4).
 // Étape 3 : bâtiments (5.2), revenus et calcul hors ligne (5.3), vente, limites de territoires (5.4).
 // Étape 4 : OPA (5.5), patrimoine (5.4) et inactivité (5.6).
+// Étape 5 : rangs (5.4), quêtes du jour et jour de Paris (5.7).
 
 /** À incrémenter quand une formule change : `territories.balance_version` dit quelles valeurs sont à recalculer. */
 export const BALANCE_VERSION = 1;
@@ -423,4 +424,77 @@ export const TAUX_RACHAT_INACTIVITE_PCT = 50;
 /** Rachat pour inactivité : arrondi_100_inférieur( 50 % × (V0 + B) ) ; les fortifications ne comptent pas. */
 export function rachatInactivite(v0: number, investi: number): number {
   return Math.floor(((v0 + investi) * TAUX_RACHAT_INACTIVITE_PCT) / 10_000) * 100;
+}
+
+// --- Étape 5 : rangs (5.4) ---
+
+/** Rang atteint avec ce patrimoine : le plus haut dont le seuil est atteint. */
+export function rangDuPatrimoine(patrimoineJoueur: number): number {
+  return RANGS.reduce((rang, r) => (patrimoineJoueur >= r.patrimoineMin ? r.niveau : rang), 0);
+}
+
+/**
+ * Le rang ne redescend jamais (décidé au début de l'étape 5) : sinon un joueur perdrait un emplacement
+ * et se retrouverait au-dessus de sa limite de territoires après une OPA perdue.
+ */
+export function nouveauRang(rangActuel: number, patrimoineJoueur: number): number {
+  return Math.max(rangActuel, rangDuPatrimoine(patrimoineJoueur));
+}
+
+/** La tâche `leaderboard` recalcule patrimoines et rangs toutes les 10 min (docs/02, 2.6). */
+export const CLASSEMENT_TOUTES_LES_S = 10 * 60;
+
+// --- Étape 5 : quêtes du jour (5.7) ---
+
+/** Les quêtes se renouvellent à minuit, heure de Paris (heure d'été comprise). */
+export const FUSEAU_JEU = 'Europe/Paris';
+
+const formatJour = new Intl.DateTimeFormat('fr-FR', {
+  timeZone: FUSEAU_JEU,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hourCycle: 'h23',
+});
+
+/** Date et heure affichées à Paris pour un instant (secondes Unix). */
+function heureDeParis(instant: number) {
+  const parties = Object.fromEntries(
+    formatJour.formatToParts(new Date(instant * 1000)).map((p) => [p.type, p.value]),
+  ) as Record<string, string>;
+  return {
+    annee: Number(parties.year),
+    mois: Number(parties.month),
+    jour: Number(parties.day),
+    secondes: Number(parties.hour) * 3_600 + Number(parties.minute) * 60 + Number(parties.second),
+  };
+}
+
+/** Jour du jeu `AAAA-MM-JJ` à Paris (colonne `user_quests.quest_date`). */
+export function jourParis(instant: number): string {
+  const { annee, mois, jour } = heureDeParis(instant);
+  return `${annee}-${String(mois).padStart(2, '0')}-${String(jour).padStart(2, '0')}`;
+}
+
+/** Décalage de Paris sur UTC à cet instant, en secondes (3 600 en hiver, 7 200 en été). */
+function decalageParis(instant: number): number {
+  const { annee, mois, jour, secondes } = heureDeParis(instant);
+  return Date.UTC(annee, mois - 1, jour) / 1000 + secondes - instant;
+}
+
+/** Prochain minuit à Paris (secondes Unix) : les quêtes du jour changent à cet instant. */
+export function prochainMinuitParis(instant: number): number {
+  const { annee, mois, jour } = heureDeParis(instant);
+  // Minuit du lendemain « comme si Paris était à l'heure UTC », moins le décalage de ce soir-là.
+  // Le changement d'heure se fait à 2 h ou 3 h du matin, jamais entre 21 h UTC et minuit à Paris.
+  const minuitUtc = Date.UTC(annee, mois - 1, jour + 1) / 1000;
+  return minuitUtc - decalageParis(minuitUtc - 3 * 3_600);
+}
+
+/** Récompense d'une quête : max( cash_min ; arrondi_100( h × R_J ) ), figée au tirage (h = 1 à 4 heures). */
+export function recompenseQuete(heures: number, revenuHeure: number, cashMin: number): number {
+  return Math.max(cashMin, Math.round((heures * revenuHeure) / 100) * 100);
 }
