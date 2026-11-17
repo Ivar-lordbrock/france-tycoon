@@ -29,6 +29,9 @@ describe('textes de la fiche commune', () => {
   it('dit à qui est la commune', () => {
     expect(proprietaire(fiche)).toBe('Libre');
     expect(proprietaire({ ...fiche, state: 'mine' })).toBe('À toi');
+    expect(proprietaire({ ...fiche, state: 'mine', shieldUntil: 1_800_000_000 })).toMatch(
+      /^À toi, sous bouclier jusqu’à /,
+    );
     expect(
       proprietaire({
         ...fiche,
