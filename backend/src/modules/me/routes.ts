@@ -1,11 +1,13 @@
-import { modifierMoiCorpsSchema, moiReponseSchema } from '@france-tycoon/shared';
+import { mesTerritoiresSchema, modifierMoiCorpsSchema, moiReponseSchema } from '@france-tycoon/shared';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ErreurMetier } from '../../erreurs.ts';
 import { exigerJoueur } from '../auth/requete.ts';
 import { lireMoi } from './requetes.ts';
+import { creerLecteurMesTerritoires } from './territoires.ts';
 
-/** Routes 🔒 /me : mon profil et mon portefeuille. */
+/** Routes 🔒 /me : mon profil, mon portefeuille, mes territoires. */
 export const routesMoi: FastifyPluginAsyncZod = async (app) => {
+  const lireMesTerritoires = creerLecteurMesTerritoires(app.db);
   const pseudoPris = app.db
     .prepare<[string, number], number>('SELECT 1 FROM users WHERE pseudo = ? AND id <> ?')
     .pluck();
@@ -17,6 +19,10 @@ export const routesMoi: FastifyPluginAsyncZod = async (app) => {
     WHERE id = @id`);
 
   app.get('/', { schema: { response: { 200: moiReponseSchema } } }, (req) => lireMoi(app.db, exigerJoueur(req)));
+
+  app.get('/territories', { schema: { response: { 200: mesTerritoiresSchema } } }, (req) =>
+    lireMesTerritoires(exigerJoueur(req), Math.floor(Date.now() / 1000)),
+  );
 
   app.patch('/', { schema: { body: modifierMoiCorpsSchema, response: { 200: moiReponseSchema } } }, (req) => {
     const id = exigerJoueur(req);

@@ -64,6 +64,11 @@ export const ficheCommuneSchema = z.object({
     canBuy: z.boolean(),
     buyPrice: entier.positive().nullable(),
     buyReasons: raisonsSchema,
+    /** Vente à l'État (70 % de la valeur totale, bâtiments détruits) : seulement sa propre commune. */
+    canSell: z.boolean(),
+    /** `null` si la commune n'est pas au joueur connecté. */
+    sellPrice: entier.nonnegative().nullable(),
+    sellReasons: raisonsSchema,
     canTakeover: z.boolean(),
     takeoverReasons: raisonsSchema,
   }),
