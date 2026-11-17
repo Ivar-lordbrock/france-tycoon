@@ -30,7 +30,7 @@
 | Base | **SQLite** via **better-sqlite3** | Synchrone et transactionnel : idéal pour une économie (pas de « course » entre deux requêtes) |
 | Auth | **google-auth-library** (`verifyIdToken`) | Vérification officielle du jeton Google |
 | Tâches planifiées | **node-cron** (fuseau `Europe/Paris`) | Dans le même processus que l'API, pas d'infrastructure en plus |
-| Temps réel | **Server-Sent Events** (`GET /api/v1/events`) | Notifications d'OPA sans WebSocket |
+| Temps réel | **Server-Sent Events** (`GET /api/v1/events`) | Notifications d'OPA sans WebSocket ni bibliothèque : le flux relit la table `notifications` chaque seconde (docs/04) |
 | Tests | **Vitest** (unitaires), **node:test** (schéma SQL, déjà en place), **Playwright** (bout en bout, étape 6) | |
 | Qualité | **Biome** (lint + format en un outil) | Une seule config pour le duo |
 | Hébergement | **Un VPS** (ex. 2 vCPU / 4 Go) + **Caddy** (HTTPS auto) + **Litestream** (sauvegarde continue de SQLite) | SQLite = un seul serveur, c'est voulu et suffisant pour des milliers de joueurs |

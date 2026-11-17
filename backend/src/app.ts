@@ -8,6 +8,7 @@ import { type OptionsAuth, routesAuth } from './modules/auth/routes.ts';
 import { routesBatiments, routesCatalogueBatiments } from './modules/buildings/routes.ts';
 import { routesCarte } from './modules/map/routes.ts';
 import { routesMoi } from './modules/me/routes.ts';
+import { type OptionsDirect, routesDirect } from './modules/notifications/routes.ts';
 import { routesOpa } from './modules/takeovers/routes.ts';
 import { routesTerritoires } from './modules/territories/routes.ts';
 
@@ -22,10 +23,12 @@ export interface OptionsApp {
   logger?: FastifyServerOptions['logger'];
   /** Connexion : Google désactivé, pas de connexion de développement, cookie non `Secure` par défaut. */
   auth?: Partial<OptionsAuth>;
+  /** Flux en direct `/events` : passage toutes les secondes par défaut. */
+  direct?: OptionsDirect;
 }
 
 /** Construit l'application sans l'écouter : utilisée par `server.ts` et par les tests (`app.inject`). */
-export function construireApp({ db, logger = false, auth = {} }: OptionsApp) {
+export function construireApp({ db, logger = false, auth = {}, direct = {} }: OptionsApp) {
   const app = Fastify({ logger, trustProxy: true }).withTypeProvider<ZodTypeProvider>();
   const optionsAuth: OptionsAuth = { googleClientId: null, devLogin: false, cookieSecure: false, ...auth };
 
@@ -40,6 +43,7 @@ export function construireApp({ db, logger = false, auth = {} }: OptionsApp) {
   app.register(routesCatalogueBatiments, { prefix: '/api/v1/building-types' });
   app.register(routesBatiments, { prefix: '/api/v1/buildings' });
   app.register(routesMoi, { prefix: '/api/v1/me' });
+  app.register(routesDirect, { prefix: '/api/v1/events', ...direct });
   app.register(routesCarte, { prefix: '/api/v1/map' });
   app.register(routesTerritoires, { prefix: '/api/v1/territories' });
   app.register(routesOpa, { prefix: '/api/v1/takeovers' });
