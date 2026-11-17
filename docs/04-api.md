@@ -28,12 +28,15 @@
 | `BUILD_QUEUE_FULL` | 409 | Toutes les files de construction occupées |
 | `BUILDING_REQUIREMENT` | 409 | Population trop faible, limite par territoire/joueur, niveau max |
 | `SHIELD_ACTIVE` | 409 | Territoire sous bouclier |
-| `CAPITAL_IMMUNE` | 409 | OPA sur une capitale |
+| `CAPITAL_IMMUNE` | 409 | OPA sur une capitale, ou vente de sa capitale |
 | `NEWBIE_PROTECTION` | 409 | Cible (ou attaquant) protégé 72 h / compte de moins de 7 jours |
 | `TAKEOVER_ALREADY_PENDING` | 409 | OPA déjà en cours sur cette commune |
 | `TAKEOVER_LIMIT` | 409 | Trop d'OPA sortantes, ou défenseur déjà visé par 2 OPA |
 | `TAKEOVER_COOLDOWN` | 409 | Même attaquant → même défenseur, moins de 7 jours après un échec |
 | `TARGET_TOO_SMALL` | 409 | Patrimoine de la cible < 25 % du vôtre (anti-acharnement) |
+| `WORKS_IN_PROGRESS` | 409 | Démolir un bâtiment pendant son chantier (l'annuler d'abord) |
+| `NO_WORKS_IN_PROGRESS` | 409 | Annuler un chantier alors qu'il n'y en a pas |
+| `CAPITAL_COOLDOWN` | 409 | Déplacer sa capitale moins de 7 jours après le dernier déplacement |
 | `PSEUDO_TAKEN` | 409 | Pseudo déjà pris par un autre joueur (majuscules ignorées) |
 | `VALIDATION_ERROR` | 400 | Corps de requête invalide |
 | `RATE_LIMITED` | 429 | Trop de requêtes |
