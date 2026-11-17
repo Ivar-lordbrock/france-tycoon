@@ -144,7 +144,7 @@ LIMIT 3000;
 
 ### Bâtiments
 
-**`building_types`** — catalogue (6 types en V1 : résidence, commerce, usine, quartier d'affaires, équipement public, siège social). Contient tous les paramètres d'équilibrage : coût, croissance du coût, revenu, bonus en %, temps de construction, niveau max, emplacements occupés, limites par territoire et par joueur, population minimale.
+**`building_types`** — catalogue (7 types en V1 : résidence, commerce, usine, quartier d'affaires, équipement public, gare, siège social ; niveau 5 au maximum). Contient tous les paramètres d'équilibrage : coût, croissance du coût, revenu, bonus en %, temps de construction, niveau max, emplacements occupés, limites par territoire et par joueur, population minimale.
 
 **`buildings`** — un bâtiment posé sur un territoire.
 - `level` = niveau **actif** (0 pendant la toute première construction).
@@ -194,7 +194,7 @@ LIMIT 3000;
 | Pas d'OPA sur soi-même | Capitale immunisée |
 | Journal financier inaltérable, pas de double paiement | Tout mouvement d'argent passe par `wallet.apply` |
 | Une capitale max par joueur | Un seul siège social par joueur |
-| Chantier cohérent (pas de saut de niveau) | Une seule file de construction (ou 2–3 avec bonus) |
+| Chantier cohérent (pas de saut de niveau) | Une seule file de construction (2ᵉ et 3ᵉ achetables plus tard) |
 
 ## 3.5 Exploitation
 

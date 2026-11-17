@@ -8,7 +8,7 @@
 | Seulement les communes françaises (Métropole + Outre-mer) | La liste des communes achetables vient d'une source officielle, le serveur refuse le reste | Import de l'**API Geo** (`geo.api.gouv.fr`) dans SQLite ; tout achat vérifie que le code INSEE existe dans `territories` |
 | ~35 000 communes sur une carte web | Impossible d'afficher tous les contours d'un coup | Contours **simplifiés à l'import**, servis **par écran visible** (index spatial R*Tree) et seulement à partir du zoom 9 |
 | Prix et revenus tirés de la réalité | Données de population et d'équipements par commune | Population (API Geo/INSEE) + équipements (**INSEE BPE**) + gares, monuments, attractions (**OpenStreetMap / Overpass**) |
-| Revenus même hors ligne | Pas de minuterie par joueur | **Calcul différé** : à chaque requête, revenu = débit × temps écoulé depuis `income_collected_at` (plafonné à 24 h) |
+| Revenus même hors ligne | Pas de minuterie par joueur | **Calcul différé** : à chaque requête, revenu = débit × temps écoulé depuis `income_collected_at` (plafonné à 48 h) |
 | OPA de 24 h, libération des inactifs | Des actions à heure fixe, même si personne n'est connecté | **Tâches planifiées** (`node-cron`) **+ vérification à la requête** (une OPA expirée est résolue dès qu'on la lit) |
 | Économie juste, sans triche | Le client ne doit rien décider | Toutes les règles **côté serveur**, en **transactions SQLite** ; montants **entiers** ; journal `wallet_transactions` en ajout seul |
 | Monétisation plus tard | Ne pas avoir à tout refaire | Deux devises séparées dès la V1 (`cash`, `premium_currency`), tables boutique et paiements déjà créées mais désactivées |
