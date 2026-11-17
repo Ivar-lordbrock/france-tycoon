@@ -58,7 +58,7 @@ export const ficheCommuneSchema = z.object({
   ),
   /**
    * Ce que le joueur connecté peut faire ici ; les raisons sont des codes d'erreur de l'API.
-   * `canTakeover` reste à false tant que les OPA ne sont pas ouvertes (étape 4).
+   * Les raisons d'OPA sont celles du devis (`GET /territories/:insee/takeover-quote`).
    */
   actions: z.object({
     canBuy: z.boolean(),
