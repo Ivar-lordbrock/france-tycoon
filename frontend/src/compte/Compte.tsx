@@ -3,6 +3,7 @@ import { type FormEvent, useId, useState } from 'react';
 import { useCashEnDirect } from '../api/batiments.ts';
 import { useConfigConnexion, useConnexion, useDeconnexion, useModifierProfil, useMoi } from '../api/compte.ts';
 import { ChantierEnCours } from '../hud/ChantierEnCours.tsx';
+import { MesOpa } from '../hud/MesOpa.tsx';
 import { ResumeRetour } from '../hud/ResumeRetour.tsx';
 import { entier, tycoons } from '../panels/fiche-texte.ts';
 import { MesTerritoires } from '../panels/MesTerritoires.tsx';
@@ -19,6 +20,7 @@ export function Compte() {
   return (
     <>
       <BarreJoueur moi={moi} />
+      <MesOpa />
       <ResumeRetour moi={moi} />
     </>
   );

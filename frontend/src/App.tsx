@@ -1,5 +1,6 @@
 import { Compte } from './compte/Compte.tsx';
 import { BarreEtat } from './hud/BarreEtat.tsx';
+import { Legende } from './hud/Legende.tsx';
 import { CarteFrance } from './map/CarteFrance.tsx';
 import { FicheCommune } from './panels/FicheCommune.tsx';
 import { Recherche } from './panels/Recherche.tsx';
@@ -32,6 +33,9 @@ export function App() {
 
       <div className="pointer-events-none absolute inset-x-4 bottom-7 z-[1000] flex flex-col items-start gap-2">
         <BarreEtat />
+        <div className="max-md:hidden">
+          <Legende />
+        </div>
         <div className="w-full md:hidden">
           <SelecteurZones />
         </div>
