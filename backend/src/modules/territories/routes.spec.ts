@@ -1,4 +1,4 @@
-import { ficheCommuneSchema, revenuSol } from '@france-tycoon/shared';
+import { ficheCommuneSchema } from '@france-tycoon/shared';
 import { describe, expect, it } from 'vitest';
 import type { Base } from '../../db/connexion.ts';
 import { appDeTest, baseDeTest, connecter } from '../../outils-test/base.ts';
@@ -143,7 +143,8 @@ describe('GET /api/v1/territories/:insee', () => {
     expect(corps.totalValue).toBe(21_800 + 4_430 + 1_000);
     expect(corps.buildingSlots.used).toBe(1);
     expect(corps.buildings).toMatchObject([{ typeCode: 'residence', level: 1, targetLevel: null }]);
-    expect(corps.incomePerHour).toBe(revenuSol(21_800));
+    // Sol (1 % de V0 = 218) + Résidence niveau 1 au village (295, docs/05, 5.2).
+    expect(corps.incomePerHour).toBe(218 + 295);
   });
 
   it('code INSEE inconnu : 404 TERRITORY_NOT_FOUND ; code mal formé : 400', async () => {

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { chantierFiniNonLuSchema } from './economie.ts';
 
 // Routes /api/v1/auth et /api/v1/me (docs/04-api.md, « Authentification et profil »).
 
@@ -58,13 +59,18 @@ export type ConnexionReponse = z.infer<typeof connexionReponseSchema>;
 export const moiReponseSchema = z.object({
   user: profilSchema,
   wallet: z.object({ cash: z.number().int().nonnegative(), gems: z.number().int().nonnegative() }),
-  /** Revenu passif total par heure (sol des territoires possédés ; bâtiments à l'étape 3). */
+  /** Revenu passif total par heure : sol et bâtiments des territoires possédés (5.3). */
   incomePerHour: z.number().int().nonnegative(),
   territories: z.object({ owned: z.number().int().nonnegative(), max: z.number().int().positive() }),
   buildQueueSlots: z.number().int().positive(),
   /** Fin de la protection débutant (secondes Unix). */
   newbieShieldUntil: z.number().int(),
   unreadNotifications: z.number().int().nonnegative(),
+  /**
+   * Résumé au retour : chantiers finis pendant l'absence, pas encore vus (50 au plus, du plus ancien
+   * au plus récent). Les marquer comme lus : POST /me/notifications/read.
+   */
+  finishedWorks: z.array(chantierFiniNonLuSchema),
 });
 export type MoiReponse = z.infer<typeof moiReponseSchema>;
 

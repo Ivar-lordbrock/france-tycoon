@@ -101,14 +101,18 @@ Règles :
 ### Calcul hors ligne (différentiel temporel)
 
 ```
-Δt   = min( maintenant − income_collected_at ; 48 h )
-gain = ⌊ R_J × Δt / 3 600 ⌋
+Δt     = min( maintenant − income_collected_at ; 48 h )
+cumul  = Σ R_J × Δt + reste            (en ₮ × secondes, un entier)
+gain   = ⌊ cumul / 3 600 ⌋
+reste  = cumul mod 3 600               (gardé dans users.income_remainder)
 ```
 
 Le calcul se fait **par morceaux** : si un chantier s'est terminé pendant l'absence, on calcule jusqu'à sa date de fin avec l'ancien revenu, on applique le nouveau niveau, puis on continue. Le plafond de **48 h** (décidé à l'étape 3, au lieu de 24 h) ne punit pas un week-end d'absence et va avec les chantiers les plus longs ; au-delà, les revenus s'arrêtent jusqu'au retour du joueur.
 
+Le **reste** évite de perdre les fractions : un joueur qui gagne 50 ₮/h et agit toutes les 30 s gagne 0,4 ₮ à chaque fois ; sans reste il ne toucherait jamais rien, avec le reste il touche bien 50 ₮ par heure (migration 004). Formules : `revenuCumule`, `partagerCumul`, `apportBatiment` (balance.ts) ; moteur : `backend/src/modules/income/revenus.ts`, vérifié en temps simulé par `revenus.spec.ts` (« on construit, on revient 2 h plus tard : 976 ₮ exactement »). Pas encore de boost : il arrive avec les quêtes et la boutique.
+
 - Le revenu monte tout seul à l'écran ; le serveur l'encaisse à chaque action (avant un achat, un chantier…). Le bouton « Encaisser » sert au tutoriel et aux quêtes.
-- Au retour, un **résumé** dit quels chantiers se sont terminés pendant l'absence (« la gare est passée au niveau 3 »). Les messages en direct arrivent à l'étape 4 (`building.done`).
+- Au retour, un **résumé** dit quels chantiers se sont terminés pendant l'absence (« la gare est passée au niveau 3 ») : `finishedWorks` de `GET /me`, jusqu'à ce que le joueur les marque lus. Les messages en direct arrivent à l'étape 4 (`building.done`).
 
 ## 5.4 Valeur, patrimoine, limites
 

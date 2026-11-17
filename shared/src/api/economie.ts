@@ -98,6 +98,10 @@ export const chantierFiniSchema = z.object({
 });
 export type ChantierFini = z.infer<typeof chantierFiniSchema>;
 
+/** Résumé au retour (GET /me) : un chantier fini pas encore vu, et le message à marquer comme lu. */
+export const chantierFiniNonLuSchema = chantierFiniSchema.extend({ notificationId: entier });
+export type ChantierFiniNonLu = z.infer<typeof chantierFiniNonLuSchema>;
+
 // GET /me/construction-queue
 
 export const fileConstructionSchema = z.object({

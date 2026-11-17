@@ -2,11 +2,11 @@ import {
   type Chantier,
   type MesTerritoires,
   type MonTerritoire,
-  revenuSol,
   valeurTerritoire,
   type ZoneCode,
 } from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
+import { creerLecteurRevenus, revenuDuTerritoire } from '../income/revenus.ts';
 
 interface LigneTerritoire {
   id: number;
@@ -46,9 +46,11 @@ export function creerLecteurMesTerritoires(db: Base) {
     WHERE t.owner_id = ? AND b.target_level IS NOT NULL
     ORDER BY b.works_ends_at, b.id`);
   const limite = db.prepare<[number], number>('SELECT max_territories FROM users WHERE id = ?').pluck();
+  const lireRevenus = creerLecteurRevenus(db);
 
   return function lireMesTerritoires(moi: number, maintenant: number): MesTerritoires {
     const parCommune = Map.groupBy(chantiers.all(moi), (c) => c.territoryInsee);
+    const revenus = lireRevenus(moi);
     const territories = territoires.all(moi).map(
       (t): MonTerritoire => ({
         insee: t.insee,
@@ -56,8 +58,7 @@ export function creerLecteurMesTerritoires(db: Base) {
         zone: t.zone,
         baseValue: t.baseValue,
         totalValue: valeurTerritoire(t.baseValue, t.invested, t.fortification),
-        // Revenu du sol (5.3) ; les bâtiments s'y ajoutent avec le moteur de revenus (paquet suivant).
-        incomePerHour: revenuSol(t.baseValue),
+        incomePerHour: revenuDuTerritoire(t.baseValue, revenus.get(t.id)?.batiments ?? [], maintenant),
         isCapital: t.isCapital === 1,
         shieldUntil: t.shieldUntil !== null && t.shieldUntil > maintenant ? t.shieldUntil : null,
         buildingSlots: { total: t.slots, used: t.used },

@@ -172,8 +172,14 @@ export function coutNiveau(type: ParametresBatiment, niveau: number, fT: number)
   return arrondi(type.baseCost * taille * type.costGrowth ** (niveau - 1), 10);
 }
 
+/** Les seuls paramètres d'un type de bâtiment qui jouent sur le revenu. */
+export type ParametresRevenu = Pick<
+  ParametresBatiment,
+  'baseIncomePerHour' | 'incomeGrowth' | 'incomeBonusPct' | 'scalesWithTerritory'
+>;
+
 /** R(L) = arrondi( R_base × f_T × croissance^(L−1) ) par heure ; 0 au niveau 0 (première construction en cours). */
-export function revenuNiveau(type: ParametresBatiment, niveau: number, fT: number): number {
+export function revenuNiveau(type: ParametresRevenu, niveau: number, fT: number): number {
   verifierNiveau(niveau, 0);
   if (niveau === 0) return 0;
   const taille = type.scalesWithTerritory ? fT : 1;
@@ -181,7 +187,7 @@ export function revenuNiveau(type: ParametresBatiment, niveau: number, fT: numbe
 }
 
 /** Bonus de revenu du bâtiment sur tout le territoire, en % : bonus par niveau × L. */
-export function bonusNiveau(type: ParametresBatiment, niveau: number): number {
+export function bonusNiveau(type: ParametresRevenu, niveau: number): number {
   verifierNiveau(niveau, 0);
   return type.incomeBonusPct * niveau;
 }
@@ -211,6 +217,11 @@ export interface ApportBatiment {
   bonusPct: number;
 }
 
+/** Ce qu'un bâtiment de ce niveau apporte à son territoire : son revenu et son bonus. */
+export function apportBatiment(type: ParametresRevenu, niveau: number, fT: number): ApportBatiment {
+  return { revenuParHeure: revenuNiveau(type, niveau, fT), bonusPct: bonusNiveau(type, niveau) };
+}
+
 /** R_T = arrondi( ( R_sol + Σ R_b ) × ( 1 + Σ bonus_b / 100 ) ) par heure. */
 export function revenuTerritoire(v0: number, batiments: readonly ApportBatiment[]): number {
   const revenus = batiments.reduce((total, b) => total + b.revenuParHeure, revenuSol(v0));
@@ -232,13 +243,12 @@ export interface ChangementRevenu {
 }
 
 /**
- * Gain accumulé depuis `depuis` (dernier encaissement), calculé par morceaux (5.3) :
- * le revenu change à chaque chantier fini pendant l'absence. Seules les 48 premières heures comptent.
- * `changements` : les nouveaux revenus, dans n'importe quel ordre. Un changement daté de `depuis` ou avant
- * remplace `revenuDepart` (le plus récent gagne) ; ceux d'après la fenêtre des 48 h sont ignorés.
- * Résultat : ⌊ Σ R × Δt / 3 600 ⌋ (une seule troncature à la fin, pour ne perdre aucune fraction en route).
+ * Revenu accumulé depuis `depuis` (dernier encaissement), calculé par morceaux (5.3), en ₮ × secondes :
+ * Σ R × Δt, un entier. Le revenu change à chaque chantier fini pendant l'absence. Seules les 48 premières
+ * heures comptent. `changements` : les nouveaux revenus, dans n'importe quel ordre. Un changement daté de
+ * `depuis` ou avant remplace `revenuDepart` (le plus récent gagne) ; ceux d'après la fenêtre des 48 h sont ignorés.
  */
-export function gainParMorceaux(
+export function revenuCumule(
   depuis: number,
   maintenant: number,
   revenuDepart: number,
@@ -258,8 +268,26 @@ export function gainParMorceaux(
     }
     revenu = revenuParHeure;
   }
-  total += revenu * (fin - debut);
-  return Math.floor(total / 3_600);
+  return total + revenu * (fin - debut);
+}
+
+/** Gain en ₮ : ⌊ Σ R × Δt / 3 600 ⌋ (une seule troncature à la fin, pour ne perdre aucune fraction en route). */
+export function gainParMorceaux(
+  depuis: number,
+  maintenant: number,
+  revenuDepart: number,
+  changements: readonly ChangementRevenu[] = [],
+): number {
+  return Math.floor(revenuCumule(depuis, maintenant, revenuDepart, changements) / 3_600);
+}
+
+/**
+ * Encaissement : `cumul` (₮ × s, voir `revenuCumule`) plus le `reste` gardé la dernière fois.
+ * Les fractions de ₮ ne sont jamais perdues : elles restent (0 à 3 599) pour le prochain encaissement.
+ */
+export function partagerCumul(cumul: number, reste: number): { gain: number; reste: number } {
+  const total = cumul + reste;
+  return { gain: Math.floor(total / 3_600), reste: total % 3_600 };
 }
 
 // --- Étape 3 : achat, vente, limites (5.4) ---
