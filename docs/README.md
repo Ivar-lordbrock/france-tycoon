@@ -5,4 +5,6 @@
 3. [Base de données SQLite](03-base-de-donnees.md)
 4. [API REST et flux de données](04-api.md)
 5. [Formules d'équilibrage](05-equilibrage.md)
-6. [Feuille de route en 6 sprints](06-feuille-de-route.md)
+6. [Feuille de route en 6 étapes](06-feuille-de-route.md)
+7. [Travailler à deux (outils du duo)](07-travailler-a-deux.md)
+8. [Brancher la connexion Google (pas à pas)](08-connexion-google.md)

@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>France Tycoon — Outils</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23ffffff'/%3E%3Crect x='3' y='3' width='9' height='26' rx='3' fill='%232347c5'/%3E%3Crect x='20' y='3' width='9' height='26' rx='3' fill='%23e0393e'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --fond: #f4f3ef;
+    --carte: #ffffff;
+    --carte-2: #f9f8f5;
+    --encre: #1b2232;
+    --encre-2: #4c5568;
+    --encre-3: #7c8496;
+    --trait: #e3e1da;
+    --bleu: #2347c5;
+    --bleu-doux: #e8edfc;
+    --rouge: #d63a3f;
+    --vert: #16794a;
+    --vert-doux: #e3f4ea;
+    --ambre: #a35f00;
+    --ambre-doux: #fff3dc;
+    --danger: #b42318;
+    --danger-doux: #fdeceb;
+    --ombre: 0 1px 2px rgb(20 24 40 / 6%), 0 4px 16px rgb(20 24 40 / 6%);
+    --rayon: 14px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fond: #14161c;
+      --carte: #1d2029;
+      --carte-2: #232733;
+      --encre: #eef0f5;
+      --encre-2: #b5bccb;
+      --encre-3: #858da0;
+      --trait: #2f3442;
+      --bleu: #7d9bff;
+      --bleu-doux: #22305c;
+      --rouge: #ff6b6f;
+      --vert: #5fd39a;
+      --vert-doux: #173a2a;
+      --ambre: #ffbe5c;
+      --ambre-doux: #3a2c13;
+      --danger: #ff8a80;
+      --danger-doux: #3d1d1b;
+      --ombre: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 20px rgb(0 0 0 / 25%);
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  .visuellement-cache { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  html, body { margin: 0; }
+  body {
+    background: var(--fond);
+    color: var(--encre);
+    font: 15px/1.5 "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+  }
+  button { font: inherit; color: inherit; }
+  a { color: var(--bleu); }
+  code, .code { font-family: "Cascadia Mono", Consolas, ui-monospace, monospace; font-size: .92em; }
+
+  .drapeau { height: 4px; background: linear-gradient(90deg, var(--bleu) 0 33.3%, #fff 33.3% 66.6%, var(--rouge) 66.6%); }
+  header {
+    display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap;
+    padding: 14px 24px; border-bottom: 1px solid var(--trait); background: var(--carte);
+  }
+  .marque { display: flex; flex-direction: column; margin-right: auto; }
+  .marque strong { font-size: 17px; letter-spacing: -.01em; white-space: nowrap; }
+  .marque span { color: var(--encre-3); font-size: 13px; }
+  .entete-boutons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-left: auto; }
+
+  .bouton {
+    display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+    border: 1px solid var(--trait); background: var(--carte); color: var(--encre);
+    padding: 8px 14px; border-radius: 10px; cursor: pointer; text-decoration: none;
+    transition: background-color .15s, border-color .15s, transform .1s;
+  }
+  .bouton:hover { background: var(--carte-2); border-color: var(--encre-3); }
+  .bouton:active { transform: scale(.98); }
+  .bouton:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .bouton.principal { background: var(--bleu); border-color: var(--bleu); color: #fff; font-weight: 600; }
+  .bouton.principal:hover { filter: brightness(1.08); }
+  .bouton.danger { background: var(--danger); border-color: var(--danger); color: #fff; font-weight: 600; }
+  .bouton.petit { padding: 5px 11px; font-size: 14px; }
+  .bouton.discret { border-color: transparent; background: transparent; }
+  .bouton.discret:hover { background: var(--carte-2); }
+  :focus-visible { outline: 3px solid color-mix(in srgb, var(--bleu) 55%, transparent); outline-offset: 2px; }
+
+  .icone { display: inline-flex; width: 20px; height: 20px; flex: none; }
+  .icone svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .tourne svg { animation: tourner 1s linear infinite; }
+  @keyframes tourner { to { transform: rotate(360deg); } }
+
+  .menu { position: relative; }
+  .menu > summary { list-style: none; }
+  .menu > summary::-webkit-details-marker { display: none; }
+  .menu-liste {
+    position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; min-width: 270px;
+    background: var(--carte); border: 1px solid var(--trait); border-radius: 12px; box-shadow: var(--ombre);
+    padding: 6px; display: grid; gap: 2px;
+  }
+  .menu-liste button { text-align: left; border: 0; background: none; padding: 9px 12px; border-radius: 8px; cursor: pointer; display: grid; }
+  .menu-liste button:hover { background: var(--carte-2); }
+  .menu-liste small { color: var(--encre-3); }
+
+  main {
+    max-width: 1240px; margin: 0 auto; padding: 22px 24px 40px;
+    display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 20px; align-items: start;
+  }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 16px; } header { padding: 12px 16px; } }
+  .colonne { display: grid; gap: 20px; min-width: 0; }
+
+  .carte { background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 18px 20px; }
+  .carte h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--encre-3); font-weight: 600; }
+
+  .position-ligne { font-size: 18px; margin: 0; }
+  .position-ligne .code { background: var(--carte-2); border: 1px solid var(--trait); border-radius: 7px; padding: 1px 7px; }
+  .position-detail { color: var(--encre-2); margin: 4px 0 0; }
+  .puces { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .puce {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px;
+    padding: 3px 10px; border-radius: 999px; background: var(--carte-2); border: 1px solid var(--trait); color: var(--encre-2);
+  }
+  button.puce { cursor: pointer; }
+  .puce::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--encre-3); }
+  .puce.vert { background: var(--vert-doux); color: var(--vert); border-color: transparent; }
+  .puce.vert::before { background: var(--vert); }
+  .puce.ambre { background: var(--ambre-doux); color: var(--ambre); border-color: transparent; }
+  .puce.ambre::before { background: var(--ambre); }
+  .puce.rouge { background: var(--danger-doux); color: var(--danger); border-color: transparent; }
+  .puce.rouge::before { background: var(--danger); }
+  .puce.bleu { background: var(--bleu-doux); color: var(--bleu); border-color: transparent; }
+  .puce.bleu::before { background: var(--bleu); }
+  .fichiers { margin: 10px 0 0; padding: 10px 12px; list-style: none; background: var(--carte-2); border-radius: 10px; font-size: 13.5px; display: grid; gap: 3px; }
+  .fichiers span { color: var(--encre-3); display: inline-block; min-width: 82px; }
+
+  .ma-pr { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--trait); }
+  .ma-pr a { font-weight: 600; text-decoration: none; }
+  .ma-pr a:hover { text-decoration: underline; }
+
+  .conseil {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    background: var(--bleu-doux); border-radius: var(--rayon); padding: 16px 18px; border: 1px solid color-mix(in srgb, var(--bleu) 25%, transparent);
+  }
+  .conseil p { margin: 0; flex: 1 1 260px; }
+  .conseil strong { color: var(--bleu); }
+
+  .etapes { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+  .etape {
+    position: relative; text-align: left; cursor: pointer;
+    background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); box-shadow: var(--ombre);
+    padding: 16px; display: grid; gap: 6px; align-content: start; min-height: 128px;
+    transition: border-color .15s, transform .1s, box-shadow .15s;
+  }
+  .etape:hover { border-color: var(--encre-3); }
+  .etape:active { transform: scale(.985); }
+  .etape:disabled { opacity: .55; cursor: not-allowed; }
+  .etape .icone { width: 26px; height: 26px; color: var(--bleu); }
+  .etape strong { font-size: 16px; }
+  .etape small { color: var(--encre-2); font-size: 13.5px; }
+  .etape .num { position: absolute; top: 12px; right: 14px; color: var(--encre-3); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .etape.conseillee { border: 2px solid var(--bleu); padding: 15px; box-shadow: 0 0 0 4px var(--bleu-doux), var(--ombre); }
+  .etape.conseillee .num { color: var(--bleu); font-weight: 700; }
+
+  .liste { display: grid; gap: 10px; }
+  .ligne-pr { border: 1px solid var(--trait); border-radius: 12px; padding: 12px 14px; display: grid; gap: 8px; background: var(--carte); }
+  .ligne-pr .haut { display: flex; gap: 10px; align-items: baseline; }
+  .ligne-pr .haut a { color: var(--encre); text-decoration: none; font-weight: 600; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .ligne-pr .haut a:hover { color: var(--bleu); text-decoration: underline; }
+  .ligne-pr .num { color: var(--encre-3); font-variant-numeric: tabular-nums; }
+  .ligne-pr .bas { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .ligne-pr .bas .bouton { margin-left: auto; }
+  .vide { color: var(--encre-3); margin: 0; }
+  .ligne-tache { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--trait); }
+  .ligne-tache:last-child { border-bottom: 0; }
+  .ligne-tache .code { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+
+  .bandeau { border-radius: 12px; padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start; }
+  .bandeau.ambre { background: var(--ambre-doux); color: var(--ambre); }
+  .bandeau.rouge { background: var(--danger-doux); color: var(--danger); }
+  .bandeau p { margin: 0; color: var(--encre); }
+
+  .chargement { display: flex; align-items: center; gap: 10px; color: var(--encre-3); }
+
+  /* Panneau d'action (fenêtre par-dessus) */
+  .voile {
+    position: fixed; inset: 0; z-index: 20; background: rgb(14 18 30 / 42%);
+    display: grid; place-items: center; padding: 20px; animation: apparaitre .15s ease-out;
+  }
+  .voile[hidden] { display: none; }
+  @keyframes apparaitre { from { opacity: 0; } }
+  .panneau {
+    width: min(760px, 100%); max-height: calc(100vh - 40px); display: flex; flex-direction: column;
+    background: var(--carte); border-radius: 18px; box-shadow: 0 20px 60px rgb(0 0 0 / 30%); overflow: hidden;
+    animation: monter .18s ease-out;
+  }
+  @keyframes monter { from { transform: translateY(10px); opacity: .6; } }
+  .panneau-tete { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--trait); }
+  .panneau-tete h3 { margin: 0; font-size: 18px; flex: 1; }
+  .journal { padding: 14px 20px; overflow: auto; display: grid; gap: 6px; align-content: start; flex: 1; min-height: 120px; }
+  .j-etape { color: var(--encre-3); font-size: 14px; }
+  .j-info { color: var(--encre-2); padding-left: 26px; overflow-wrap: anywhere; white-space: pre-wrap; }
+  .j-section { font-weight: 600; margin-top: 8px; }
+  .j-ok { display: flex; gap: 8px; color: var(--vert); font-weight: 600; }
+  .j-ok span { color: var(--encre); font-weight: 400; }
+  .j-reponse { padding-left: 26px; color: var(--bleu); font-weight: 600; }
+  .j-brut { font-family: "Cascadia Mono", Consolas, monospace; font-size: 12.5px; color: var(--encre-3); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .j-suite { margin-top: 10px; background: var(--bleu-doux); border-radius: 12px; padding: 12px 14px; display: grid; gap: 10px; }
+  .j-suite p { margin: 0; }
+  .j-suite .actions, .bandeau .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bandeau .pile { display: grid; gap: 10px; }
+  .j-pile { font-family: "Cascadia Mono", Consolas, monospace; font-size: 12px; white-space: pre-wrap; color: var(--encre-3); margin-top: 6px; }
+  .question { border-top: 1px solid var(--trait); padding: 16px 20px; background: var(--carte-2); display: grid; gap: 12px; }
+  .question[hidden] { display: none; }
+  .question label, .question .intitule { font-weight: 600; font-size: 16px; }
+  .question input[type="text"] {
+    width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--trait);
+    background: var(--carte); color: var(--encre);
+  }
+  .question input[type="text"]:focus { outline: 3px solid color-mix(in srgb, var(--bleu) 40%, transparent); border-color: var(--bleu); }
+  .question .aide { color: var(--encre-3); font-size: 13.5px; margin: -6px 0 0; }
+  .question .boutons { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .choix { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+  .choix button {
+    text-align: left; border: 1px solid var(--trait); background: var(--carte); border-radius: 12px;
+    padding: 11px 13px; cursor: pointer; display: grid; gap: 2px;
+  }
+  .choix button:hover { border-color: var(--bleu); background: var(--bleu-doux); }
+  .choix button.defaut { border-color: var(--bleu); }
+  .choix small { color: var(--encre-2); }
+  .choix code { overflow-wrap: anywhere; font-weight: 600; }
+  .question.danger { background: var(--danger-doux); }
+  .panneau-pied { padding: 12px 20px; border-top: 1px solid var(--trait); display: flex; justify-content: flex-end; gap: 8px; }
+  .panneau-pied[hidden] { display: none; }
+
+  .ferme { position: fixed; inset: 0; z-index: 30; background: var(--fond); display: grid; place-items: center; padding: 24px; text-align: center; }
+  .ferme[hidden] { display: none; }
+  .ferme div { max-width: 460px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="drapeau"></div>
+<header>
+  <div class="marque"><strong>France Tycoon</strong><span>Outils du duo</span></div>
+  <div class="entete-boutons">
+    <button class="bouton" id="actualiser" type="button" title="Relire où tu en es"></button>
+    <button class="bouton" id="dossier" type="button" title="Ouvrir le dossier du projet dans l’Explorateur"></button>
+    <a class="bouton" id="github" href="https://github.com/" target="_blank" rel="noreferrer noopener" hidden>GitHub</a>
+    <details class="menu" id="menu">
+      <summary class="bouton" title="Plus d’outils"></summary>
+      <div class="menu-liste" id="menu-liste"></div>
+    </details>
+  </div>
+</header>
+
+<main>
+  <div class="colonne">
+    <section class="carte" aria-labelledby="titre-position">
+      <h2 id="titre-position">Où j’en suis</h2>
+      <div id="position"><div class="chargement" id="attente"></div></div>
+    </section>
+    <div id="conseil"></div>
+    <section aria-label="Les étapes de ta journée">
+      <div class="etapes" id="etapes"></div>
+    </section>
+  </div>
+  <div class="colonne">
+    <section class="carte" aria-labelledby="titre-pr">
+      <h2 id="titre-pr">Propositions ouvertes</h2>
+      <div class="liste" id="propositions"><p class="vide">…</p></div>
+    </section>
+    <section class="carte" aria-labelledby="titre-taches" id="bloc-taches" hidden>
+      <h2 id="titre-taches">Tes autres tâches sur ce PC</h2>
+      <div id="taches"></div>
+    </section>
+    <section class="carte" aria-labelledby="titre-ci" id="bloc-ci" hidden>
+      <h2 id="titre-ci">Dernière vérification de dev</h2>
+      <div id="ci-dev"></div>
+    </section>
+  </div>
+</main>
+
+<div class="voile" id="voile" hidden>
+  <div class="panneau" role="dialog" aria-modal="true" aria-labelledby="panneau-titre">
+    <div class="panneau-tete">
+      <span class="icone" id="panneau-icone"></span>
+      <h3 id="panneau-titre">…</h3>
+    </div>
+    <div class="journal" id="journal" aria-live="polite"></div>
+    <form class="question" id="question" hidden></form>
+    <div class="panneau-pied" id="pied" hidden>
+      <button class="bouton principal" id="fermer" type="button">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="ferme" id="ferme" hidden>
+  <div>
+    <h1>Les outils sont fermés</h1>
+    <p>Pour les rouvrir : double-clique sur <strong>France Tycoon</strong> sur le Bureau, ou sur <code>0-ouvrir-les-outils</code> dans le dossier <code>outils</code> du projet.</p>
+  </div>
+</div>
+
+<script>
+window.CONFIG = /*CONFIG*/null;
+</script>
+<script>
+'use strict';
+const CONFIG = window.CONFIG ?? { outils: {}, types: {}, zones: {}, depot: '', dossier: '' };
+const JETON = new URLSearchParams(location.search).get('jeton') ?? '';
+const $ = (selecteur) => document.querySelector(selecteur);
+
+const ICONES = {
+  'mettre-a-jour': '<path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.7"/><path d="M20 4v4.7h-4.7"/><path d="M20 12a8 8 0 0 1-13.7 5.6L4 15.3"/><path d="M4 20v-4.7h4.7"/>',
+  commencer: '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',
+  envoyer: '<path d="M7 18.5a4.5 4.5 0 0 1-.6-9 6 6 0 0 1 11.4-1.2A4.5 4.5 0 0 1 17.5 18.5"/><path d="M12 12.5V20M9 15.5l3-3 3 3"/>',
+  proposer: '<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5v7"/><path d="M18 15.5V9a3 3 0 0 0-3-3h-3.5"/><path d="M13.5 3.5 11 6l2.5 2.5"/>',
+  fusionner: '<circle cx="6" cy="5" r="2.5"/><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M6 7.5v9"/><path d="M6 8c0 3.5 3.5 4 9.5 4"/>',
+  'fin-d-etape': '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
+  actualiser: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
+  dossier: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  github: '<path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  plus: '<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>',
+  ok: '<circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.7 2.7L16.5 9.5"/>',
+  attention: '<path d="M12 3.5 2.5 20h19z"/><path d="M12 10v4.5M12 17.5v.1"/>',
+  stop: '<circle cx="12" cy="12" r="9"/><path d="M8.5 12h7"/>',
+  erreur: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.1"/>',
+  attente: '<path d="M12 3a9 9 0 1 0 9 9"/>',
+  poste: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+};
+
+const ETAPES = [
+  { action: 'mettre-a-jour', aide: 'Récupérer le dernier travail commun (dev)' },
+  { action: 'commencer', aide: 'Une nouvelle tâche, à partir du dernier dev' },
+  { action: 'envoyer', aide: 'Enregistrer ton travail et le sauvegarder sur GitHub' },
+  { action: 'proposer', aide: 'Demander que ta tâche rejoigne dev' },
+  { action: 'fusionner', aide: 'Faire entrer une proposition validée dans dev' },
+];
+
+const CI = {
+  aucune: ['pas de vérification', ''],
+  'en-cours': ['vérifications en cours', 'ambre'],
+  verte: ['vérifications vertes', 'vert'],
+  rouge: ['vérifications rouges', 'rouge'],
+};
+const RELECTURE = {
+  APPROVED: ['acceptée', 'vert'],
+  CHANGES_REQUESTED: ['changements demandés', 'rouge'],
+  REVIEW_REQUIRED: ['à relire', 'ambre'],
+  '': ['relecture non obligatoire', ''],
+};
+
+/** Petit constructeur d'éléments : h('div', { class: 'x', onclick: f }, enfants…). */
+function h(balise, proprietes, ...enfants) {
+  const el = document.createElement(balise);
+  for (const [cle, valeur] of Object.entries(proprietes ?? {})) {
+    if (valeur === null || valeur === undefined || valeur === false) continue;
+    if (cle === 'class') el.className = valeur;
+    else if (cle.startsWith('on')) el.addEventListener(cle.slice(2), valeur);
+    else el.setAttribute(cle, valeur === true ? '' : valeur);
+  }
+  for (const enfant of enfants.flat(Infinity)) {
+    if (enfant === null || enfant === undefined || enfant === false) continue;
+    el.append(enfant instanceof Node ? enfant : document.createTextNode(String(enfant)));
+  }
+  return el;
+}
+
+function icone(nom, classe = '') {
+  const span = h('span', { class: `icone ${classe}`, 'aria-hidden': 'true' });
+  span.innerHTML = `<svg viewBox="0 0 24 24">${ICONES[nom] ?? ''}</svg>`;
+  return span;
+}
+
+const puce = ([texte, couleur]) => h('span', { class: `puce ${couleur}` }, texte);
+const nomBouton = (action) => CONFIG.outils[action] ?? action;
+const majuscule = (texte) => (texte ? texte[0].toUpperCase() + texte.slice(1) : texte);
+
+/** Texte avec les adresses web rendues cliquables. */
+function texteAvecLiens(texte) {
+  return String(texte)
+    .split(/(https?:\/\/[^\s)]+)/)
+    .map((morceau, i) =>
+      i % 2 ? h('a', { href: morceau, target: '_blank', rel: 'noreferrer noopener' }, morceau) : morceau,
+    );
+}
+
+/** Les « Nom d'un bouton » cités dans un message, dans l'ordre. */
+function actionsCitees(texte) {
+  const trouvees = [];
+  for (const [action, nom] of Object.entries(CONFIG.outils)) {
+    const position = texte.indexOf(`« ${nom} »`);
+    if (position >= 0) trouvees.push([position, action]);
+  }
+  return trouvees.sort((a, b) => a[0] - b[0]).map(([, action]) => action);
+}
+
+async function api(chemin, corps) {
+  const options = { headers: { 'x-jeton': JETON } };
+  if (corps !== undefined) {
+    options.method = 'POST';
+    options.headers['content-type'] = 'application/json';
+    options.body = JSON.stringify(corps);
+  }
+  const r = await fetch(chemin, options);
+  const donnees = await r.json().catch(() => ({}));
+  return { statut: r.status, ...donnees };
+}
+
+// ---------------------------------------------------------------------------
+// « Où j'en suis »
+// ---------------------------------------------------------------------------
+
+let etat = null;
+let erreurEtat = '';
+let lecture = null;
+let derniereLecture = 0;
+
+async function actualiser() {
+  if (lecture) return lecture;
+  if (actionEnCours()) return;
+  lecture = (async () => {
+    dessinerBoutonActualiser(true);
+    try {
+      const r = await api('/api/etat');
+      if (r.statut === 409) {
+        setTimeout(actualiser, 3000);
+        return;
+      }
+      if (r.etat) {
+        etat = r.etat;
+        erreurEtat = '';
+      } else {
+        erreurEtat = r.erreur ?? 'Je n’arrive pas à lire où tu en es.';
+      }
+      derniereLecture = Date.now();
+    } catch {
+      // le serveur ne répond plus : le battement de cœur s'en occupe
+    } finally {
+      dessinerBoutonActualiser(false);
+      dessiner();
+      lecture = null;
+    }
+  })();
+  return lecture;
+}
+
+function dessinerBoutonActualiser(occupe) {
+  $('#actualiser').replaceChildren(icone(occupe ? 'attente' : 'actualiser', occupe ? 'tourne' : ''), 'Actualiser');
+  $('#actualiser').disabled = occupe;
+}
+
+function lireBranche(nom) {
+  const m = /^(feat|fix)\/([a-z]+)-(.+)$/.exec(nom);
+  if (!m) return null;
+  return {
+    type: m[1] === 'fix' ? 'Correction' : 'Fonctionnalité',
+    zone: m[2],
+    sujet: m[3].replaceAll('-', ' '),
+  };
+}
+
+function dessiner() {
+  dessinerPosition();
+  dessinerConseil();
+  dessinerEtapes();
+  dessinerPropositions();
+  dessinerTaches();
+  dessinerCI();
+  dessinerMenu();
+}
+
+function dessinerPosition() {
+  const boite = $('#position');
+  if (erreurEtat && !etat) {
+    boite.replaceChildren(h('div', { class: 'bandeau rouge' }, icone('erreur'), h('p', null, erreurEtat)));
+    return;
+  }
+  if (!etat) return;
+  const e = etat;
+  const contenu = [];
+  if (!e.branche) {
+    contenu.push(h('p', { class: 'position-ligne' }, 'Tu n’es sur aucune branche.'));
+    contenu.push(h('p', { class: 'position-detail' }, 'Demande à Claude de te remettre sur dev.'));
+  } else if (e.surTache) {
+    const infos = lireBranche(e.branche);
+    contenu.push(h('p', { class: 'position-ligne' }, 'Tu travailles sur la tâche ', h('span', { class: 'code' }, e.branche)));
+    if (infos) contenu.push(h('p', { class: 'position-detail' }, `${infos.type} · ${infos.zone} · ${infos.sujet}`));
+  } else {
+    const role = e.branche === 'dev' ? 'la version de travail commune' : 'la version stable';
+    contenu.push(h('p', { class: 'position-ligne' }, 'Tu es sur ', h('span', { class: 'code' }, e.branche), `, ${role}.`));
+    contenu.push(h('p', { class: 'position-detail' }, 'On n’y travaille jamais directement : commence une tâche.'));
+  }
+
+  const puces = [];
+  const mods = e.modifications ?? [];
+  let liste = null;
+  if (mods.length) {
+    liste = h(
+      'ul',
+      { class: 'fichiers', hidden: mods.length > 4 },
+      mods.slice(0, 30).map((f) => h('li', null, h('span', null, f.etat), h('code', null, f.chemin))),
+      mods.length > 30 ? h('li', null, `… et ${mods.length - 30} autres`) : null,
+    );
+    puces.push(
+      h(
+        'button',
+        { class: 'puce ambre', type: 'button', title: 'Voir les fichiers', onclick: () => { liste.hidden = !liste.hidden; } },
+        `${mods.length} fichier${mods.length > 1 ? 's' : ''} modifié${mods.length > 1 ? 's' : ''}, pas encore enregistré${mods.length > 1 ? 's' : ''}`,
+      ),
+    );
+  } else {
+    puces.push(puce(['aucune modification en attente', 'vert']));
+  }
+  if (e.nonEnvoyes) puces.push(puce([`${e.nonEnvoyes} enregistrement${e.nonEnvoyes > 1 ? 's' : ''} pas encore envoyé${e.nonEnvoyes > 1 ? 's' : ''}`, 'ambre']));
+  if (e.retard) {
+    const texte = e.surTache ? `dev a ${e.retard} nouveauté${e.retard > 1 ? 's' : ''} que ta tâche n’a pas` : `${e.retard} nouveauté${e.retard > 1 ? 's' : ''} à récupérer`;
+    puces.push(puce([texte, 'bleu']));
+  }
+  contenu.push(h('div', { class: 'puces' }, puces), liste);
+
+  if (e.surTache && e.avecGitHub) {
+    const p = e.maProposition;
+    let bloc;
+    if (p) {
+      bloc = [
+        h('div', null, 'Ta proposition : ', h('a', { href: p.url, target: '_blank', rel: 'noreferrer noopener' }, `n°${p.numero} ${p.titre}`)),
+        h('div', { class: 'puces' }, [
+          p.brouillon ? puce(['brouillon', '']) : null,
+          puce(CI[p.ci] ?? CI.aucune),
+          puce(RELECTURE[p.relecture] ?? RELECTURE['']),
+          p.conflit ? puce(['en conflit avec dev', 'rouge']) : null,
+        ]),
+      ];
+    } else if (e.fusionnee) {
+      bloc = [h('div', null, `Ta tâche est déjà fusionnée (n°${e.fusionnee.numero}).`)];
+    } else {
+      bloc = [h('div', { class: 'position-detail' }, 'Pas encore de proposition pour cette tâche.')];
+    }
+    contenu.push(h('div', { class: 'ma-pr' }, bloc));
+  }
+  if (!e.avecGitHub) {
+    contenu.push(
+      h('div', { class: 'bandeau ambre', style: 'margin-top:14px' }, icone('attention'),
+        h('p', null, e.enLigne
+          ? 'GitHub n’est pas prêt sur ce PC : les propositions ne s’affichent pas. Utilise « Vérifier mon poste » (menu …).'
+          : 'GitHub ne répond pas (connexion internet ?). Tu peux continuer à travailler.')),
+    );
+  }
+  if (erreurEtat) contenu.push(h('div', { class: 'bandeau rouge', style: 'margin-top:14px' }, icone('erreur'), h('p', null, erreurEtat)));
+  boite.replaceChildren(...contenu.filter(Boolean));
+}
+
+function dessinerConseil() {
+  const boite = $('#conseil');
+  if (!etat?.conseil) {
+    boite.replaceChildren();
+    return;
+  }
+  const { action, texte } = etat.conseil;
+  boite.replaceChildren(
+    h('div', { class: 'conseil' },
+      h('p', null, h('strong', null, 'Et maintenant ? '), majuscule(texte)),
+      action
+        ? h('button', {
+            class: 'bouton principal',
+            type: 'button',
+            onclick: () => (action === 'installer' ? ouvrir('installer') : lancer(action)),
+          }, icone(ICONES[action] ? action : 'poste'), nomBouton(action))
+        : null,
+    ),
+  );
+}
+
+function dessinerEtapes() {
+  const conseillee = etat?.conseil?.action;
+  $('#etapes').replaceChildren(
+    ...ETAPES.map((etape, i) =>
+      h('button', {
+        class: `etape${etape.action === conseillee ? ' conseillee' : ''}`,
+        type: 'button',
+        disabled: actionEnCours(),
+        onclick: () => lancer(etape.action),
+      },
+      h('span', { class: 'num' }, etape.action === conseillee ? 'conseillé' : String(i + 1)),
+      icone(etape.action),
+      h('strong', null, nomBouton(etape.action)),
+      h('small', null, etape.aide)),
+    ),
+  );
+}
+
+function peutFusionner(p) {
+  if (p.brouillon || p.conflit || p.ci !== 'verte') return false;
+  if (p.relecture === 'CHANGES_REQUESTED') return false;
+  return p.relecture !== 'REVIEW_REQUIRED' || etat?.admin;
+}
+
+function dessinerPropositions() {
+  const boite = $('#propositions');
+  if (!etat) return;
+  if (!etat.avecGitHub) {
+    boite.replaceChildren(h('p', { class: 'vide' }, 'GitHub n’est pas joignable pour le moment.'));
+    return;
+  }
+  if (!etat.ouvertes.length) {
+    boite.replaceChildren(h('p', { class: 'vide' }, 'Aucune proposition ouverte.'));
+    return;
+  }
+  boite.replaceChildren(
+    ...etat.ouvertes.map((p) =>
+      h('div', { class: 'ligne-pr' },
+        h('div', { class: 'haut' },
+          h('span', { class: 'num' }, `n°${p.numero}`),
+          h('a', { href: p.url, target: '_blank', rel: 'noreferrer noopener', title: 'Ouvrir sur GitHub' }, p.titre)),
+        h('div', { class: 'bas' },
+          h('span', { class: 'puce' }, p.auteur || '?'),
+          p.base !== 'dev' ? h('span', { class: 'puce bleu' }, `vers ${p.base}`) : null,
+          p.brouillon ? puce(['brouillon', '']) : null,
+          puce(CI[p.ci] ?? CI.aucune),
+          puce(RELECTURE[p.relecture] ?? RELECTURE['']),
+          p.conflit ? puce(['en conflit', 'rouge']) : null,
+          peutFusionner(p)
+            ? h('button', { class: 'bouton petit', type: 'button', disabled: actionEnCours(), onclick: () => lancer('fusionner', { pr: String(p.numero) }) }, icone('fusionner'), 'Fusionner')
+            : null),
+      ),
+    ),
+  );
+}
+
+function dessinerTaches() {
+  const autres = etat?.autres ?? [];
+  $('#bloc-taches').hidden = !autres.length;
+  $('#taches').replaceChildren(
+    ...autres.map((t) =>
+      h('div', { class: 'ligne-tache' },
+        h('span', { class: 'code' }, t.nom),
+        t.disparue
+          ? h('span', { class: 'puce vert', title: '« Mettre à jour » la rangera' }, 'fusionnée')
+          : h('button', { class: 'bouton petit', type: 'button', disabled: actionEnCours(), onclick: () => lancer('commencer', { reprendre: t.nom }) }, 'Reprendre')),
+    ),
+  );
+}
+
+function dessinerCI() {
+  const c = etat?.derniereCI;
+  $('#bloc-ci').hidden = !c;
+  if (!c) return;
+  const couleur = { verte: 'vert', rouge: 'rouge', 'en-cours': 'ambre' }[c.resultat];
+  const texte = { verte: 'verte', rouge: 'rouge', 'en-cours': 'en cours' }[c.resultat];
+  $('#ci-dev').replaceChildren(
+    h('div', { class: 'puces', style: 'margin:0' }, puce([texte, couleur]), h('span', { class: 'position-detail', style: 'margin:0' }, c.quand)),
+  );
+}
+
+function dessinerMenu() {
+  const elements = [
+    h('button', { type: 'button', onclick: () => ouvrir('installer') },
+      h('span', null, nomBouton('installer')), h('small', null, 'Revérifie Git, Node.js, GitHub (fenêtre à part)')),
+  ];
+  if (etat?.admin) {
+    elements.push(
+      h('button', { type: 'button', onclick: () => lancer('fin-d-etape', { essai: true }) },
+        h('span', null, "Fin d'étape — essai"), h('small', null, 'Montre ce qui serait fait, sans rien changer')),
+      h('button', { type: 'button', onclick: () => lancer('fin-d-etape') },
+        h('span', null, "Fin d'étape"), h('small', null, 'dev vers main, puis version v0.<étape>.0')),
+    );
+  }
+  $('#menu-liste').replaceChildren(...elements);
+}
+
+async function ouvrir(quoi) {
+  $('#menu').open = false;
+  await api('/api/ouvrir', { quoi }).catch(() => {});
+}
+
+// ---------------------------------------------------------------------------
+// Actions : panneau, messages, questions
+// ---------------------------------------------------------------------------
+
+let action = null; // { id, nom, source, fini }
+
+const actionEnCours = () => Boolean(action && !action.fini);
+
+async function lancer(nom, options = {}) {
+  if (actionEnCours()) return;
+  $('#menu').open = false;
+  if (lecture) await lecture;
+  action = { id: null, nom, source: null, fini: false };
+  ouvrirPanneau(nom);
+  dessinerEtapes();
+  let r;
+  try {
+    r = await api('/api/action', { action: nom, options });
+  } catch {
+    r = { statut: 0, erreur: 'Les outils ne répondent plus.' };
+  }
+  if (r.statut !== 200 || !r.id) {
+    recevoir({ genre: 'erreur', texte: r.erreur ?? 'Impossible de lancer cette action.' });
+    recevoir({ genre: 'fin', code: 3 });
+    return;
+  }
+  action.id = r.id;
+  const source = new EventSource(`/api/flux?id=${encodeURIComponent(r.id)}&jeton=${encodeURIComponent(JETON)}`);
+  action.source = source;
+  source.onmessage = (evenement) => recevoir(JSON.parse(evenement.data));
+}
+
+function ouvrirPanneau(nom) {
+  $('#panneau-titre').textContent = nomBouton(nom);
+  $('#panneau-icone').replaceChildren(icone(ICONES[nom] ? nom : 'attente'));
+  $('#journal').replaceChildren(h('div', { class: 'chargement', id: 'en-cours' }, icone('attente', 'tourne'), 'C’est parti…'));
+  $('#question').hidden = true;
+  $('#pied').hidden = true;
+  $('#voile').hidden = false;
+}
+
+function ajouter(element) {
+  const journal = $('#journal');
+  const indicateur = $('#en-cours');
+  journal.insertBefore(element, indicateur);
+  journal.scrollTop = journal.scrollHeight;
+}
+
+function recevoir(m) {
+  switch (m.genre) {
+    case 'titre':
+      return;
+    case 'section':
+      return ajouter(h('div', { class: 'j-section' }, m.texte));
+    case 'etape':
+      return ajouter(h('div', { class: 'j-etape' }, m.texte));
+    case 'info':
+      return ajouter(h('div', { class: 'j-info' }, texteAvecLiens(m.texte.trim())));
+    case 'ok':
+      return ajouter(h('div', { class: 'j-ok' }, icone('ok'), h('span', null, texteAvecLiens(m.texte))));
+    case 'attention':
+      return ajouter(h('div', { class: 'bandeau ambre' }, icone('attention'), h('p', null, texteAvecLiens(m.texte))));
+    case 'suite':
+      return ajouter(blocSuite(m.texte));
+    case 'stop':
+      return ajouter(h('div', { class: 'bandeau ambre' }, icone('stop'),
+        h('div', { class: 'pile' },
+          h('p', null, h('strong', null, 'Stop. '), texteAvecLiens(m.texte), m.texte.startsWith('Annulé') ? '' : ' Rien n’a été cassé.'),
+          boutonsCites(m.texte))));
+    case 'erreur':
+      return ajouter(h('div', { class: 'bandeau rouge' }, icone('erreur'),
+        h('div', null, h('p', null, h('strong', null, 'Erreur inattendue : '), m.texte), h('p', null, 'Copie ce message et demande à Claude de regarder.'),
+          m.pile ? h('div', { class: 'j-pile' }, m.pile) : null)));
+    case 'question':
+      return montrerQuestion(m);
+    case 'reponse':
+      return ajouter(h('div', { class: 'j-reponse' }, `→ ${m.texte}`));
+    case 'fin':
+      return terminer(m.code);
+    default:
+      if (m.texte?.trim()) ajouter(h('div', { class: 'j-brut' }, m.texte));
+  }
+}
+
+function blocSuite(texte) {
+  return h('div', { class: 'j-suite' }, h('p', null, h('strong', null, 'Et maintenant ? '), majuscule(texte)), boutonsCites(texte));
+}
+
+/** Un bouton pour chaque outil cité dans le texte (« Envoyer mon travail »…), le premier mis en avant. */
+function boutonsCites(texte) {
+  const actions = actionsCitees(texte).filter((a) => a !== 'etat');
+  if (!actions.length) return null;
+  return h('div', { class: 'actions' }, actions.map((a, i) =>
+    h('button', {
+      class: `bouton${i === 0 ? ' principal' : ''}`,
+      type: 'button',
+      onclick: () => (a === 'installer' ? ouvrir('installer') : enchainer(a)),
+    }, icone(ICONES[a] ? a : 'poste'), nomBouton(a))));
+}
+
+/** Un nom technique (zone, nom de tâche) s'écrit tel quel, en police de code ; une phrase prend sa majuscule. */
+function nomDuChoix(c) {
+  return String(c.valeur) === c.libelle ? h('strong', null, h('code', null, c.libelle)) : h('strong', null, majuscule(c.libelle));
+}
+
+function montrerQuestion(q) {
+  $('#en-cours')?.remove();
+  const form = $('#question');
+  form.className = `question${q.danger ? ' danger' : ''}`;
+  form.onsubmit = (evenement) => evenement.preventDefault();
+  const annuler = h('button', { class: 'bouton discret', type: 'button', onclick: annulerAction }, 'Annuler');
+  let contenu;
+
+  if (q.forme === 'oui-non') {
+    contenu = [
+      h('div', { class: 'intitule' }, q.question),
+      q.danger ? h('p', { class: 'aide' }, 'Réfléchis bien : cette réponse passe outre une règle du projet.') : null,
+      h('div', { class: 'boutons' },
+        annuler,
+        h('button', { class: 'bouton', type: 'button', onclick: () => repondre('non', 'Non') }, 'Non'),
+        h('button', { class: `bouton ${q.danger ? 'danger' : 'principal'}`, type: 'button', onclick: () => repondre('oui', 'Oui') }, 'Oui')),
+    ];
+  } else if (q.forme === 'choix') {
+    contenu = [
+      h('div', { class: 'intitule' }, q.question),
+      h('div', { class: 'choix' }, q.choix.map((c, i) =>
+        h('button', {
+          type: 'button',
+          class: String(i + 1) === q.defaut ? 'defaut' : '',
+          onclick: () => repondre(String(c.valeur), c.detail ? `${c.libelle} — ${c.detail}` : majuscule(c.libelle)),
+        }, nomDuChoix(c), c.detail ? h('small', null, c.detail) : null))),
+      h('div', { class: 'boutons' }, annuler),
+    ];
+  } else {
+    const champ = h('input', { type: 'text', id: 'reponse', value: q.defaut ?? '', autocomplete: 'off', spellcheck: 'true' });
+    const valider = () => {
+      const valeur = champ.value.trim();
+      if (!valeur && !q.facultatif && !q.defaut) {
+        champ.focus();
+        return;
+      }
+      repondre(valeur, valeur || q.defaut || '(vide)');
+    };
+    form.onsubmit = (evenement) => {
+      evenement.preventDefault();
+      valider();
+    };
+    contenu = [
+      h('label', { for: 'reponse' }, q.question.replace(/…?\s*Entrée pour passer/, '')),
+      champ,
+      q.facultatif ? h('p', { class: 'aide' }, 'Tu peux laisser vide.') : null,
+      h('div', { class: 'boutons' }, annuler, h('button', { class: 'bouton principal', type: 'submit' }, 'Valider')),
+    ];
+  }
+  form.replaceChildren(...contenu.filter(Boolean));
+  form.hidden = false;
+  requestAnimationFrame(() => (form.querySelector('input') ?? form.querySelector('.choix button, .boutons .principal, .boutons .danger'))?.focus());
+}
+
+async function repondre(valeur, affichage) {
+  $('#question').hidden = true;
+  recevoir({ genre: 'reponse', texte: affichage });
+  $('#journal').append(h('div', { class: 'chargement', id: 'en-cours' }, icone('attente', 'tourne'), 'Je continue…'));
+  await api('/api/repondre', { id: action.id, reponse: valeur }).catch(() => {});
+}
+
+async function annulerAction() {
+  $('#question').hidden = true;
+  await api('/api/annuler', { id: action.id }).catch(() => {});
+}
+
+function terminer(code) {
+  if (action) {
+    action.fini = true;
+    action.source?.close();
+  }
+  $('#en-cours')?.remove();
+  $('#question').hidden = true;
+  if (code === 0 && !$('#journal .j-suite')) ajouter(h('div', { class: 'j-ok' }, icone('ok'), h('span', null, 'Terminé.')));
+  $('#pied').hidden = false;
+  $('#fermer').focus();
+  actualiser();
+}
+
+function fermerPanneau() {
+  if (actionEnCours()) return;
+  $('#voile').hidden = true;
+  dessiner();
+}
+
+function enchainer(nom) {
+  fermerPanneau();
+  if (nom === 'etat') actualiser();
+  else lancer(nom);
+}
+
+// ---------------------------------------------------------------------------
+// Démarrage
+// ---------------------------------------------------------------------------
+
+$('#actualiser').addEventListener('click', actualiser);
+$('#dossier').replaceChildren(icone('dossier'), 'Dossier du projet');
+$('#dossier').addEventListener('click', () => ouvrir('dossier'));
+if (CONFIG.depot) {
+  $('#github').href = CONFIG.depot;
+  $('#github').hidden = false;
+  $('#github').replaceChildren(icone('github'), 'GitHub');
+}
+$('#menu > summary').replaceChildren(icone('plus'), h('span', { class: 'visuellement-cache' }, 'Plus'));
+$('#fermer').addEventListener('click', fermerPanneau);
+$('#attente').replaceChildren(icone('attente', 'tourne'), 'Je regarde où tu en es…');
+document.addEventListener('keydown', (evenement) => {
+  if (evenement.key === 'Escape') {
+    if (!$('#voile').hidden) fermerPanneau();
+    else $('#menu').open = false;
+  }
+  if (evenement.key === 'F5') {
+    evenement.preventDefault();
+    if (!actionEnCours()) actualiser();
+  }
+});
+document.addEventListener('click', (evenement) => {
+  if (!$('#menu').contains(evenement.target)) $('#menu').open = false;
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  signeDeVie();
+  if (Date.now() - derniereLecture > 20000) actualiser();
+});
+// Fenêtre fermée : on prévient le serveur, qui s'arrête au bout de quelques secondes (sauf si la page revient).
+window.addEventListener('pagehide', () => navigator.sendBeacon(`/api/au-revoir?jeton=${encodeURIComponent(JETON)}`));
+
+// Une vérification (CI) tourne : on relit toutes les 45 s pour voir le résultat arriver.
+setInterval(() => {
+  const attend = etat && [etat.maProposition, ...(etat.ouvertes ?? [])].some((p) => p?.ci === 'en-cours');
+  if (attend && document.visibilityState === 'visible' && !actionEnCours()) actualiser();
+}, 45000);
+
+// Battement de cœur : sans page, le serveur s'arrête ; sans serveur, la page le dit.
+// (Fenêtre réduite : le navigateur ralentit ce minuteur jusqu'à une fois par minute, le serveur le sait.)
+let echecs = 0;
+async function signeDeVie() {
+  try {
+    const r = await fetch('/api/vivant', { method: 'POST', headers: { 'x-jeton': JETON } });
+    echecs = r.ok ? 0 : echecs + 1;
+  } catch {
+    echecs += 1;
+  }
+  if (echecs >= 2) $('#ferme').hidden = false;
+}
+setInterval(signeDeVie, 5000);
+
+dessinerBoutonActualiser(false);
+dessinerEtapes();
+dessinerMenu();
+actualiser();
+</script>
+</body>
+</html>

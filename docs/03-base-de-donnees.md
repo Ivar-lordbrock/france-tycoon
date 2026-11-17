@@ -4,7 +4,10 @@ Le schéma exact, exécutable, est dans le code :
 
 - [`backend/src/db/migrations/001_initial.sql`](../backend/src/db/migrations/001_initial.sql) — 19 tables `STRICT`, index, déclencheurs
 - [`backend/src/db/migrations/002_seed.sql`](../backend/src/db/migrations/002_seed.sql) — catalogues : bâtiments, tutoriel, quêtes, boutique
-- [`backend/src/db/schema.test.mjs`](../backend/src/db/schema.test.mjs) — 24 tests (`node --test backend/`), lancés par la CI à chaque push
+- [`backend/src/db/migrations/003_economie_etape3.sql`](../backend/src/db/migrations/003_economie_etape3.sql) — étape 3 : bâtiments à 5 niveaux et gare, prix du chantier (`works_cost`), 4 territoires au départ
+- [`backend/src/db/migrations/004_reste_revenus.sql`](../backend/src/db/migrations/004_reste_revenus.sql) — étape 3 : reste des revenus (`income_remainder`), pour ne perdre aucune fraction de ₮
+- [`backend/src/db/migrations/005_deplacement_capitale.sql`](../backend/src/db/migrations/005_deplacement_capitale.sql) — étape 3 : date du dernier déplacement de capitale (`capital_moved_at`), pour la limite d'une fois tous les 7 jours
+- [`backend/src/db/schema.test.mjs`](../backend/src/db/schema.test.mjs) — 30 tests (`node --test backend/`), lancés par la CI à chaque push
 
 > Cette page explique le schéma. En cas de doute, **le fichier SQL fait foi**.
 
@@ -53,6 +56,8 @@ erDiagram
     int max_territories
     int build_queue_slots
     int income_collected_at
+    int income_remainder
+    int capital_moved_at
     int net_worth
     int newbie_shield_until
     int last_active_at
@@ -77,6 +82,7 @@ erDiagram
     int level
     int target_level
     int works_ends_at
+    int works_cost
     int invested_cash "B"
   }
   takeovers {
@@ -108,8 +114,9 @@ erDiagram
 **`users`** — un joueur = un compte Google.
 - Identité : `google_id` (le `sub` du jeton), `email`, `pseudo` (unique, insensible à la casse, 3–24 caractères), `avatar_url`.
 - Portefeuille : `cash ≥ 0`, `premium_currency ≥ 0` (la base refuse un solde négatif).
-- Limites : `max_territories` (1–12), `extra_territory_slots` (0–1, boutique V2), `build_queue_slots` (1–3), `rank_level`.
-- Économie : `income_collected_at` (point de départ du calcul des revenus hors ligne), `net_worth` (patrimoine en cache pour le classement).
+- Limites : `max_territories` (1–12), `extra_territory_slots` (0–1, boutique V2), `build_queue_slots` (1–3), `rank_level`. `max_territories` est recalculé à chaque chantier fini (siège social : +1 par niveau, `buildings/limites.ts`). La création de compte écrit elle-même `max_territories = 4` et `build_queue_slots = 1` (`TERRITOIRES_DEPART`, `FILES_CONSTRUCTION_DEPART` de balance.ts) : la valeur par défaut de la colonne (3, migration 001) date d'avant l'étape 3 ; la migration 003 a donné +1 aux joueurs déjà inscrits.
+- Économie : `income_collected_at` (point de départ du calcul des revenus hors ligne), `income_remainder` (0 à 3 599 : la fraction de ₮ pas encore versée, en ₮ × secondes, migration 004), `net_worth` (patrimoine en cache pour le classement).
+- Capitale : `capital_moved_at` (NULL = jamais déplacée ; construire le siège ne compte pas comme un déplacement, migration 005). Prochain déplacement possible 7 jours après.
 - Protection : `newbie_shield_until` = inscription + 72 h.
 - Index : `(status, last_active_at)` pour la tâche d'inactivité ; `net_worth DESC` (joueurs actifs) pour le classement.
 
@@ -144,12 +151,13 @@ LIMIT 3000;
 
 ### Bâtiments
 
-**`building_types`** — catalogue (6 types en V1 : résidence, commerce, usine, quartier d'affaires, équipement public, siège social). Contient tous les paramètres d'équilibrage : coût, croissance du coût, revenu, bonus en %, temps de construction, niveau max, emplacements occupés, limites par territoire et par joueur, population minimale.
+**`building_types`** — catalogue (7 types en V1 : résidence, commerce, usine, quartier d'affaires, équipement public, gare, siège social ; niveau 5 au maximum). Contient tous les paramètres d'équilibrage : coût, croissance du coût, revenu, bonus en %, temps de construction, niveau max, emplacements occupés, limites par territoire et par joueur, population minimale. Valeurs de 002, remplacées par 003 (docs/05, 5.2) ; servies telles quelles par `GET /building-types`.
 
 **`buildings`** — un bâtiment posé sur un territoire.
 - `level` = niveau **actif** (0 pendant la toute première construction).
-- Chantier en cours : `target_level = level + 1` et `works_ends_at` renseignés (la base impose les deux ensemble, et interdit de sauter un niveau).
-- `invested_cash` = total dépensé (B), compte dans la valeur du territoire.
+- Chantier en cours : `target_level = level + 1`, `works_ends_at` et `works_cost` renseignés (la base impose les trois ensemble, et interdit de sauter un niveau).
+- `works_cost` = prix payé pour le chantier en cours (> 0) : une annulation rend exactement ce montant, même si f_T a changé depuis (nouvel import).
+- `invested_cash` = total dépensé (B), chantier en cours compris ; compte dans la valeur du territoire.
 - Pas de colonne « propriétaire » : c'est celui du territoire (les bâtiments suivent le territoire lors d'une OPA).
 
 ### PvP
@@ -172,7 +180,7 @@ LIMIT 3000;
 
 **`daily_quests`** (catalogue) + **`user_quests`** — 3 quêtes par joueur et par jour (`slot` 1 = facile, 2 = moyenne, 3 = difficile). La récompense est figée au tirage. Contraintes : une quête ne sort pas deux fois le même jour, pas de 4ᵉ quête, pas de réclamation avant d'avoir fini.
 
-**`notifications`** — OPA reçue, OPA résolue, chantier fini, alerte d'inactivité. Index partiel sur les non lues.
+**`notifications`** — OPA reçue, OPA résolue, chantier fini, alerte d'inactivité. Index partiel sur les non lues. Chantier fini : `kind = 'building_done'`, `payload` au format `chantierFiniSchema` (shared/src/api/economie.ts), `created_at` = date de fin du chantier ; écrit par l'encaissement (`backend/src/modules/income/revenus.ts`).
 
 ### Monétisation V2 (créée, inactive)
 
@@ -186,7 +194,7 @@ LIMIT 3000;
 
 ## 3.4 Ce que la base garantit, ce que le code garantit
 
-| Garanti par SQLite (testé) | Garanti par le code (à tester en Sprint 3–4) |
+| Garanti par SQLite (testé) | Garanti par le code (à tester aux étapes 3–4) |
 |---|---|
 | Solde jamais négatif | Limite de territoires (`max_territories`) |
 | Commune hors des 12 zones refusée | Emplacements de bâtiments disponibles |
@@ -194,10 +202,10 @@ LIMIT 3000;
 | Pas d'OPA sur soi-même | Capitale immunisée |
 | Journal financier inaltérable, pas de double paiement | Tout mouvement d'argent passe par `wallet.apply` |
 | Une capitale max par joueur | Un seul siège social par joueur |
-| Chantier cohérent (pas de saut de niveau) | Une seule file de construction (ou 2–3 avec bonus) |
+| Chantier cohérent (pas de saut de niveau) | Une seule file de construction (2ᵉ et 3ᵉ achetables plus tard) |
 
 ## 3.5 Exploitation
 
-- **Sauvegarde** : Litestream réplique le fichier WAL en continu vers un stockage S3 ; restauration testée au Sprint 6.
-- **Migrations** : au démarrage, le serveur applique les fichiers `migrations/*.sql` pas encore joués (table `schema_migrations`, créée par le petit exécuteur de migrations du Sprint 1).
+- **Sauvegarde** : Litestream réplique le fichier WAL en continu vers un stockage S3 ; restauration testée à l'étape 6.
+- **Migrations** : au démarrage, le serveur applique les fichiers `migrations/*.sql` pas encore joués (table `schema_migrations`, créée par le petit exécuteur de migrations de l'étape 1).
 - **RGPD** : suppression = `status = 'deleted'`, e-mail remplacé par un hachage, pseudo par « Joueur supprimé #id », `google_id` par `deleted:<id>`, territoires libérés.

@@ -4,7 +4,7 @@
 
 ## Pourquoi
 
-<!-- Lien vers l'issue / le sprint. Ex. : Sprint 3 — achat de territoire -->
+<!-- Lien vers l'issue / l'étape. Ex. : Étape 3 — achat de territoire -->
 
 ## Vérifié
 

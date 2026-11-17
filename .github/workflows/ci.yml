@@ -9,7 +9,12 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # Nom de job requis par la protection des branches : ne pas le renommer.
   schema:
     name: Schéma SQLite
     runs-on: ubuntu-latest
@@ -20,3 +25,23 @@ jobs:
           node-version: lts/*
       - name: Migrations + contraintes
         run: node --test backend/
+
+  qualite:
+    name: Lint, tests et build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - name: Dépendances
+        run: npm ci
+      - name: Lint et format (Biome)
+        run: npx biome ci .
+      - name: Typage (TypeScript)
+        run: npm run typecheck
+      - name: Tests unitaires (Vitest)
+        run: npx vitest run
+      - name: Build
+        run: npm run build
