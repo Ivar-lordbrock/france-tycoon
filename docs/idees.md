@@ -37,6 +37,18 @@ Pas d'idée nouvelle dans ce fichier pour l'étape 4 : on garde les règles déj
 | « Échec » qui bloque 7 jours le même attaquant contre le même défenseur | OPA **défendue ou retirée** (pas une OPA annulée par le système) |
 | Rachat pour inactivité | 50 % de `V0 + B`, sans les fortifications |
 
+### Étape 5 — tutoriel, quêtes, classement (17/11/2026)
+
+Réponses données au début de l'étape 5 :
+
+| Sujet | Décision |
+|---|---|
+| Encaisser | Un **bouton « Encaisser »** dans la barre du haut, avec le montant en attente. Les revenus continuent de s'encaisser tout seuls à chaque action, mais **seul ce clic** compte pour le tutoriel (étape 7) et la quête « Trésorier » |
+| Rang | **Ne redescend jamais** : une fois Baron, on reste Baron même si le patrimoine baisse (sinon on perdrait un emplacement et on serait au-dessus de sa limite de territoires) |
+| Joueurs déjà inscrits | Le tutoriel leur est **proposé une fois**, avec « Passer » ; récompenses versées seulement pour les étapes faites |
+
+Choisi sans question, en suivant la doc : classement recalculé **toutes les 10 min** ; tous les joueurs actifs y figurent, même sans commune (à égalité, le plus ancien devant) ; classement d'une région ou de l'Outre-mer = les joueurs qui y possèdent au moins une commune, classés par patrimoine total ; quêtes tirées à la lecture (pas de tâche) ; une même commune ou zone ne compte qu'une fois par jour pour les quêtes « Repérage » et « Cap sur l'Outre-mer » ; badges de rang seulement (le skin Tycoon attend la boutique).
+
 ## Bâtiments : 5 niveaux, chantiers longs et de plus en plus chers
 
 *Notée le 16/11/2026. **Adoptée le 17/11/2026** (voir « Décisions prises » ci-dessus).*

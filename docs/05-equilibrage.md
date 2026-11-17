@@ -1,6 +1,6 @@
 # 5. Formules d'équilibrage
 
-Toutes les constantes ci-dessous vivent dans **un seul fichier**, `shared/src/balance.ts` (5.1 depuis l'étape 1 ; capital de départ, protection débutant, revenu du sol et valeur d'un territoire depuis l'étape 2 ; bâtiments, revenus et limites à l'étape 3 ; OPA, patrimoine et inactivité à l'étape 4), importé par le serveur (qui fait foi), par le front (aperçus) et par le script d'import (valeurs des communes). Les paramètres propres à chaque bâtiment sont dans la table `building_types` ([002_seed.sql](../backend/src/db/migrations/002_seed.sql), valeurs remplacées par [003_economie_etape3.sql](../backend/src/db/migrations/003_economie_etape3.sql)).
+Toutes les constantes ci-dessous vivent dans **un seul fichier**, `shared/src/balance.ts` (5.1 depuis l'étape 1 ; capital de départ, protection débutant, revenu du sol et valeur d'un territoire depuis l'étape 2 ; bâtiments, revenus et limites à l'étape 3 ; OPA, patrimoine et inactivité à l'étape 4 ; rangs, quêtes et jour de Paris à l'étape 5), importé par le serveur (qui fait foi), par le front (aperçus) et par le script d'import (valeurs des communes). Les paramètres propres à chaque bâtiment sont dans la table `building_types` ([002_seed.sql](../backend/src/db/migrations/002_seed.sql), valeurs remplacées par [003_economie_etape3.sql](../backend/src/db/migrations/003_economie_etape3.sql)).
 
 Notations : `P` population, `I` score d'infrastructures, `L` niveau, `arrondi_N` arrondi à N près, `plafond_N` arrondi au-dessus à N près, `⌊x⌋` partie entière.
 
@@ -132,6 +132,9 @@ Le **reste** évite de perdre les fractions : un joueur qui gagne 50 ₮/h et ag
 | 3 Magnat | 25 000 000 | +1 territoire, 2 OPA sortantes simultanées |
 | 4 Tycoon | 250 000 000 | badge et skin exclusifs |
 
+- **Rang** = le plus haut seuil atteint (`rangDuPatrimoine`), recalculé toutes les 10 min par la tâche `leaderboard` (`CLASSEMENT_TOUTES_LES_S`). Il **ne redescend jamais** (`nouveauRang`, décidé au début de l'étape 5) : sinon une OPA perdue ferait perdre un emplacement et laisserait le joueur au-dessus de sa limite de territoires.
+- Le skin du rang Tycoon attend la boutique (V2) ; en V1, chaque rang a son badge.
+
 ## 5.5 OPA (rachat hostile)
 
 ### Montants, figés au lancement
@@ -172,9 +175,11 @@ En patrimoine, une OPA réussie coûte `0,5 × V_T` à l'attaquant et rapporte `
 
 ## 5.7 Quêtes et tutoriel
 
-- **Récompense d'une quête** : `max( cash_min ; arrondi_100( h × R_J ) )` — `h` = 1 à 4 heures de revenu selon la difficulté, figée au tirage. Elle reste utile du premier jour à la fin de partie.
-- **Tirage** : chaque jour (heure de Paris), au premier appel, 1 quête facile + 1 moyenne + 1 difficile, tirées au hasard pondéré (`weight`) parmi celles dont le joueur remplit `min_territories`. Graine = `user_id + date` → même tirage si on recharge.
-- **Tutoriel** : 10 étapes, 10 000 ₮ et 5 💎 au total, versés aux étapes 5, 7 et 10.
+- **Récompense d'une quête** : `max( cash_min ; arrondi_100( h × R_J ) )` (`recompenseQuete`) — `h` = 1 à 4 heures de revenu selon la difficulté (`reward_income_hours`), `R_J` = revenu par heure du joueur, figée au tirage. Elle reste utile du premier jour à la fin de partie.
+- **Tirage** : chaque jour (heure de Paris), au premier appel, 1 quête facile + 1 moyenne + 1 difficile, tirées au hasard pondéré (`weight`) parmi celles dont le joueur remplit `min_territories`. Graine = `user_id + date` → même tirage si on recharge. S'il n'y a aucune quête possible pour une difficulté (un joueur sans commune n'a aucune quête moyenne), on tire une autre quête facile à la place.
+- **Jour du jeu** : la date à Paris (`jourParis`, fuseau `Europe/Paris`, heure d'été comprise) ; les quêtes changent au prochain minuit à Paris (`prochainMinuitParis`). L'objectif est tiré entre `target_min` et `target_max` avec la même graine.
+- **Ce qui compte** : « Repérage » et « Cap sur l'Outre-mer » comptent une même commune ou zone une seule fois par jour ; « Trésorier » ne compte que le clic sur « Encaisser » (`POST /me/collect`), pas l'encaissement automatique ; « Passer au bureau » se valide à la première requête du jour.
+- **Tutoriel** : 10 étapes, 10 000 ₮ et 5 💎 au total, versés aux étapes 5, 7 et 10 (colonnes `reward_cash` et `reward_gems` de `tutorials`). Proposé une fois aux joueurs déjà inscrits, avec « Passer » ; seules les étapes faites sont récompensées.
 
 ## 5.8 Gemmes (monnaie premium) : règles anti pay-to-win
 
