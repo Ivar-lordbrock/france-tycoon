@@ -33,15 +33,18 @@
 
 ## Étape 3 — Économie : achat, construction, revenus
 
+Décisions prises le 17/11/2026 (détail dans [idees.md](idees.md#décisions-prises) et [05-equilibrage.md](05-equilibrage.md#52-bâtiments)) : bâtiments jusqu'au **niveau 5**, coût ×2 et revenu +70 % par niveau, chantiers **longs en temps réel** (durée ×2 par niveau, gare niveau 5 = 48 h), une **gare** en plus, **une seule file** de construction, chantier annulable et remboursé, siège social au niveau 5 et **4 territoires** au départ, revenus hors ligne plafonnés à **48 h**, bâtiments détruits à la revente.
+
 | Dev A | Dev B |
 |---|---|
 | `shared/src/balance.ts` (toutes les constantes de 05) + tests unitaires des formules | Bouton Acheter / Vendre avec confirmation et aperçu (formules `shared/`) |
-| Achat, vente, limite de territoires, bouclier 12 h | Panneau bâtiments : emplacements, construire, améliorer, démolir, minuteurs |
-| Moteur de revenus différés **par morceaux** (chantiers finis pendant l'absence) + tests de temps simulé | Cash qui monte en direct côté client, « encaisser » |
-| Bâtiments : construction, amélioration, files, siège social, capitale | Liste « Mes territoires », file de construction |
-| `GET /me/territories`, `/building-types`, `/me/construction-queue`, `/me/collect`, `/me/capital` | Gestion des erreurs métier (toasts lisibles) |
+| Migration 003 : nouveau catalogue de bâtiments (5 niveaux, durées, gare), 4 territoires au départ | Onglet « Bâtiments » de la fiche : emplacements, construire, améliorer, annuler, démolir, minuteurs |
+| Achat, vente (bâtiments détruits), limite de territoires, bouclier 12 h | Cash qui monte en direct côté client, « encaisser » |
+| Moteur de revenus différés **par morceaux** (chantiers finis pendant l'absence, plafond 48 h) + tests de temps simulé | Barre du haut : chantier en cours et temps restant (un clic ouvre la liste) |
+| Bâtiments : construction, amélioration, annulation (remboursée), démolition, file unique, siège social, capitale | Liste « Mes territoires » ; résumé au retour (« pendant ton absence… ») |
+| `GET /me/territories`, `/building-types`, `/me/construction-queue`, `/me/collect`, `/me/capital`, annulation d'un chantier, résumé des chantiers finis dans `/me` | Gestion des erreurs métier (toasts lisibles) |
 
-**Fini quand** : on achète un village, on construit, on ferme l'onglet, on revient 2 h plus tard et le revenu encaissé est exact (testé automatiquement).
+**Fini quand** : on achète un village, on construit, on ferme l'onglet, on revient 2 h plus tard : le revenu encaissé est exact (testé automatiquement) et un résumé dit quels chantiers se sont terminés.
 
 ## Étape 4 — PvP : OPA et inactivité
 

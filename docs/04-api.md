@@ -49,7 +49,7 @@
 | POST | `/auth/google` | | `{ credential }` (jeton d'identité Google) → `{ user, isNew }` + cookie. Crée le compte au premier passage : 30 000 ₮ (`signup_bonus`), bouclier 72 h |
 | POST | `/auth/dev` | | `{ pseudo }` → comme `/auth/google`, sans Google. **Local seulement** : la route n'existe que si `AUTH_DEV=true`, refusé avec `NODE_ENV=production` |
 | POST | `/auth/logout` | 🔒 | → 204, session supprimée |
-| GET | `/me` | 🔒 | → profil, portefeuille, revenu/h, `maxTerritories`, territoires possédés/max, files de construction, état du tutoriel, notifications non lues |
+| GET | `/me` | 🔒 | → profil, portefeuille, revenu/h, `maxTerritories`, territoires possédés/max, file de construction, chantiers finis depuis la dernière visite (résumé au retour), état du tutoriel, notifications non lues |
 | PATCH | `/me` | 🔒 | `{ pseudo?, markerColor? }` (pseudo 3 à 24 caractères, couleur `#rrggbb`) → même réponse que `GET /me` ; `PSEUDO_TAKEN` si le pseudo est pris |
 | POST | `/me/collect` | 🔒 | → `{ collected, cash, incomePerHour }` (encaissement explicite, utile pour le tutoriel et les quêtes) |
 | DELETE | `/me` | 🔒 | → 204, anonymisation RGPD |
@@ -73,6 +73,7 @@
 | GET | `/building-types` | | → catalogue (mis en cache) |
 | POST | `/territories/:insee/buildings` | 🔒💰 | `{ typeCode }` → bâtiment en chantier (niveau 0 → 1) |
 | POST | `/buildings/:id/upgrade` | 🔒💰 | → chantier niveau L → L+1 |
+| POST | `/buildings/:id/cancel` | 🔒💰 | → annule le chantier en cours, **rembourse tout son coût** ; le bâtiment reste à son niveau (une 1re construction annulée supprime le bâtiment) |
 | DELETE | `/buildings/:id` | 🔒 | → démolition, rembourse 30 % de `invested_cash`. Le siège social ne se démolit pas |
 | GET | `/me/construction-queue` | 🔒 | → chantiers en cours et fin prévue |
 | POST | `/me/capital` | 🔒 | `{ insee }` → déplace la capitale (siège social) ; une fois tous les 7 jours |

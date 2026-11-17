@@ -52,52 +52,71 @@ Capital de départ : **30 000 ₮** (`CAPITAL_DEPART`, protection débutant 72 h
 
 ## 5.2 Bâtiments
 
-Pour un bâtiment de type b au niveau L, sur un territoire de facteur f_T :
+Décidé au début de l'étape 3 (17/11/2026, voir [idees.md](idees.md#décisions-prises)) : **tous les bâtiments s'arrêtent au niveau 5**, chaque niveau coûte plus cher que le précédent, et les chantiers durent longtemps, **en temps réel** (jusqu'à 48 h pour une gare niveau 5).
 
-- **Coût du niveau L** : `C(L) = arrondi_10( C_base × f_T × 1,4^(L−1) )`
-- **Revenu au niveau L** : `R(L) = arrondi( R_base × f_T × L )` (linéaire : chaque niveau ajoute `R_base × f_T`)
-- **Durée du chantier** : `T(L) = T_base × 1,5^(L−1)`
-- **Temps de retour marginal** : `C(L) / (R_base × f_T) = TR₁ × 1,4^(L−1)` → environ 15 h au niveau 1, 58 h au niveau 5, 310 h (13 jours) au niveau 10. Remplir ses emplacements est plus rentable qu'empiler les niveaux, puis il faut viser une plus grande commune.
+Pour un bâtiment de type b au niveau L (1 à 5), sur un territoire de facteur f_T :
 
-| Bâtiment | C_base | R_base /h | Empl. | Conditions | T_base | Effet |
+- **Coût du niveau L** : `C(L) = arrondi_10( C_base × f_T × 2^(L−1) )` (le coût double à chaque niveau)
+- **Revenu au niveau L** : `R(L) = arrondi( R_base × f_T × 1,7^(L−1) )` (chaque niveau rapporte 70 % de plus que le précédent)
+- **Durée du chantier** : `T(L) = T_base × 2^(L−1)` (chaque niveau prend deux fois plus de temps)
+- **Temps de retour marginal** : `C(L) / (R(L) − R(L−1))` → pour une Résidence, environ 15 h au niveau 1, 43 h au niveau 2, 50 h au niveau 3, 59 h au niveau 4 et 70 h au niveau 5. Remplir ses emplacements reste plus rentable que monter les niveaux, puis il faut viser une plus grande commune.
+
+| Bâtiment | C_base | R_base /h | Empl. | Conditions | T_base (niveau 1 → 5) | Effet |
 |---|---|---|---|---|---|---|
-| Résidence | 3 000 | 200 | 1 | — | 5 min | |
-| Commerce de proximité | 5 500 | 350 | 1 | P ≥ 200 | 15 min | |
-| Usine | 15 000 | 900 | 2 | P ≥ 1 000, max 2 | 45 min | |
-| Quartier d'affaires | 40 000 | 2 400 | 2 | P ≥ 20 000, max 2 | 2 h | |
-| Équipement public | 8 000 | 0 | 1 | max 1 | 30 min | **+8 % par niveau** sur tout le territoire |
-| **Siège social** | 40 000 × **2,5**^(L−1) (pas de f_T) | 0 | 2 | 1 par joueur, niveau max 7 | 1 h × **2**^(L−1) | **+1 territoire max par niveau** ; sa commune devient la **capitale** (immunisée contre les OPA) |
+| Résidence | 3 000 | 200 | 1 | — | 10 min → 2 h 40 | |
+| Commerce de proximité | 5 500 | 350 | 1 | P ≥ 200 | 20 min → 5 h 20 | |
+| Usine | 15 000 | 900 | 2 | P ≥ 1 000, max 2 | 1 h → 16 h | |
+| Quartier d'affaires | 40 000 | 2 400 | 2 | P ≥ 20 000, max 2 | 2 h → 32 h | |
+| Équipement public | 8 000 | 0 | 1 | max 1 | 30 min → 8 h | **+8 % par niveau** sur tout le territoire (+40 % au niveau 5) |
+| **Gare** | 20 000 | 0 | 2 | P ≥ 2 000, max 1 | 3 h → 48 h | **+10 % par niveau** sur tout le territoire (+50 % au niveau 5) |
+| **Siège social** | 40 000 × **2,5**^(L−1) (pas de f_T) | 0 | 2 | 1 par joueur | 1 h → 16 h | **+1 territoire max par niveau** ; sa commune devient la **capitale** (immunisée contre les OPA) |
 
-Exemple, Résidence au village (f_T = 1,48) : niveau 1 = 4 430 ₮ pour 295 ₮/h, niveau 10 = 91 520 ₮ pour 2 953 ₮/h au total.
-Siège social : 40 000 → 100 000 → 250 000 → 625 000 → 1,56 M → 3,9 M → 9,8 M.
+- La gare ne demande pas de vraie gare dans la commune : seulement 2 000 habitants (l'Outre-mer n'a presque pas de trains). Elle est surtout intéressante dans les grandes villes, qui ont beaucoup d'emplacements à faire profiter du bonus.
+- Exemple, Résidence au village (f_T = 1,48) :
+
+| Niveau | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|
+| Coût | 4 430 | 8 860 | 17 720 | 35 440 | 70 870 |
+| Revenu /h | 295 | 502 | 853 | 1 451 | 2 466 |
+| Chantier | 10 min | 20 min | 40 min | 1 h 20 | 2 h 40 |
+
+- Siège social : 40 000 → 100 000 → 250 000 → 625 000 → 1,56 M.
+- Les valeurs de [002_seed.sql](../backend/src/db/migrations/002_seed.sql) (10 niveaux, ×1,4, durées ×1,5, pas de gare) sont remplacées à l'étape 3 par une nouvelle migration (les migrations sont en ajout seul). Attention : dans la nouvelle formule, `income_growth` (1,7) n'est plus multiplié par L.
+- Gare : coût et bonus à régler pendant la bêta (étape 6).
 
 Règles :
-- Un chantier occupe une **file de construction** (1 au départ). Pendant une amélioration, le bâtiment continue de produire au niveau actuel.
+- Un chantier occupe une **file de construction**. **Une seule file** par joueur ; une 2ᵉ s'achètera plus tard (boutique, voir 5.8). Pendant une amélioration, le bâtiment continue de produire au niveau actuel.
 - Premier chantier du tutoriel : 10 secondes.
+- **Annuler un chantier** : rembourse **tout** son coût ; le bâtiment reste à son niveau actuel (une première construction annulée supprime le bâtiment). La file se libère.
+- Le coût d'un chantier compte dans `invested_cash` dès qu'il est payé ; une annulation le retire.
 - Démolition : rembourse 30 % de `invested_cash`.
+- Pas d'accélération payante des chantiers en V1.
 
 ## 5.3 Revenus passifs
 
 - **Revenu du sol** : `R_sol = arrondi( 1 % × V0 )` par heure (`revenuSol`, taux `TAUX_REVENU_SOL`) (temps de retour d'un terrain nu ≈ 100 h)
-- **Revenu d'un territoire** : `R_T = ( R_sol + Σ R_b ) × ( 1 + Σ bonus_b / 100 )` — `bonus_b` = 8 × niveau de l'équipement public
+- **Revenu d'un territoire** : `R_T = ( R_sol + Σ R_b ) × ( 1 + Σ bonus_b / 100 )` — `bonus_b` = 8 × niveau de l'équipement public + 10 × niveau de la gare
 - **Revenu du joueur** : `R_J = Σ R_T × ( 1 + boost )`, avec `boost ≤ 25 %` (boost de quête ou de boutique, jamais cumulés au-delà)
 
 ### Calcul hors ligne (différentiel temporel)
 
 ```
-Δt   = min( maintenant − income_collected_at ; 24 h )
+Δt   = min( maintenant − income_collected_at ; 48 h )
 gain = ⌊ R_J × Δt / 3 600 ⌋
 ```
 
-Le calcul se fait **par morceaux** : si un chantier s'est terminé pendant l'absence, on calcule jusqu'à sa date de fin avec l'ancien revenu, on applique le nouveau niveau, puis on continue. Le plafond de 24 h pousse à revenir chaque jour sans punir un week-end d'absence.
+Le calcul se fait **par morceaux** : si un chantier s'est terminé pendant l'absence, on calcule jusqu'à sa date de fin avec l'ancien revenu, on applique le nouveau niveau, puis on continue. Le plafond de **48 h** (décidé à l'étape 3, au lieu de 24 h) ne punit pas un week-end d'absence et va avec les chantiers les plus longs ; au-delà, les revenus s'arrêtent jusqu'au retour du joueur.
+
+- Le revenu monte tout seul à l'écran ; le serveur l'encaisse à chaque action (avant un achat, un chantier…). Le bouton « Encaisser » sert au tutoriel et aux quêtes.
+- Au retour, un **résumé** dit quels chantiers se sont terminés pendant l'absence (« la gare est passée au niveau 3 »). Les messages en direct arrivent à l'étape 4 (`building.done`).
 
 ## 5.4 Valeur, patrimoine, limites
 
 - **Valeur d'un territoire** : `V_T = V0 + B + F` (`valeurTerritoire`) — `B` = somme des `invested_cash` de ses bâtiments, `F` = fortifications (défenses d'OPA)
 - **Patrimoine** (classement) : `NW = cash + Σ V_T + séquestres d'OPA en cours` (les gemmes ne comptent pas)
 - **Achat** d'une commune libre : `V0`
-- **Vente à l'État** : `arrondi_100_inférieur( 70 % × V_T )`
-- **Limite de territoires** : `max_territories = min( 12 ; 3 + niveau du siège + bonus de rang + emplacement acheté )` ; une OPA sortante en cours compte comme un territoire réservé
+- **Vente à l'État** : `arrondi_100_inférieur( 70 % × V_T )` ; ses bâtiments sont **détruits** (chantier en cours compris) et la commune redevient libre au prix `V0` (même règle que l'inactivité, 5.6)
+- **Limite de territoires** : `max_territories = min( 12 ; 4 + niveau du siège + bonus de rang + emplacement acheté )` ; une OPA sortante en cours compte comme un territoire réservé. On démarre avec **4 territoires** (au lieu de 3, depuis que le siège s'arrête au niveau 5) : 4 + 5 + 2 + 1 = 12, le maximum reste atteignable
 
 | Rang | Patrimoine | Bonus |
 |---|---|---|
