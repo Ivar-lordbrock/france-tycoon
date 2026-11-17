@@ -56,6 +56,8 @@ cd france-tycoon
 git switch dev
 npm install
 npm run import:communes   # ~35 000 communes depuis l'API Geo (1re fois : long, ensuite cache dans data/raw/)
+npm run import:bpe        # équipements INSEE → vrais prix (quelques secondes)
+npm run import:osm        # gares, monuments, musées, outre-mer (~30 min la 1re fois, ensuite cache)
 npm run dev               # API sur http://localhost:3000, carte sur http://localhost:5173
 ```
 

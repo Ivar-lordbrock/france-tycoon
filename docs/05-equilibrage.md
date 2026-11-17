@@ -33,7 +33,7 @@ Notations : `P` population, `I` score d'infrastructures, `L` niveau, `arrondi_N`
 - **`f_T = borne( √(V0 / 10 000) ; 1 ; 60 )`** — multiplie le coût et le revenu des bâtiments : construire à Lyon coûte et rapporte plus qu'au village, avec le **même temps de retour**.
 - **`Emplacements = borne( 2 + ⌊2 × log10(1 + P)⌋ ; 3 ; 16 )`** — une grande ville accueille plus de bâtiments.
 
-> **Provisoire (étape 1)** : tant que BPE et OSM ne sont pas importés, `territory_stats` est vide, donc `I = 0` et V0 ne dépend que de la population. Le script `npm run import:communes` relit `territory_stats` à chaque passage : il suffira de le relancer après l'import des équipements.
+Les équipements viennent de `npm run import:bpe` (INSEE : domaines A services, B commerces, C éducation, D santé, F sports et loisirs, G tourisme ; A504 = restaurant ; hôtels, campings et auberges = hôtel ; domaine E transports ignoré) et de `npm run import:osm` (OpenStreetMap). Les deux recalculent I, V0 et les emplacements à la fin.
 
 ### Exemples (valeurs réelles de population ; équipements estimés en attendant l'import BPE/OSM)
 
