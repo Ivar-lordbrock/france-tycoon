@@ -1,6 +1,9 @@
 import { type MoiReponse, PSEUDO_MAX, pseudoSchema } from '@france-tycoon/shared';
 import { type FormEvent, useId, useState } from 'react';
+import { useCashEnDirect } from '../api/batiments.ts';
 import { useConfigConnexion, useConnexion, useDeconnexion, useModifierProfil, useMoi } from '../api/compte.ts';
+import { ChantierEnCours } from '../hud/ChantierEnCours.tsx';
+import { ResumeRetour } from '../hud/ResumeRetour.tsx';
 import { entier, tycoons } from '../panels/fiche-texte.ts';
 import { MesTerritoires } from '../panels/MesTerritoires.tsx';
 import { BoutonGoogle } from './BoutonGoogle.tsx';
@@ -12,7 +15,13 @@ export function Compte() {
   if (isError) {
     return <p className="panneau pointer-events-auto p-3 text-sm text-ardoise">Serveur injoignable.</p>;
   }
-  return moi ? <BarreJoueur moi={moi} /> : <Connexion />;
+  if (!moi) return <Connexion />;
+  return (
+    <>
+      <BarreJoueur moi={moi} />
+      <ResumeRetour moi={moi} />
+    </>
+  );
 }
 
 function Connexion() {
@@ -91,11 +100,13 @@ function Avatar({ moi }: { moi: MoiReponse }) {
   );
 }
 
-/** Barre du haut : qui je suis, mon cash, mes gemmes, mon revenu par heure, mes territoires. */
+/** Barre du haut : qui je suis, mon cash (qui monte tout seul), mes gemmes, mon revenu, mon chantier, mes territoires. */
 function BarreJoueur({ moi }: { moi: MoiReponse }) {
   const [ouvert, setOuvert] = useState<'profil' | 'territoires' | null>(null);
   const id = useId();
   const basculer = (volet: 'profil' | 'territoires') => setOuvert((o) => (o === volet ? null : volet));
+  // Entre deux lectures de /me, le cash monte de revenu/h ÷ 3 600 chaque seconde (docs/04 § 4.4).
+  const cash = useCashEnDirect() ?? moi.wallet.cash;
 
   return (
     <section aria-label="Mon compte" className="panneau pointer-events-auto">
@@ -124,7 +135,7 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
       <dl className="grid grid-cols-3 border-t border-encre/10 text-center">
         <div className="p-2">
           <dt className="text-xs text-ardoise">Cash</dt>
-          <dd className="font-bold tabular-nums">{tycoons(moi.wallet.cash)}</dd>
+          <dd className="font-bold tabular-nums">{tycoons(cash)}</dd>
         </div>
         <div className="border-x border-encre/10 p-2">
           <dt className="text-xs text-ardoise">Gemmes</dt>
@@ -135,6 +146,7 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
           <dd className="font-bold tabular-nums">{tycoons(moi.incomePerHour)}/h</dd>
         </div>
       </dl>
+      <ChantierEnCours possede={moi.territories.owned} />
       <button
         type="button"
         onClick={() => basculer('territoires')}

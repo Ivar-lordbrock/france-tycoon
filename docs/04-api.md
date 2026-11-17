@@ -196,8 +196,9 @@ sequenceDiagram
 | Écran | Appels |
 |---|---|
 | Carte | `/map/zones` (une fois), `/map/territories` à chaque fin de déplacement (anti-rebond 300 ms, cache par tuile de bbox arrondie) |
-| Barre du haut (HUD) | `/me` toutes les 60 s ; entre deux appels, le cash affiché **monte en continu** côté client (revenu/h ÷ 3600 chaque seconde), le serveur reste la référence |
-| Fiche commune | `/territories/:insee`, puis actions `buy`, `sell`, `buildings`, `takeover-quote`. Acheter et vendre passent par une confirmation avec aperçu (formules de `shared/`) ; une clé `Idempotency-Key` par confirmation (`frontend/src/panels/ActionsFiche.tsx`). Après un refus, la fiche et `/me` sont relus |
+| Barre du haut (HUD) | `/me` toutes les 60 s ; entre deux appels, le cash affiché **monte en continu** côté client (revenu/h ÷ 3600 chaque seconde, plafond 48 h, `useCashEnDirect`), le serveur reste la référence. Chantier en cours : `/me/construction-queue`, relue juste après la fin du prochain chantier (le serveur le termine à la lecture), minuteur à la seconde ; un clic ouvre l'onglet « Bâtiments » de la commune (`frontend/src/hud/ChantierEnCours.tsx`) |
+| Fiche commune | `/territories/:insee`, puis actions `buy`, `sell`, `takeover-quote`. Acheter et vendre passent par une confirmation avec aperçu (formules de `shared/`) ; une clé `Idempotency-Key` par confirmation (`frontend/src/panels/ActionsFiche.tsx`). Après un refus, la fiche et `/me` sont relus. Onglet « Bâtiments » (communes à soi) : `/building-types` (catalogue, 1 h), construire `POST …/buildings`, améliorer `…/upgrade`, arrêter `…/cancel`, démolir `DELETE /buildings/:id`, chacun avec confirmation et aperçu (prix, durée, revenu avant → après) ; `Idempotency-Key` sauf pour démolir (`frontend/src/panels/OngletBatiments.tsx`) |
+| Résumé au retour | `finishedWorks` de `/me` : chantiers finis pas encore vus (« Pendant ton absence » s'ils ont fini avant l'ouverture de la page) ; « Compris » → `POST /me/notifications/read` (`frontend/src/hud/ResumeRetour.tsx`) |
 | Mes territoires | `/me/territories` à l'ouverture de la liste (barre du haut) ; un clic ouvre la fiche et amène la carte sur la commune |
 | Notifications | flux SSE `/events` → toasts + invalidation des requêtes concernées |
 | Tutoriel | `/tutorial` au démarrage ; driver.js met en avant `[data-tuto="<ui_anchor>"]` |

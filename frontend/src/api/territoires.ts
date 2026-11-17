@@ -15,9 +15,14 @@ export function useMesTerritoires(actif: boolean) {
   });
 }
 
+/** Le cash change tout de suite à l'écran, sans attendre la relecture de /me. */
+export function poserPortefeuille(client: QueryClient, wallet: Portefeuille) {
+  client.setQueryData<MoiReponse | null>(['moi'], (moi) => (moi ? { ...moi, wallet } : moi));
+}
+
 /** Le cash change tout de suite à l'écran ; le reste du profil (territoires, revenu) est relu. */
 function apresTransaction(client: QueryClient, wallet: Portefeuille) {
-  client.setQueryData<MoiReponse | null>(['moi'], (moi) => (moi ? { ...moi, wallet } : moi));
+  poserPortefeuille(client, wallet);
   return Promise.all([
     client.invalidateQueries({ queryKey: ['moi'] }),
     // La commune change de couleur sur la carte.
@@ -26,7 +31,7 @@ function apresTransaction(client: QueryClient, wallet: Portefeuille) {
 }
 
 /** Après un refus (plus assez de cash, commune prise entre-temps…), la fiche et le profil sont relus. */
-function apresRefus(client: QueryClient, insee: string) {
+export function apresRefus(client: QueryClient, insee: string) {
   return Promise.all([
     client.invalidateQueries({ queryKey: ['fiche', insee] }),
     client.invalidateQueries({ queryKey: ['moi'] }),
