@@ -1,4 +1,4 @@
-import { type BoiteCarte, type ResultatRecherche, ZOOM_MIN_COMMUNES } from '@france-tycoon/shared';
+import { type BoiteCarte, type ResultatRecherche, ZOOM_MIN_COMMUNES, type ZoneCode } from '@france-tycoon/shared';
 import L from 'leaflet';
 import { type Vue, vueDeZone } from './vues.ts';
 
@@ -37,4 +37,12 @@ export function allerVersCommune(carte: L.Map, commune: ResultatRecherche) {
   liberer(carte);
   carte.once('moveend', () => verrouiller(carte, vueDeZone(commune.zone)));
   carte.flyTo(limites.getCenter(), zoom, { duration: DUREE_VOL });
+}
+
+/** Vole vers le centre d'une commune (liste « Mes territoires ») ; on garde le zoom s'il est déjà proche. */
+export function allerVersCentre(carte: L.Map, centre: { lat: number; lng: number }, zone: ZoneCode) {
+  const zoom = Math.min(ZOOM_MAX_COMMUNE, Math.max(ZOOM_MIN_COMMUNES + 2, carte.getZoom()));
+  liberer(carte);
+  carte.once('moveend', () => verrouiller(carte, vueDeZone(zone)));
+  carte.flyTo([centre.lat, centre.lng], zoom, { duration: DUREE_VOL });
 }

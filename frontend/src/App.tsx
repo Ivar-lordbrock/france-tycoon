@@ -24,8 +24,8 @@ export function App() {
         </div>
       </div>
 
-      {/* À droite sur grand écran ; sous la recherche sur téléphone. */}
-      <div className="pointer-events-none absolute inset-x-4 top-[6.75rem] z-[1000] flex max-h-[calc(100dvh-10rem)] flex-col gap-3 md:top-4 md:left-auto md:w-80">
+      {/* À droite sur grand écran ; sous la recherche sur téléphone, en s'arrêtant au-dessus de la barre du bas. */}
+      <div className="pointer-events-none absolute inset-x-4 top-[6.75rem] z-[1000] flex max-h-[calc(100dvh-15rem)] flex-col gap-3 md:top-4 md:left-auto md:max-h-[calc(100dvh-10rem)] md:w-80">
         <Compte />
         <FicheCommune />
       </div>

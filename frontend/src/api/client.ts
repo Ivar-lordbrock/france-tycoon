@@ -31,18 +31,41 @@ async function erreurDe(reponse: Response): Promise<ErreurApi> {
   return new ErreurApi(reponse.status, 'HTTP_ERROR', `Le serveur a répondu ${reponse.status}.`);
 }
 
+export interface OptionsEnvoi {
+  /** En-tête `Idempotency-Key` : renvoyer la même clé ne fait pas payer deux fois (docs/04 § 4.1). */
+  cle?: string;
+  appel?: typeof fetch;
+}
+
 /** POST / PATCH JSON ; `undefined` pour une réponse 204. Le cookie de session part tout seul (même origine). */
 export async function envoyerJson<T>(
   url: string,
   methode: 'POST' | 'PATCH',
   corps?: unknown,
-  appel: typeof fetch = fetch,
+  { cle, appel = fetch }: OptionsEnvoi = {},
 ): Promise<T> {
   const reponse = await appel(url, {
     method: methode,
-    headers: { accept: 'application/json', ...(corps === undefined ? {} : { 'content-type': 'application/json' }) },
+    headers: {
+      accept: 'application/json',
+      ...(corps === undefined ? {} : { 'content-type': 'application/json' }),
+      ...(cle ? { 'idempotency-key': cle } : {}),
+    },
     body: corps === undefined ? undefined : JSON.stringify(corps),
   });
   if (!reponse.ok) throw await erreurDe(reponse);
   return (reponse.status === 204 ? undefined : await reponse.json()) as T;
+}
+
+/** Clé d'idempotence : une par action voulue (un clic sur « Confirmer »), réutilisée si on réessaie. */
+export function nouvelleCle(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  // Hors HTTPS (et hors localhost), randomUUID n'existe pas : 16 octets au hasard suffisent.
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (o) => o.toString(16).padStart(2, '0')).join('');
+}
+
+/** Message à montrer au joueur : celui du serveur (déjà en français), sinon une phrase simple. */
+export function messageErreur(erreur: unknown): string {
+  if (erreur instanceof ErreurApi) return erreur.message;
+  return 'Le serveur ne répond pas. Vérifie ta connexion, puis réessaie.';
 }

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useFiche, useMoi } from '../api/compte.ts';
 import { useCarte } from '../etat/carte.ts';
+import { ActionsFiche } from './ActionsFiche.tsx';
 import { entier, LIBELLES_EQUIPEMENTS, lieu, proprietaire, raisonAchat, tycoons } from './fiche-texte.ts';
 
 /** Fiche de la commune choisie (clic sur la carte ou recherche). Échap la ferme. */
@@ -71,6 +72,9 @@ export function FicheCommune() {
         <p className="flex items-center gap-2 text-sm font-semibold">
           {couleur && <span className="size-3 rounded-full" style={{ background: couleur }} aria-hidden="true" />}
           {proprietaire(fiche)}
+          {fiche.isCapital && (
+            <span className="rounded bg-surligneur px-1.5 py-0.5 text-xs font-semibold">Capitale</span>
+          )}
         </p>
 
         <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5">
@@ -98,11 +102,7 @@ export function FicheCommune() {
           )}
         </dl>
 
-        {fiche.state === 'free' && (
-          <p className={`mt-3 rounded-md px-3 py-2 text-sm ${fiche.actions.canBuy ? 'bg-brume' : 'bg-surligneur/30'}`}>
-            {fiche.actions.canBuy ? 'Dans tes moyens.' : raisons.join(' ')}
-          </p>
-        )}
+        <ActionsFiche key={fiche.insee} fiche={fiche} moi={moi ?? null} raisonsAchat={raisons} />
 
         <h3 className="mt-4 text-sm font-semibold">Équipements</h3>
         {fiche.equipments.length === 0 ? (

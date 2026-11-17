@@ -2,6 +2,7 @@ import { type MoiReponse, PSEUDO_MAX, pseudoSchema } from '@france-tycoon/shared
 import { type FormEvent, useId, useState } from 'react';
 import { useConfigConnexion, useConnexion, useDeconnexion, useModifierProfil, useMoi } from '../api/compte.ts';
 import { entier, tycoons } from '../panels/fiche-texte.ts';
+import { MesTerritoires } from '../panels/MesTerritoires.tsx';
 import { BoutonGoogle } from './BoutonGoogle.tsx';
 
 /** Coin du joueur : connexion, ou barre du haut (cash, gemmes, revenu) et profil. */
@@ -90,17 +91,18 @@ function Avatar({ moi }: { moi: MoiReponse }) {
   );
 }
 
-/** Barre du haut : qui je suis, mon cash, mes gemmes, mon revenu par heure. */
+/** Barre du haut : qui je suis, mon cash, mes gemmes, mon revenu par heure, mes territoires. */
 function BarreJoueur({ moi }: { moi: MoiReponse }) {
-  const [ouvert, setOuvert] = useState(false);
+  const [ouvert, setOuvert] = useState<'profil' | 'territoires' | null>(null);
   const id = useId();
+  const basculer = (volet: 'profil' | 'territoires') => setOuvert((o) => (o === volet ? null : volet));
 
   return (
     <section aria-label="Mon compte" className="panneau pointer-events-auto">
       <button
         type="button"
-        onClick={() => setOuvert((o) => !o)}
-        aria-expanded={ouvert}
+        onClick={() => basculer('profil')}
+        aria-expanded={ouvert === 'profil'}
         aria-controls={`${id}-profil`}
         className="flex w-full items-center gap-3 rounded-[10px] p-2.5 text-left hover:bg-brume/60"
       >
@@ -133,7 +135,28 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
           <dd className="font-bold tabular-nums">{tycoons(moi.incomePerHour)}/h</dd>
         </div>
       </dl>
-      {ouvert && <Profil id={`${id}-profil`} moi={moi} />}
+      <button
+        type="button"
+        onClick={() => basculer('territoires')}
+        aria-expanded={ouvert === 'territoires'}
+        aria-controls={`${id}-territoires`}
+        className={`flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60 ${ouvert ? '' : 'rounded-b-[10px]'}`}
+      >
+        Mes territoires
+        <span className="flex items-center gap-1.5 font-normal text-ardoise tabular-nums">
+          {moi.territories.owned} / {moi.territories.max}
+          <svg
+            viewBox="0 0 20 20"
+            className={`size-4 stroke-current stroke-2 transition-transform motion-reduce:transition-none ${ouvert === 'territoires' ? 'rotate-180' : ''}`}
+            fill="none"
+            aria-hidden="true"
+          >
+            <path d="m5 8 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+      </button>
+      {ouvert === 'territoires' && <MesTerritoires id={`${id}-territoires`} onChoisi={() => setOuvert(null)} />}
+      {ouvert === 'profil' && <Profil id={`${id}-profil`} moi={moi} />}
     </section>
   );
 }
