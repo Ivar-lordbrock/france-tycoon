@@ -12,6 +12,8 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ErreurMetier } from '../../erreurs.ts';
 import { exigerJoueur } from '../auth/requete.ts';
 import { creerChantiers } from '../buildings/chantiers.ts';
+import { creerEncaisseurSimple } from '../income/revenus.ts';
+import { creerIssuesOpa } from '../takeovers/issues.ts';
 import { creerLancementOpa } from '../takeovers/lancement.ts';
 import { cleIdempotence } from '../wallet/idempotence.ts';
 import { creerAchatVente } from './achat-vente.ts';
@@ -25,9 +27,12 @@ export const routesTerritoires: FastifyPluginAsyncZod = async (app) => {
   const { acheter, vendre } = creerAchatVente(app.db, lireFiche);
   const { construire } = creerChantiers(app.db);
   const { devis, lancer } = creerLancementOpa(app.db);
+  const { resoudreEchues } = creerIssuesOpa(app.db, creerEncaisseurSimple(app.db));
 
   app.get('/:insee', { schema: { params: inseeParamsSchema, response: { 200: ficheCommuneSchema } } }, (req, reply) => {
-    const fiche = lireFiche(req.params.insee, req.joueur?.id ?? null, maintenant());
+    const t = maintenant();
+    resoudreEchues(t); // une OPA échue est résolue dès qu'on regarde la commune
+    const fiche = lireFiche(req.params.insee, req.joueur?.id ?? null, t);
     if (!fiche) {
       throw new ErreurMetier('TERRITORY_NOT_FOUND', 404, `Aucune commune française avec le code ${req.params.insee}.`);
     }

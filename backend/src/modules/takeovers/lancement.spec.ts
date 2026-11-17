@@ -44,15 +44,17 @@ async function partie() {
       headers: { ...(cookie ? { cookie } : {}), ...(cle ? { 'idempotency-key': cle } : {}) },
     });
   const cash = (id: number) => db.prepare('SELECT cash FROM users WHERE id = ?').pluck().get(id) as number;
-  /** Une OPA écrite directement en base (pour préparer une situation). */
+  /** Une OPA écrite directement en base (pour préparer une situation) ; en cours, elle finit dans 1 h. */
   const opaEnBase = (attaquant: number, defenseur: number, insee: string, status = 'pending', resoluLe?: number) =>
     sql(
       `INSERT INTO takeovers (territory_id, attacker_id, defender_id, territory_value, offer_amount, defense_cost,
         break_fee, status, created_at, expires_at, resolved_at)
-      SELECT id, ?, ?, 10000, 15000, 3500, 800, ?, unixepoch() - ${10 * jour}, unixepoch() - ${9 * jour}, ?
+      SELECT id, ?, ?, 10000, 15000, 3500, 800, ?, unixepoch() - ${10 * jour},
+        CASE ? WHEN 'pending' THEN unixepoch() + 3600 ELSE unixepoch() - ${9 * jour} END, ?
       FROM territories WHERE insee_code = ?`,
       attaquant,
       defenseur,
+      status,
       status,
       status === 'pending' ? null : (resoluLe ?? null),
       insee,

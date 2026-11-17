@@ -3,6 +3,7 @@ import { construireApp } from './app.ts';
 import { chargerFichierEnv, lireConfig } from './config.ts';
 import { fermerBase, ouvrirBase } from './db/connexion.ts';
 import { appliquerMigrations } from './db/migrations.ts';
+import { demarrerTaches } from './jobs/taches.ts';
 
 chargerFichierEnv();
 const config = lireConfig();
@@ -35,7 +36,12 @@ if (!config.GOOGLE_CLIENT_ID) app.log.warn('GOOGLE_CLIENT_ID vide : connexion Go
 const { appliquees } = appliquerMigrations(db);
 if (appliquees.length > 0) app.log.info({ appliquees }, 'migrations appliquées');
 
-app.addHook('onClose', async () => fermerBase(db));
+// Tâches planifiées (OPA échues…) : arrêtées avant la fermeture de la base.
+const arreterTaches = demarrerTaches(db, app.log);
+app.addHook('onClose', async () => {
+  arreterTaches();
+  fermerBase(db);
+});
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => {

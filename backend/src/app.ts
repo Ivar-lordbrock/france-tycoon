@@ -8,6 +8,7 @@ import { type OptionsAuth, routesAuth } from './modules/auth/routes.ts';
 import { routesBatiments, routesCatalogueBatiments } from './modules/buildings/routes.ts';
 import { routesCarte } from './modules/map/routes.ts';
 import { routesMoi } from './modules/me/routes.ts';
+import { routesOpa } from './modules/takeovers/routes.ts';
 import { routesTerritoires } from './modules/territories/routes.ts';
 
 declare module 'fastify' {
@@ -41,6 +42,7 @@ export function construireApp({ db, logger = false, auth = {} }: OptionsApp) {
   app.register(routesMoi, { prefix: '/api/v1/me' });
   app.register(routesCarte, { prefix: '/api/v1/map' });
   app.register(routesTerritoires, { prefix: '/api/v1/territories' });
+  app.register(routesOpa, { prefix: '/api/v1/takeovers' });
 
   return app;
 }

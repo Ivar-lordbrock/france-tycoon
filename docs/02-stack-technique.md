@@ -118,7 +118,8 @@ Chaque règle temporelle a **deux** garde-fous : une tâche planifiée (pour que
 | `cleanup` | chaque jour à 05:00 | Sessions expirées, notifications lues de plus de 30 jours |
 
 - Les chantiers terminés, les boucliers et les quêtes du jour **n'ont pas besoin de tâche** : ils se calculent à la lecture à partir des dates.
-- Chaque exécution laisse une ligne dans `job_runs` ; l'index unique `uq_job_runs_one_running` empêche deux exécutions simultanées.
+- Chaque exécution laisse une ligne dans `job_runs` ; l'index unique `uq_job_runs_one_running` empêche deux exécutions simultanées. On garde 7 jours de lignes par tâche.
+- Code : `backend/src/jobs/taches.ts`, lancé par `server.ts`. Les tâches « toutes les N minutes » tournent avec un simple minuteur ; `node-cron` arrivera avec la première tâche à heure fixe (inactifs, étape 4).
 - Si un jour il faut plusieurs serveurs, ces tâches passent dans un processus « worker » séparé ; rien d'autre ne change.
 
 ## 2.7 Sécurité
