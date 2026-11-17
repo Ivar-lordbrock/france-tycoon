@@ -62,7 +62,7 @@ describe('GET /api/v1/territories/:insee', () => {
       sellPrice: null,
       sellReasons: ['UNAUTHENTICATED'],
       canTakeover: false,
-      takeoverReasons: [],
+      takeoverReasons: ['UNAUTHENTICATED'],
     });
   });
 
@@ -100,7 +100,7 @@ describe('GET /api/v1/territories/:insee', () => {
     expect(corps.actions.buyReasons).toEqual(['TERRITORY_LIMIT_REACHED']);
   });
 
-  it('commune d’un rival : propriétaire affiché, achat impossible, OPA pas encore ouvertes', async () => {
+  it('commune d’un rival : propriétaire affiché, achat impossible, OPA refusée avec ses raisons', async () => {
     const db = baseAvecCommunes();
     const app = appDeTest(db);
     const bob = await connecter(app, 'Bob');
@@ -121,11 +121,12 @@ describe('GET /api/v1/territories/:insee', () => {
         buyPrice: null,
         buyReasons: ['TERRITORY_NOT_FREE'],
         canTakeover: false,
-        takeoverReasons: ['FEATURE_DISABLED'],
+        // Bouclier de la commune, Bob vient d'arriver, et le compte d'Alice n'a pas 7 jours.
+        takeoverReasons: ['SHIELD_ACTIVE', 'NEWBIE_PROTECTION', 'INSUFFICIENT_FUNDS'],
       },
     });
     expect(vueAlice.shieldUntil).toBeGreaterThan(Date.now() / 1000);
-    expect(vueBob).toMatchObject({ state: 'mine', owner: { isMe: true }, actions: { takeoverReasons: [] } });
+    expect(vueBob).toMatchObject({ state: 'mine', owner: { isMe: true }, actions: { takeoverReasons: ['FORBIDDEN'] } });
   });
 
   it('valeur totale = V0 + bâtiments + fortifications', async () => {
