@@ -17,7 +17,11 @@ export function useConfigConnexion() {
   });
 }
 
-/** Mon profil et mon portefeuille ; `null` si personne n'est connecté. Relu toutes les 60 s (docs/04 § 4.4). */
+/**
+ * Mon profil et mon portefeuille ; `null` si personne n'est connecté.
+ * Relu toutes les 60 s une fois connecté (docs/04 § 4.4) ; déconnecté, rien à relire :
+ * la connexion relance la lecture d'elle-même (`toutRelire`).
+ */
 export function useMoi() {
   return useQuery({
     queryKey: ['moi'],
@@ -29,7 +33,7 @@ export function useMoi() {
         throw erreur;
       }
     },
-    refetchInterval: 60_000,
+    refetchInterval: (query) => (query.state.data ? 60_000 : false),
   });
 }
 
