@@ -9,7 +9,7 @@
 | Authentification | Cookie de session `sid` (HttpOnly). 🔒 = connexion obligatoire, 🛡️ = rôle admin |
 | Validation | Schémas **zod** dans `shared/src/api/` : les mêmes servent au front et au back |
 | Idempotence | Les actions qui coûtent de l'argent (💰) acceptent `Idempotency-Key: <uuid>` (8 à 100 caractères : lettres, chiffres, `-`, `_`) ; rejouer la même clé renvoie le même résultat sans repayer. La clé est rangée dans `wallet_transactions.idempotency_key`, préfixée par l'action et le joueur (`wallet/idempotence.ts`) ; une clé déjà servie pour une autre commune → 400 |
-| Revenus | Toute requête 🔒 qui lit ou dépense le portefeuille **encaisse d'abord** les revenus en attente (calcul différé) et termine les chantiers finis : `GET`/`PATCH /me`, `GET /me/territories`, `GET /me/construction-queue`, `POST /me/collect`, achat, vente, bâtiments, capitale, devis et lancement d'OPA (puis la suite des OPA…). Moteur : `backend/src/modules/income/revenus.ts` |
+| Revenus | Toute requête 🔒 qui lit ou dépense le portefeuille **encaisse d'abord** les revenus en attente (calcul différé) et termine les chantiers finis : `GET`/`PATCH /me`, `GET /me/territories`, `GET /me/construction-queue`, `POST /me/collect`, achat, vente, bâtiments, capitale, OPA. Avant de compter les revenus, les OPA dont les 24 h sont passées sont résolues (la commune change de main à `expires_at`, chacun touche les revenus pour son temps). Moteur : `backend/src/modules/income/revenus.ts` |
 | Pagination | `?cursor=...&limit=50` → `{ items, nextCursor }` |
 | Erreurs | `{ "error": { "code": "INSUFFICIENT_FUNDS", "message": "Il manque 1 200 ₮", "details": {...} } }` avec un statut HTTP cohérent |
 | Monnaie affichée | `₮` (« tycoon ») pour le cash, 💎 pour les gemmes |
@@ -33,6 +33,7 @@
 | `TAKEOVER_ALREADY_PENDING` | 409 | OPA déjà en cours sur cette commune |
 | `TAKEOVER_LIMIT` | 409 | Trop d'OPA sortantes, ou défenseur déjà visé par 2 OPA |
 | `TAKEOVER_COOLDOWN` | 409 | Même attaquant → même défenseur, moins de 7 jours après un échec |
+| `TAKEOVER_NOT_PENDING` | 409 | Répondre à une OPA déjà terminée (défendue, acceptée, retirée, ou 24 h passées) ; `details.status` |
 | `TARGET_TOO_SMALL` | 409 | Patrimoine de la cible < 25 % du vôtre (anti-acharnement) |
 | `WORKS_IN_PROGRESS` | 409 | Démolir un bâtiment pendant son chantier (l'annuler d'abord) |
 | `NO_WORKS_IN_PROGRESS` | 409 | Annuler un chantier alors qu'il n'y en a pas |
@@ -87,11 +88,13 @@
 |---|---|---|---|
 | GET | `/territories/:insee/takeover-quote` | 🔒 | → `{ territoryValue, offerAmount, defenseCost, breakFee, eligible, reasons[] }` : les montants qui seraient figés maintenant (docs/05, 5.5 ; encaisse d'abord). Raisons, dans l'ordre : `FORBIDDEN` (commune libre ou à soi, seule raison dans ce cas), `CAPITAL_IMMUNE`, `SHIELD_ACTIVE`, `NEWBIE_PROTECTION` (défenseur protégé 72 h, ou compte de l'attaquant de moins de 7 jours), `TAKEOVER_ALREADY_PENDING`, `TAKEOVER_LIMIT`, `TAKEOVER_COOLDOWN`, `TARGET_TOO_SMALL`, `TERRITORY_LIMIT_REACHED`, `INSUFFICIENT_FUNDS` ; sans doublon. `TERRITORY_NOT_FOUND` si le code est inconnu |
 | POST | `/territories/:insee/takeovers` | 🔒💰 | → `{ takeover, wallet }` : OPA `pending`, 24 h pour répondre ; `offerAmount` bloqué (débité en `takeover_escrow`) ; notification `takeover_received` au défenseur (SSE au paquet 5) ; l'attaquant perd sa protection débutant. Refus : la première raison du devis (403/409), `INSUFFICIENT_FUNDS` avec `details.missing`. Moteur : `backend/src/modules/takeovers/lancement.ts` |
-| GET | `/me/takeovers?role=attacker\|defender&status=pending` | 🔒 | → liste avec compte à rebours |
-| GET | `/takeovers/:id` | 🔒 | → détail (attaquant ou défenseur seulement). Résout l'OPA si elle a expiré |
-| POST | `/takeovers/:id/defend` | 🔒💰 | Défenseur : paie `defenseCost` → `defended`, bouclier 72 h |
-| POST | `/takeovers/:id/accept` | 🔒 | Défenseur : vend tout de suite → `accepted` |
-| POST | `/takeovers/:id/cancel` | 🔒 | Attaquant : retire l'offre → `cancelled`, l'indemnité est quand même versée au défenseur |
+| GET | `/me/takeovers?role=attacker\|defender&status=pending` | 🔒 | → `{ takeovers }` : mes OPA (100 au plus), les plus récentes d'abord ; `role` et `status` facultatifs. Résout d'abord les OPA échues |
+| GET | `/takeovers/:id` | 🔒 | → `{ takeover }` (attaquant ou défenseur seulement, sinon `NOT_FOUND`). Résout l'OPA si ses 24 h sont passées |
+| POST | `/takeovers/:id/defend` | 🔒💰 | Défenseur : paie `defenseCost` (`takeover_defense`) et reçoit `breakFee` ; l'attaquant récupère `offerAmount − breakFee` (`takeover_refund`). → `defended`, `F += defenseCost`, bouclier 72 h. → `{ takeover, wallet }` |
+| POST | `/takeovers/:id/accept` | 🔒 | Défenseur : vend tout de suite → `accepted` ; il reçoit `offerAmount` (`takeover_payout`), la commune passe à l'attaquant avec ses bâtiments et chantiers, bouclier 48 h. Même chose sans réponse au bout de 24 h → `succeeded` |
+| POST | `/takeovers/:id/cancel` | 🔒💰 | Attaquant : retire l'offre → `cancelled` ; il récupère `offerAmount − breakFee`, l'indemnité est versée au défenseur |
+
+Réponses : `FORBIDDEN` si ce n'est pas son rôle (le défenseur défend ou accepte, l'attaquant retire), `TAKEOVER_NOT_PENDING` si l'OPA est terminée, `INSUFFICIENT_FUNDS` pour une défense trop chère. Chaque issue envoie une notification `takeover_resolved` à l'autre joueur (aux deux pour `succeeded`). Les OPA échues sont résolues par la tâche `resolve-takeovers` (chaque minute) et dès qu'on lit : encaissement, fiche de la commune, `/takeovers/:id`, `/me/takeovers`. Moteur : `backend/src/modules/takeovers/issues.ts` et `reponses.ts`
 
 ### Quêtes, tutoriel, classement
 

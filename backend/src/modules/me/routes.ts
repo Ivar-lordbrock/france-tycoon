@@ -5,6 +5,8 @@ import {
   fileConstructionSchema,
   lireNotificationsCorpsSchema,
   lireNotificationsReponseSchema,
+  mesOpaQuerySchema,
+  mesOpaReponseSchema,
   mesTerritoiresSchema,
   modifierMoiCorpsSchema,
   moiReponseSchema,
@@ -14,19 +16,21 @@ import { ErreurMetier } from '../../erreurs.ts';
 import { exigerJoueur } from '../auth/requete.ts';
 import { creerLecteurChantiers } from '../buildings/file.ts';
 import { creerEncaisseur } from '../income/revenus.ts';
+import { creerReponsesOpa } from '../takeovers/reponses.ts';
 import { creerDeplacementCapitale } from './capitale.ts';
 import { creerLecteurMoi } from './requetes.ts';
 import { creerLecteurMesTerritoires } from './territoires.ts';
 
 const maintenant = () => Math.floor(Date.now() / 1000);
 
-/** Routes 🔒 /me : mon profil, mon portefeuille, mes territoires, mes revenus, mes messages. */
+/** Routes 🔒 /me : mon profil, mon portefeuille, mes territoires, mes revenus, mes OPA, mes messages. */
 export const routesMoi: FastifyPluginAsyncZod = async (app) => {
   const lireMoi = creerLecteurMoi(app.db);
   const lireMesTerritoires = creerLecteurMesTerritoires(app.db);
   const encaisser = creerEncaisseur(app.db);
   const lireChantiers = creerLecteurChantiers(app.db);
   const deplacerCapitale = creerDeplacementCapitale(app.db);
+  const { mesOpa } = creerReponsesOpa(app.db);
   const files = app.db.prepare<[number], number>('SELECT build_queue_slots FROM users WHERE id = ?').pluck();
   const pseudoPris = app.db
     .prepare<[string, number], number>('SELECT 1 FROM users WHERE pseudo = ? AND id <> ?')
@@ -80,6 +84,16 @@ export const routesMoi: FastifyPluginAsyncZod = async (app) => {
       })
       .immediate();
   });
+
+  app.get(
+    '/takeovers',
+    { schema: { querystring: mesOpaQuerySchema, response: { 200: mesOpaReponseSchema } } },
+    (req, reply) => {
+      const id = exigerJoueur(req);
+      reply.header('cache-control', 'private, no-store');
+      return { takeovers: mesOpa(id, req.query, maintenant()) };
+    },
+  );
 
   app.post(
     '/capital',

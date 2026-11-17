@@ -10,6 +10,7 @@ import {
 } from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
 import { creerRecalculLimite } from '../buildings/limites.ts';
+import { creerIssuesOpa } from '../takeovers/issues.ts';
 import { wallet } from '../wallet/wallet.ts';
 
 // Moteur des revenus passifs (docs/05-equilibrage.md, 5.3) : revenu par heure et encaissement par morceaux.
@@ -134,10 +135,24 @@ export interface Encaissement {
 }
 
 /**
- * « Encaisse d'abord » (docs/04) : verse les revenus en attente et termine les chantiers finis.
+ * « Encaisse d'abord » (docs/04) : résout les OPA dont les 24 h sont passées, puis verse les revenus
+ * en attente et termine les chantiers finis.
  * Doit tourner dans la transaction de l'action (`db.transaction(...).immediate()`), comme `wallet.apply`.
  */
 export function creerEncaisseur(db: Base) {
+  const encaisserSimple = creerEncaisseurSimple(db);
+  // Une OPA échue change le propriétaire d'une commune à `expires_at` : elle passe avant le calcul,
+  // sinon le défenseur toucherait les revenus de la commune après l'avoir perdue.
+  const { resoudreEchues } = creerIssuesOpa(db, encaisserSimple);
+  return function encaisser(moi: number, maintenant: number): Encaissement {
+    if (!db.inTransaction) throw new Error('encaisser doit être appelé dans une transaction');
+    resoudreEchues(maintenant);
+    return encaisserSimple(moi, maintenant);
+  };
+}
+
+/** Comme `creerEncaisseur`, sans résoudre les OPA (c'est la résolution qui l'appelle, à `expires_at`). */
+export function creerEncaisseurSimple(db: Base) {
   const lireTerritoires = creerLecteurRevenus(db);
   const joueur = db.prepare<[number], { depuis: number; reste: number; cash: number }>(
     'SELECT income_collected_at AS depuis, income_remainder AS reste, cash FROM users WHERE id = ?',
