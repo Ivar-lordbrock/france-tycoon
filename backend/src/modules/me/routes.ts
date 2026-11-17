@@ -10,12 +10,15 @@ import {
   mesTerritoiresSchema,
   modifierMoiCorpsSchema,
   moiReponseSchema,
+  notificationsQuerySchema,
+  notificationsReponseSchema,
 } from '@france-tycoon/shared';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ErreurMetier } from '../../erreurs.ts';
 import { exigerJoueur } from '../auth/requete.ts';
 import { creerLecteurChantiers } from '../buildings/file.ts';
 import { creerEncaisseur } from '../income/revenus.ts';
+import { creerListeNotifications } from '../notifications/liste.ts';
 import { creerReponsesOpa } from '../takeovers/reponses.ts';
 import { creerDeplacementCapitale } from './capitale.ts';
 import { creerLecteurMoi } from './requetes.ts';
@@ -31,6 +34,7 @@ export const routesMoi: FastifyPluginAsyncZod = async (app) => {
   const lireChantiers = creerLecteurChantiers(app.db);
   const deplacerCapitale = creerDeplacementCapitale(app.db);
   const { mesOpa } = creerReponsesOpa(app.db);
+  const listerNotifications = creerListeNotifications(app.db);
   const files = app.db.prepare<[number], number>('SELECT build_queue_slots FROM users WHERE id = ?').pluck();
   const pseudoPris = app.db
     .prepare<[string, number], number>('SELECT 1 FROM users WHERE pseudo = ? AND id <> ?')
@@ -106,6 +110,21 @@ export const routesMoi: FastifyPluginAsyncZod = async (app) => {
     const { collected, cash, incomePerHour } = app.db.transaction(() => encaisser(id, maintenant())).immediate();
     return { collected, cash, incomePerHour };
   });
+
+  app.get(
+    '/notifications',
+    { schema: { querystring: notificationsQuerySchema, response: { 200: notificationsReponseSchema } } },
+    (req, reply) => {
+      const id = exigerJoueur(req);
+      reply.header('cache-control', 'private, no-store');
+      return app.db
+        .transaction(() => {
+          encaisser(id, maintenant()); // les chantiers finis ont leur message dans la liste
+          return listerNotifications(id, req.query);
+        })
+        .immediate();
+    },
+  );
 
   app.post(
     '/notifications/read',
