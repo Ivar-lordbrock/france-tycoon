@@ -72,8 +72,9 @@ export const notificationSchema = z.discriminatedUnion('kind', [
   z.object({ ...message, kind: z.literal('inactivity_warning'), payload: contenuAvertissementInactiviteSchema }),
   z.object({ ...message, kind: z.literal('inactivity_released'), payload: contenuLiberationInactiviteSchema }),
 ]);
-export type Notification = z.infer<typeof notificationSchema>;
-export type TypeNotification = Notification['kind'];
+/** Un message du jeu (à ne pas confondre avec `Notification` du navigateur). */
+export type NotificationJeu = z.infer<typeof notificationSchema>;
+export type TypeNotification = NotificationJeu['kind'];
 
 // GET /me/notifications?before=<id>&limit=20 — les plus récents d'abord
 
