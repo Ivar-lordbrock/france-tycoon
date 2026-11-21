@@ -16,6 +16,7 @@ export function Legende() {
   return (
     <ul
       aria-label="Légende de la carte"
+      data-tuto="takeover-help"
       className="panneau pointer-events-auto flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1.5 text-xs text-encre"
     >
       <li className="text-ardoise">Couleur du propriétaire, et :</li>

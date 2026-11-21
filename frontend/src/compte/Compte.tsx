@@ -153,7 +153,7 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
           </span>
         </span>
       </button>
-      <dl className="grid grid-cols-3 border-t border-encre/10 text-center">
+      <dl className="grid grid-cols-3 border-t border-encre/10 text-center" data-tuto="hud-wallet">
         <div className="p-2">
           <dt className="text-xs text-ardoise">Cash</dt>
           <dd className="font-bold tabular-nums">{tycoons(cash)}</dd>
@@ -174,6 +174,7 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
           type="button"
           onClick={() => encaisser.mutate()}
           disabled={encaisser.isPending}
+          data-tuto="collect-button"
           className="h-8 rounded-md bg-encre px-3 font-semibold text-white disabled:opacity-50"
         >
           Encaisser
@@ -211,6 +212,7 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
         onClick={() => basculer('quetes')}
         aria-expanded={ouvert === 'quetes'}
         aria-controls={`${id}-quetes`}
+        data-tuto="quests-button"
         className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
       >
         Quêtes du jour
@@ -222,6 +224,7 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
         onClick={() => basculer('classement')}
         aria-expanded={ouvert === 'classement'}
         aria-controls={`${id}-classement`}
+        data-tuto="leaderboard-button"
         className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
       >
         Classement

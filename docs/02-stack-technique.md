@@ -24,7 +24,7 @@
 | Carte | **Leaflet 1.9 + react-leaflet**, rendu **canvas** (`preferCanvas`) | Demandé ; le canvas tient des milliers de polygones |
 | État front | **TanStack Query** (données serveur) + **Zustand** (état d'interface) | Cache, rafraîchissement, peu de code |
 | Style | **Tailwind CSS** | Rapide à deux, pas de CSS qui diverge |
-| Tutoriel | **driver.js** | Met en avant un élément de l'écran étape par étape (ancres `data-tuto="..."`) |
+| Tutoriel | Bulle maison (`frontend/src/hud/Tutoriel.tsx`) | Entoure l'élément de l'étape (ancres `data-tuto="..."`) sans bloquer le jeu ; driver.js écarté : son voile empêche de cliquer la carte, or la plupart des étapes demandent d'agir |
 | Backend | **Node.js LTS (≥ 22) + Fastify 5** | Rapide, validation par schéma intégrée, logs Pino |
 | Validation | **zod** (schémas dans `shared/`) | Le même schéma valide le formulaire front et la requête back |
 | Base | **SQLite** via **better-sqlite3** | Synchrone et transactionnel : idéal pour une économie (pas de « course » entre deux requêtes) |

@@ -7,6 +7,7 @@ import type {
 } from '@france-tycoon/shared';
 import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ErreurApi, envoyerJson, lireJson } from './client.ts';
+import { CLE_TUTORIEL } from './tutoriel.ts';
 
 /** Ce que l'écran de connexion propose (bouton Google, compte de test). */
 export function useConfigConnexion() {
@@ -50,6 +51,9 @@ export function useFiche(insee: string | null) {
 
 /** Après connexion ou déconnexion : profil, fiches et couleurs de la carte (« à moi ») changent. */
 function toutRelire(client: QueryClient) {
+  // Propres au joueur, et un tutoriel fini n'est plus relu : effacés (l'écran les relira pour le nouveau compte).
+  client.removeQueries({ queryKey: CLE_TUTORIEL });
+  client.removeQueries({ queryKey: ['quetes'] });
   return Promise.all([
     client.invalidateQueries({ queryKey: ['moi'] }),
     client.invalidateQueries({ queryKey: ['fiche'] }),
