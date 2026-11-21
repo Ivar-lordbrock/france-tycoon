@@ -9,6 +9,7 @@ import {
 import type { OngletFiche } from '../etat/carte.ts';
 import type { NouveauToast } from '../etat/toasts.ts';
 import { phraseChantierFini } from './batiments-texte.ts';
+import { nomRang } from './classement-texte.ts';
 import { tycoons } from './fiche-texte.ts';
 
 // Textes du centre de notifications et des petits messages en direct (docs/04, « Notifications et temps réel »).
@@ -72,7 +73,7 @@ export function recompenseQuete(p: Pick<ContenuQueteTerminee, 'rewardCash' | 're
 
 /** « Nouveau rang : Baron ! Tu peux posséder 6 communes. » (la limite n'est citée que si elle a monté). */
 export function phraseNouveauRang(p: ContenuNouveauRang): string {
-  const nom = RANGS.find((r) => r.niveau === p.rankLevel)?.nom ?? `niveau ${p.rankLevel}`;
+  const nom = nomRang(p.rankLevel);
   const plus = RANGS.some((r) => r.niveau > p.previousLevel && r.niveau <= p.rankLevel && r.bonusTerritoires > 0);
   return plus ? `Nouveau rang : ${nom} ! Tu peux posséder ${p.maxTerritories} communes.` : `Nouveau rang : ${nom} !`;
 }
