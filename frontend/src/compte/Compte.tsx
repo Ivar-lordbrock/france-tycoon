@@ -7,9 +7,11 @@ import { useFluxDirect } from '../api/direct.ts';
 import { useEncaisser } from '../api/quetes.ts';
 import { CentreMessages } from '../hud/CentreMessages.tsx';
 import { ChantierEnCours } from '../hud/ChantierEnCours.tsx';
+import { Classement } from '../hud/Classement.tsx';
 import { MesOpa } from '../hud/MesOpa.tsx';
 import { QuetesDuJour } from '../hud/QuetesDuJour.tsx';
 import { ResumeRetour } from '../hud/ResumeRetour.tsx';
+import { nomRang } from '../panels/classement-texte.ts';
 import { entier, tycoons } from '../panels/fiche-texte.ts';
 import { MesTerritoires } from '../panels/MesTerritoires.tsx';
 import { BoutonGoogle } from './BoutonGoogle.tsx';
@@ -115,7 +117,7 @@ function Avatar({ moi }: { moi: MoiReponse }) {
   );
 }
 
-type Volet = 'profil' | 'messages' | 'quetes' | 'territoires';
+type Volet = 'profil' | 'messages' | 'quetes' | 'classement' | 'territoires';
 
 /** Barre du haut : qui je suis, mon cash (qui monte tout seul), mes gemmes, mon revenu, mon chantier, mes territoires. */
 function BarreJoueur({ moi }: { moi: MoiReponse }) {
@@ -147,7 +149,7 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
             {moi.user.pseudo}
           </span>
           <span className="block text-xs text-ardoise">
-            {moi.territories.owned} / {moi.territories.max} territoires
+            {nomRang(moi.rankLevel)} · {moi.territories.owned} / {moi.territories.max} territoires
           </span>
         </span>
       </button>
@@ -215,6 +217,17 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
         <Chevron ouvert={ouvert === 'quetes'} />
       </button>
       {ouvert === 'quetes' && <QuetesDuJour id={`${id}-quetes`} />}
+      <button
+        type="button"
+        onClick={() => basculer('classement')}
+        aria-expanded={ouvert === 'classement'}
+        aria-controls={`${id}-classement`}
+        className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
+      >
+        Classement
+        <Chevron ouvert={ouvert === 'classement'} />
+      </button>
+      {ouvert === 'classement' && <Classement id={`${id}-classement`} onChoisi={() => setOuvert(null)} />}
       <button
         type="button"
         onClick={() => basculer('territoires')}

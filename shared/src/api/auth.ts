@@ -62,6 +62,8 @@ export const moiReponseSchema = z.object({
   /** Revenu passif total par heure : sol et bâtiments des territoires possédés (5.3). */
   incomePerHour: z.number().int().nonnegative(),
   territories: z.object({ owned: z.number().int().nonnegative(), max: z.number().int().positive() }),
+  /** 0 Entrepreneur … 4 Tycoon (`RANGS`) ; ne redescend jamais (tâche `leaderboard`). */
+  rankLevel: z.number().int().nonnegative(),
   buildQueueSlots: z.number().int().positive(),
   /** Fin de la protection débutant (secondes Unix). */
   newbieShieldUntil: z.number().int(),

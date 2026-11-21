@@ -172,6 +172,7 @@ describe('session, GET /me et POST /auth/logout', () => {
       wallet: { cash: 30_000, gems: 0 },
       incomePerHour: 0,
       territories: { owned: 0, max: 4 },
+      rankLevel: 0,
       buildQueueSlots: 1,
       unreadNotifications: 0,
     });
