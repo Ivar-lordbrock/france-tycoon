@@ -33,7 +33,7 @@ async function partie() {
     { insee: '01004', nom: 'Ambérieu-en-Bugey', departement: '01', population: 14_000, valeur: 200_000 },
   ]);
   const app = appDeTest(db);
-  const alice = await connecter(app, 'Alice');
+  const alice = await connecter(app, 'Alice', { tutoriel: true }); // premier chantier de 10 s
   const bruno = await connecter(app, 'Bruno');
   const maintenant = () => Math.floor(Date.now() / 1000);
   const avancer = (secondes: number) => vi.setSystemTime(Date.now() + secondes * 1000);

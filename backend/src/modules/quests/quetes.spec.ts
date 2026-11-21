@@ -21,10 +21,10 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-/** Une partie à l'horloge figée, 5 min après le début d'une heure. Rien n'est acheté. */
+/** Une partie à l'horloge figée, demain à 9 h 05 (heure de Paris) : loin de minuit. Rien n'est acheté. */
 async function partie() {
   vi.useFakeTimers({ toFake: ['Date'] });
-  vi.setSystemTime(((Math.floor(Date.now() / 1000 / h) + 1) * h + 300) * 1000);
+  vi.setSystemTime((prochainMinuitParis(Math.floor(Date.now() / 1000)) + 9 * h + 300) * 1000);
   const db = baseDeTest();
   insererCommunes(db, [
     { insee: '01001', nom: 'L’Abergement-Clémenciat', departement: '01', population: 859, valeur: 21_800 },
@@ -228,7 +228,7 @@ describe('ce qui fait avancer les quêtes', () => {
     expect((await p.quete('encaisser')).progress).toBe(1);
 
     p.avancer(h);
-    await p.requete('POST', '/me/collect');
+    expect((await p.requete('POST', '/me/collect')).json().collected).toBeGreaterThan(0);
     expect(await p.quete('encaisser')).toMatchObject({ progress: 2, completedAt: p.maintenant() });
   });
 

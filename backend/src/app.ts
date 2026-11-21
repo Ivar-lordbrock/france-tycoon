@@ -6,12 +6,14 @@ import { routesAdmin } from './modules/admin/routes.ts';
 import { brancherSessions } from './modules/auth/requete.ts';
 import { type OptionsAuth, routesAuth } from './modules/auth/routes.ts';
 import { routesBatiments, routesCatalogueBatiments } from './modules/buildings/routes.ts';
+import { routesSuivi } from './modules/evenements/suivi.ts';
 import { routesCarte } from './modules/map/routes.ts';
 import { routesMoi } from './modules/me/routes.ts';
 import { type OptionsDirect, routesDirect } from './modules/notifications/routes.ts';
 import { routesQuetes } from './modules/quests/routes.ts';
 import { routesOpa } from './modules/takeovers/routes.ts';
 import { routesTerritoires } from './modules/territories/routes.ts';
+import { routesTutoriel } from './modules/tutorial/routes.ts';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -46,9 +48,11 @@ export function construireApp({ db, logger = false, auth = {}, direct = {} }: Op
   app.register(routesMoi, { prefix: '/api/v1/me' });
   app.register(routesQuetes, { prefix: '/api/v1/me/quests' });
   app.register(routesDirect, { prefix: '/api/v1/events', ...direct });
+  app.register(routesSuivi, { prefix: '/api/v1/events' });
   app.register(routesCarte, { prefix: '/api/v1/map' });
   app.register(routesTerritoires, { prefix: '/api/v1/territories' });
   app.register(routesOpa, { prefix: '/api/v1/takeovers' });
+  app.register(routesTutoriel, { prefix: '/api/v1/tutorial' });
 
   return app;
 }

@@ -16,11 +16,21 @@ export function appDeTest(db: Base = baseDeTest(), auth: OptionsApp['auth'] = {}
 
 type AppDeTest = ReturnType<typeof appDeTest>;
 
-/** Se connecte avec un compte de test et renvoie l'en-tête `cookie` à rejouer, plus l'id du joueur. */
-export async function connecter(app: AppDeTest, pseudo: string): Promise<{ cookie: string; id: number }> {
+/**
+ * Se connecte avec un compte de test et renvoie l'en-tête `cookie` à rejouer, plus l'id du joueur.
+ * Le joueur a passé le tutoriel, sauf avec `{ tutoriel: true }` : ses récompenses (premier achat,
+ * premier encaissement…) ne faussent pas les comptes des tests qui parlent d'autre chose.
+ */
+export async function connecter(
+  app: AppDeTest,
+  pseudo: string,
+  { tutoriel = false }: { tutoriel?: boolean } = {},
+): Promise<{ cookie: string; id: number }> {
   const reponse = await app.inject({ method: 'POST', url: '/api/v1/auth/dev', payload: { pseudo } });
   if (reponse.statusCode !== 200) throw new Error(`connexion de test refusée : ${reponse.body}`);
   const sid = reponse.cookies.find((c) => c.name === 'sid');
   if (!sid) throw new Error('pas de cookie sid');
-  return { cookie: `sid=${sid.value}`, id: reponse.json().user.id };
+  const id: number = reponse.json().user.id;
+  if (!tutoriel) app.db.prepare('UPDATE users SET tutorial_skipped = 1 WHERE id = ?').run(id);
+  return { cookie: `sid=${sid.value}`, id };
 }
