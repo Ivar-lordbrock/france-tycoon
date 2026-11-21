@@ -1,5 +1,7 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { type KeyboardEvent as ToucheReact, useEffect } from 'react';
 import { useFiche, useMoi } from '../api/compte.ts';
+import { suivre } from '../api/quetes.ts';
 import { type OngletFiche, useCarte } from '../etat/carte.ts';
 import { ActionsFiche } from './ActionsFiche.tsx';
 import { ActionsOpa } from './ActionsOpa.tsx';
@@ -15,6 +17,13 @@ export function FicheCommune() {
   const definirOnglet = useCarte((etat) => etat.definirOnglet);
   const { data: fiche, isPending, isError } = useFiche(selection);
   const { data: moi } = useMoi();
+  const client = useQueryClient();
+  const connecte = Boolean(moi);
+
+  // Fiche ouverte : quête « Repérage ».
+  useEffect(() => {
+    if (selection && connecte) suivre(client, 'territory_visited', selection);
+  }, [selection, connecte, client]);
 
   useEffect(() => {
     if (!selection) return;
