@@ -1,12 +1,17 @@
 import { type MoiReponse, PSEUDO_MAX, pseudoSchema } from '@france-tycoon/shared';
 import { type FormEvent, useId, useState } from 'react';
 import { useCashEnDirect } from '../api/batiments.ts';
+import { messageErreur } from '../api/client.ts';
 import { useConfigConnexion, useConnexion, useDeconnexion, useModifierProfil, useMoi } from '../api/compte.ts';
 import { useFluxDirect } from '../api/direct.ts';
+import { useEncaisser } from '../api/quetes.ts';
 import { CentreMessages } from '../hud/CentreMessages.tsx';
 import { ChantierEnCours } from '../hud/ChantierEnCours.tsx';
+import { Classement } from '../hud/Classement.tsx';
 import { MesOpa } from '../hud/MesOpa.tsx';
+import { QuetesDuJour } from '../hud/QuetesDuJour.tsx';
 import { ResumeRetour } from '../hud/ResumeRetour.tsx';
+import { nomRang } from '../panels/classement-texte.ts';
 import { entier, tycoons } from '../panels/fiche-texte.ts';
 import { MesTerritoires } from '../panels/MesTerritoires.tsx';
 import { BoutonGoogle } from './BoutonGoogle.tsx';
@@ -112,7 +117,7 @@ function Avatar({ moi }: { moi: MoiReponse }) {
   );
 }
 
-type Volet = 'profil' | 'messages' | 'territoires';
+type Volet = 'profil' | 'messages' | 'quetes' | 'classement' | 'territoires';
 
 /** Barre du haut : qui je suis, mon cash (qui monte tout seul), mes gemmes, mon revenu, mon chantier, mes territoires. */
 function BarreJoueur({ moi }: { moi: MoiReponse }) {
@@ -122,6 +127,7 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
   const nonLus = moi.unreadNotifications;
   // Entre deux lectures de /me, le cash monte de revenu/h ÷ 3 600 chaque seconde (docs/04 § 4.4).
   const cash = useCashEnDirect() ?? moi.wallet.cash;
+  const encaisser = useEncaisser();
 
   return (
     <section aria-label="Mon compte" className="panneau pointer-events-auto">
@@ -143,11 +149,11 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
             {moi.user.pseudo}
           </span>
           <span className="block text-xs text-ardoise">
-            {moi.territories.owned} / {moi.territories.max} territoires
+            {nomRang(moi.rankLevel)} · {moi.territories.owned} / {moi.territories.max} territoires
           </span>
         </span>
       </button>
-      <dl className="grid grid-cols-3 border-t border-encre/10 text-center">
+      <dl className="grid grid-cols-3 border-t border-encre/10 text-center" data-tuto="hud-wallet">
         <div className="p-2">
           <dt className="text-xs text-ardoise">Cash</dt>
           <dd className="font-bold tabular-nums">{tycoons(cash)}</dd>
@@ -161,6 +167,24 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
           <dd className="font-bold tabular-nums">{tycoons(moi.incomePerHour)}/h</dd>
         </div>
       </dl>
+      {/* Le cash affiché compte déjà ce montant ; le clic l'enregistre (tutoriel, quête « Trésorier »). */}
+      <div className="flex items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm">
+        <span className="text-ardoise tabular-nums">+{tycoons(cash - moi.wallet.cash)} en attente</span>
+        <button
+          type="button"
+          onClick={() => encaisser.mutate()}
+          disabled={encaisser.isPending}
+          data-tuto="collect-button"
+          className="h-8 rounded-md bg-encre px-3 font-semibold text-white disabled:opacity-50"
+        >
+          Encaisser
+        </button>
+      </div>
+      {encaisser.isError && (
+        <p role="alert" className="px-3 pb-2 text-sm text-red-700">
+          {messageErreur(encaisser.error)}
+        </p>
+      )}
       <ChantierEnCours possede={moi.territories.owned} />
       <button
         type="button"
@@ -183,6 +207,30 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
       {ouvert === 'messages' && (
         <CentreMessages id={`${id}-messages`} nonLus={nonLus} onChoisi={() => setOuvert(null)} />
       )}
+      <button
+        type="button"
+        onClick={() => basculer('quetes')}
+        aria-expanded={ouvert === 'quetes'}
+        aria-controls={`${id}-quetes`}
+        data-tuto="quests-button"
+        className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
+      >
+        Quêtes du jour
+        <Chevron ouvert={ouvert === 'quetes'} />
+      </button>
+      {ouvert === 'quetes' && <QuetesDuJour id={`${id}-quetes`} />}
+      <button
+        type="button"
+        onClick={() => basculer('classement')}
+        aria-expanded={ouvert === 'classement'}
+        aria-controls={`${id}-classement`}
+        data-tuto="leaderboard-button"
+        className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
+      >
+        Classement
+        <Chevron ouvert={ouvert === 'classement'} />
+      </button>
+      {ouvert === 'classement' && <Classement id={`${id}-classement`} onChoisi={() => setOuvert(null)} />}
       <button
         type="button"
         onClick={() => basculer('territoires')}

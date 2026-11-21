@@ -2,6 +2,7 @@ import { Compte } from './compte/Compte.tsx';
 import { BarreEtat } from './hud/BarreEtat.tsx';
 import { Legende } from './hud/Legende.tsx';
 import { Toasts } from './hud/Toasts.tsx';
+import { Tutoriel } from './hud/Tutoriel.tsx';
 import { CarteFrance } from './map/CarteFrance.tsx';
 import { FicheCommune } from './panels/FicheCommune.tsx';
 import { Recherche } from './panels/Recherche.tsx';
@@ -11,7 +12,7 @@ import { SelecteurZones } from './panels/SelecteurZones.tsx';
 export function App() {
   return (
     <div className="relative h-dvh w-full overflow-hidden">
-      <main className="absolute inset-0">
+      <main className="absolute inset-0" data-tuto="map">
         <h1 className="sr-only">France Tycoon : carte des communes</h1>
         <CarteFrance />
       </main>
@@ -33,6 +34,7 @@ export function App() {
       </div>
 
       <div className="pointer-events-none absolute inset-x-4 bottom-7 z-[1000] flex flex-col items-start gap-2">
+        <Tutoriel />
         <BarreEtat />
         <div className="max-md:hidden">
           <Legende />

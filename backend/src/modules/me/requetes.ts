@@ -23,6 +23,7 @@ interface LigneMoi extends LigneProfil {
   cash: number;
   gems: number;
   maxTerritories: number;
+  rankLevel: number;
   buildQueueSlots: number;
   newbieShieldUntil: number;
   unread: number;
@@ -35,7 +36,7 @@ const RESUME_MAX = 50;
 export function creerLecteurMoi(db: Base) {
   const moi = db.prepare<[number], LigneMoi>(`
     SELECT ${COLONNES_PROFIL},
-      cash, premium_currency AS gems, max_territories AS maxTerritories, build_queue_slots AS buildQueueSlots,
+      cash, premium_currency AS gems, max_territories AS maxTerritories, rank_level AS rankLevel, build_queue_slots AS buildQueueSlots,
       newbie_shield_until AS newbieShieldUntil,
       (SELECT count(*) FROM notifications AS n WHERE n.user_id = u.id AND n.read_at IS NULL) AS unread
     FROM users AS u WHERE id = ?`);
@@ -50,12 +51,13 @@ export function creerLecteurMoi(db: Base) {
     const ligne = moi.get(userId);
     if (!ligne) throw new Error(`Joueur inconnu : ${userId}`);
     const territoires = [...lireTerritoires(userId).values()];
-    const { cash, gems, maxTerritories, buildQueueSlots, newbieShieldUntil, unread, ...user } = ligne;
+    const { cash, gems, maxTerritories, rankLevel, buildQueueSlots, newbieShieldUntil, unread, ...user } = ligne;
     return {
       user,
       wallet: { cash, gems },
       incomePerHour: revenuDuJoueur(territoires, maintenant),
       territories: { owned: territoires.length, max: maxTerritories },
+      rankLevel,
       buildQueueSlots,
       newbieShieldUntil,
       unreadNotifications: unread,

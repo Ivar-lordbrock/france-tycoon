@@ -310,6 +310,7 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
                       disabled={a.raison !== null || !fileLibre}
                       onClick={() => ouvrir({ action: 'construire', typeCode: type.code })}
                       data-cible={repere({ action: 'construire', typeCode: type.code })}
+                      data-tuto={type.code === 'residence' ? 'build-button' : undefined}
                       className={petitPrincipal}
                       aria-label={`Construire ${type.name} pour ${tycoons(a.cout)}`}
                     >

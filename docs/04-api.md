@@ -9,7 +9,7 @@
 | Authentification | Cookie de session `sid` (HttpOnly). 🔒 = connexion obligatoire, 🛡️ = rôle admin |
 | Validation | Schémas **zod** dans `shared/src/api/` : les mêmes servent au front et au back |
 | Idempotence | Les actions qui coûtent de l'argent (💰) acceptent `Idempotency-Key: <uuid>` (8 à 100 caractères : lettres, chiffres, `-`, `_`) ; rejouer la même clé renvoie le même résultat sans repayer. La clé est rangée dans `wallet_transactions.idempotency_key`, préfixée par l'action et le joueur (`wallet/idempotence.ts`) ; une clé déjà servie pour une autre commune → 400 |
-| Revenus | Toute requête 🔒 qui lit ou dépense le portefeuille **encaisse d'abord** les revenus en attente (calcul différé) et termine les chantiers finis : `GET`/`PATCH /me`, `GET /me/territories`, `GET /me/construction-queue`, `GET /me/notifications`, `POST /me/collect`, achat, vente, bâtiments, capitale, OPA. Avant de compter les revenus, les OPA dont les 24 h sont passées sont résolues (la commune change de main à `expires_at`, chacun touche les revenus pour son temps). Moteur : `backend/src/modules/income/revenus.ts` |
+| Revenus | Toute requête 🔒 qui lit ou dépense le portefeuille **encaisse d'abord** les revenus en attente (calcul différé) et termine les chantiers finis : `GET`/`PATCH /me`, `GET /me/territories`, `GET /me/construction-queue`, `GET /me/notifications`, `GET /me/quests`, `POST /me/collect`, achat, vente, bâtiments, capitale, OPA. Avant de compter les revenus, les OPA dont les 24 h sont passées sont résolues (la commune change de main à `expires_at`, chacun touche les revenus pour son temps). Moteur : `backend/src/modules/income/revenus.ts` |
 | Pagination | `?cursor=...&limit=50` → `{ items, nextCursor }` |
 | Erreurs | `{ "error": { "code": "INSUFFICIENT_FUNDS", "message": "Il manque 1 200 ₮", "details": {...} } }` avec un statut HTTP cohérent |
 | Monnaie affichée | `₮` (« tycoon ») pour le cash, 💎 pour les gemmes |
@@ -39,6 +39,7 @@
 | `NO_WORKS_IN_PROGRESS` | 409 | Annuler un chantier alors qu'il n'y en a pas |
 | `CAPITAL_COOLDOWN` | 409 | Déplacer sa capitale moins de 7 jours après le dernier déplacement |
 | `PSEUDO_TAKEN` | 409 | Pseudo déjà pris par un autre joueur (majuscules ignorées) |
+| `QUEST_NOT_CLAIMABLE` | 409 | Réclamer une quête pas encore finie ou déjà réclamée ; `details.reason` (`not_completed`, `already_claimed`) |
 | `VALIDATION_ERROR` | 400 | Corps de requête invalide |
 | `RATE_LIMITED` | 429 | Trop de requêtes |
 | `FEATURE_DISABLED` | 404 | Boutique en V1, connexion Google pas configurée |
@@ -53,9 +54,9 @@
 | POST | `/auth/google` | | `{ credential }` (jeton d'identité Google) → `{ user, isNew }` + cookie. Crée le compte au premier passage : 30 000 ₮ (`signup_bonus`), bouclier 72 h |
 | POST | `/auth/dev` | | `{ pseudo }` → comme `/auth/google`, sans Google. **Local seulement** : la route n'existe que si `AUTH_DEV=true`, refusé avec `NODE_ENV=production` |
 | POST | `/auth/logout` | 🔒 | → 204, session supprimée |
-| GET | `/me` | 🔒 | → profil, portefeuille, revenu/h (sol + bâtiments), `maxTerritories`, territoires possédés/max, file de construction, notifications non lues, `finishedWorks` : chantiers finis pas encore vus (résumé au retour, 50 au plus, avec `notificationId` pour les marquer lus) ; état du tutoriel plus tard |
+| GET | `/me` | 🔒 | → profil, portefeuille, revenu/h (sol + bâtiments), `maxTerritories`, territoires possédés/max, `rankLevel` (rang, 0 Entrepreneur … 4 Tycoon), file de construction, notifications non lues, `finishedWorks` : chantiers finis pas encore vus (résumé au retour, 50 au plus, avec `notificationId` pour les marquer lus) ; état du tutoriel plus tard |
 | PATCH | `/me` | 🔒 | `{ pseudo?, markerColor? }` (pseudo 3 à 24 caractères, couleur `#rrggbb`) → même réponse que `GET /me` ; `PSEUDO_TAKEN` si le pseudo est pris |
-| POST | `/me/collect` | 🔒 | → `{ collected, cash, incomePerHour }` (encaissement explicite, utile pour le tutoriel et les quêtes) ; `collected` vaut 0 si moins d'un ₮ s'est accumulé (la fraction est gardée) |
+| POST | `/me/collect` | 🔒 | → `{ collected, cash, incomePerHour }` (encaissement explicite, utile pour le tutoriel et les quêtes) ; `collected` vaut 0 si moins d'un ₮ s'est accumulé (la fraction est gardée). Fait avancer « Trésorier » si `collected > 0`, une fois par heure au plus |
 | DELETE | `/me` | 🔒 | → 204, anonymisation RGPD |
 
 ### Carte
@@ -100,22 +101,24 @@ Réponses : `FORBIDDEN` si ce n'est pas son rôle (le défenseur défend ou acce
 
 | Méthode | Route | | Corps → Réponse |
 |---|---|---|---|
-| GET | `/me/quests` | 🔒 | → les 3 quêtes du jour (tirées au premier appel de la journée, heure de Paris) |
-| POST | `/me/quests/:id/claim` | 🔒💰 | → récompense versée (`quest_reward`) |
-| GET | `/tutorial` | 🔒 | → étapes + étapes faites |
-| POST | `/tutorial/:stepKey/complete` | 🔒 | Seulement pour les étapes `validated_by = 'client'` ; les autres sont validées par le serveur quand l'action a lieu |
-| POST | `/tutorial/skip` | 🔒 | → passe le tutoriel (pas de récompense) |
-| POST | `/events/track` | 🔒 | `{ type: 'territory_visited' \| 'zone_visited' \| 'leaderboard_viewed', ref }` → fait avancer quêtes et tutoriel (limité à 60/min) |
-| GET | `/leaderboard?scope=national\|metropole\|outre_mer\|region:84&cursor=` | | → `{ rank, pseudo, avatar, netWorth, territories, rankLevel }`, + ma position si connecté |
-| GET | `/players/:pseudo` | | → profil public : patrimoine, rang, territoires |
+| GET | `/me/quests` | 🔒 | → `{ date, resetsAt, quests[] }` : les 3 quêtes du jour (1 facile, 1 moyenne, 1 difficile), tirées au premier appel de la journée (heure de Paris, `date` = `AAAA-MM-JJ`) ; `resetsAt` = prochain minuit à Paris. Chaque quête : `{ id, slot, code, title, description, difficulty, eventType, target, progress, rewardCash, rewardGems, completedAt, claimedAt }`. Encaisse d'abord (un chantier fini fait avancer ses quêtes). Une quête réussie envoie le message `quest_completed`. Code : `backend/src/modules/quests/` |
+| POST | `/me/quests/:id/claim` | 🔒💰 | → `{ quest, wallet }` : récompense versée (`quest_reward`). Erreurs : `NOT_FOUND` (pas à moi), `QUEST_NOT_CLAIMABLE` (pas finie ou déjà réclamée). Une quête d'un jour passé se réclame encore. `Idempotency-Key` accepté |
+| GET | `/tutorial` | 🔒 | → `{ steps[], completedAt, skipped }` ; chaque étape : `{ key, position, title, body, anchor, validatedBy, rewardCash, rewardGems, completedAt }`. Encaisse d'abord (le premier chantier fini valide « Construis »). Étapes validées par le serveur : achat (5), premier chantier **fini** (6), clic sur « Encaisser » même s'il rapporte 0 (7), classement vu (10, par `/events/track`), dans n'importe quel ordre. Code : `backend/src/modules/tutorial/` |
+| POST | `/tutorial/:stepKey/complete` | 🔒 | → même réponse + `wallet`. Seulement pour les étapes `validatedBy = 'client'` (`FORBIDDEN` sinon, `NOT_FOUND` si la clé est inconnue) ; les autres sont validées par le serveur quand l'action a lieu. Rejouer une étape faite ne fait rien ; après « Passer » ou une fois fini, rien ne change |
+| POST | `/tutorial/skip` | 🔒 | → même réponse que `GET /tutorial` : passe le tutoriel (pas de récompense pour les étapes non faites ; plus aucune étape ne compte ensuite) |
+| POST | `/events/track` | 🔒 | `{ type: 'territory_visited' \| 'zone_visited' \| 'leaderboard_viewed', ref }` → 204 : fait avancer quêtes et tutoriel (60 par minute et par joueur, sinon `RATE_LIMITED`). Une même commune ou zone ne compte qu'une fois par jour. `territory_visited` : code INSEE existant (`NOT_FOUND` sinon) ; `zone_visited` : code de zone (`VALIDATION_ERROR` sinon), `MET` accepté mais ne compte pas. Code : `backend/src/modules/evenements/suivi.ts` |
+| GET | `/leaderboard?scope=national\|metropole\|outre_mer\|region:84&cursor=` | | → `{ scope, players[], nextCursor, me, updatedAt }` ; chaque ligne : `{ rank, pseudo, avatar, markerColor, netWorth, territories, rankLevel }`, 50 par page ; `me` = ma ligne si je suis connecté et dans la portée ; `updatedAt` = dernier passage de la tâche `leaderboard`. Hors national : les joueurs qui possèdent au moins une commune dans la portée, classés par patrimoine total. Seuls les comptes actifs sont classés (ni bannis ni endormis) ; à patrimoine égal, le compte le plus ancien passe devant. Simple lecture : « classement vu » passe par `/events/track`. Code : `backend/src/modules/leaderboard/` |
+| GET | `/players/:pseudo` | | → `{ pseudo, avatar, markerColor, rankLevel, netWorth, nationalRank, createdAt, territories[] }` : profil public (ni cash, ni gemmes). `NOT_FOUND` si le pseudo est inconnu ou le compte banni (un compte endormi reste visible). Pseudo sans tenir compte des majuscules ; communes : la capitale d'abord |
+
+Contrat : `shared/src/api/quetes.ts`, `tutoriel.ts`, `classement.ts` ; règles dans [05-equilibrage.md](05-equilibrage.md#57-quêtes-et-tutoriel) (5.4 et 5.7).
 
 ### Notifications et temps réel
 
 | Méthode | Route | | Corps → Réponse |
 |---|---|---|---|
-| GET | `/me/notifications?before=<id>&limit=20` | 🔒 | → `{ notifications, nextCursor, unreadNotifications }`, les plus récents d'abord (50 au plus par page). Types (`kind`) : `building_done`, `takeover_received`, `takeover_resolved`, `inactivity_warning`, `inactivity_released` ; contenu de chacun dans `shared/src/api/notifications.ts`. `nextCursor` = `before` de la page suivante. Encaisse d'abord (les chantiers finis ont leur message) ; un type inconnu du contrat n'est pas listé. Code : `backend/src/modules/notifications/liste.ts` |
+| GET | `/me/notifications?before=<id>&limit=20` | 🔒 | → `{ notifications, nextCursor, unreadNotifications }`, les plus récents d'abord (50 au plus par page). Types (`kind`) : `building_done`, `takeover_received`, `takeover_resolved`, `inactivity_warning`, `inactivity_released`, `quest_completed`, `rank_up` ; contenu de chacun dans `shared/src/api/notifications.ts`. `nextCursor` = `before` de la page suivante. Encaisse d'abord (les chantiers finis ont leur message) ; un type inconnu du contrat n'est pas listé. Code : `backend/src/modules/notifications/liste.ts` |
 | POST | `/me/notifications/read` | 🔒 | `{ ids[] }` (1 à 100) ou `{ all: true }` → `{ unreadNotifications }` ; seulement ses propres messages |
-| GET | `/events` | 🔒 | Flux SSE (`event: <type>` puis `data: <JSON>`) : `takeover.received`, `takeover.resolved`, `building.done` (le message du centre de notifications), `wallet.changed` (`{ cash, gems, incomePerHour }`, après une issue d'OPA ou un rachat pour inactivité) ; `quest.completed` à l'étape 5. Pas d'événement pour l'avertissement d'inactivité. Voir ci-dessous |
+| GET | `/events` | 🔒 | Flux SSE (`event: <type>` puis `data: <JSON>`) : `takeover.received`, `takeover.resolved`, `building.done` (le message du centre de notifications), `wallet.changed` (`{ cash, gems, incomePerHour }`, après une issue d'OPA ou un rachat pour inactivité), `quest.completed` (le message `quest_completed` : `{ questId, code, title, rewardCash, rewardGems }`), `rank.up` (le message `rank_up` : `{ rankLevel, previousLevel, maxTerritories }`, écrit par la tâche `leaderboard`). Pas d'événement pour l'avertissement d'inactivité. Voir ci-dessous |
 
 Le flux relit la table `notifications` : tant qu'un joueur écoute, un passage chaque seconde termine ce qui est dû pour ceux qui regardent (OPA échues, chantiers finis : à la seconde près, sans attendre une action), puis envoie les messages écrits depuis le passage d'avant, quelle que soit la route ou la tâche qui les a écrits. Rien d'une transaction annulée n'est envoyé. Un commentaire `: ping` toutes les 25 s garde la connexion ouverte ; `retry: 5000` : le navigateur se reconnecte seul au bout de 5 s. 5 onglets par joueur au plus (le plus ancien est fermé). Pas de rattrapage à la reconnexion : le front relit `/me` et `/me/notifications` à chaque ouverture du flux. Un seul serveur pour l'instant (les abonnés sont en mémoire). Code : `backend/src/modules/notifications/direct.ts` et `routes.ts`
 
@@ -209,4 +212,4 @@ sequenceDiagram
 | Mes OPA | `/me/takeovers?status=pending` toutes les 60 s, sous la barre du haut : OPA reçues d'abord (orange), puis lancées, avec le temps restant ; un clic ouvre la fiche (`frontend/src/hud/MesOpa.tsx`). Légende des couleurs de la carte (rival, OPA en cours, bouclier) en bas à gauche (`frontend/src/hud/Legende.tsx`) |
 | Notifications | Flux SSE `/events` ouvert tant que le joueur est connecté (`frontend/src/api/direct.ts`) : `wallet.changed` pose le solde, les autres relisent `/me` (mes OPA, centre de notifications compris), la fiche de la commune et la carte. Petits messages (toasts) : OPA reçue (« Réagir »), OPA terminée par l'autre joueur ou sans réponse ; rien pour ses propres actions ni pour un chantier fini (le résumé s'en charge). À chaque reconnexion, `/me`, les fiches et la carte sont relus ; après une réponse d'erreur (502, 401), le front rouvre le flux au bout de 10 s. Centre de notifications : volet « Messages » de la barre du haut, pastille = `unreadNotifications`, `/me/notifications` page par page ; un clic marque le message lu et ouvre la commune, « Tout marquer comme lu » → `{ all: true }` (`frontend/src/hud/CentreMessages.tsx`) |
 | Erreurs | Une action refusée s'affiche à côté de son bouton. Une relecture en arrière-plan qui échoue (l'écran garde l'ancienne valeur) ou un échec du centre de notifications s'affiche en petit message rouge (`QueryCache` dans `frontend/src/main.tsx`, `frontend/src/hud/Toasts.tsx`) |
-| Tutoriel | `/tutorial` au démarrage ; driver.js met en avant `[data-tuto="<ui_anchor>"]` |
+| Tutoriel | `/tutorial` au démarrage (relu avec `/me`) ; la bulle du tutoriel entoure `[data-tuto~="<ui_anchor>"]` |

@@ -92,7 +92,13 @@ export function ActionsFiche({
       );
     } else {
       contenu = (
-        <button ref={declencheur} type="button" onClick={() => ouvrir('achat')} className={`${boutonPrincipal} w-full`}>
+        <button
+          ref={declencheur}
+          type="button"
+          onClick={() => ouvrir('achat')}
+          data-tuto="buy-button"
+          className={`${boutonPrincipal} w-full`}
+        >
           Acheter · {tycoons(apercu.prix)}
         </button>
       );

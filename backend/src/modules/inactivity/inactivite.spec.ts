@@ -173,12 +173,13 @@ describe('libération à 14 jours (release-inactive)', () => {
 });
 
 describe('tâches planifiées', () => {
-  it('warn-inactive et release-inactive tournent toutes les heures', () => {
+  it('warn-inactive et release-inactive tournent toutes les heures, leaderboard toutes les 10 min', () => {
     const taches = creerTaches(baseDeTest()).map((t) => [t.nom, t.toutesLes]);
     expect(taches).toEqual([
       ['resolve-takeovers', 60],
       ['warn-inactive', 3_600],
       ['release-inactive', 3_600],
+      ['leaderboard', 600],
     ]);
   });
 });

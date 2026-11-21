@@ -65,6 +65,13 @@ body {
   }
 }
 
+/* Élément mis en avant par le tutoriel : il clignote doucement (règle posée par hud/Tutoriel.tsx, rien si l'on préfère moins d'animations). */
+@keyframes tuto-cible {
+  to {
+    outline-color: transparent;
+  }
+}
+
 /* Leaflet */
 .leaflet-container {
   background: #dfe3ea;

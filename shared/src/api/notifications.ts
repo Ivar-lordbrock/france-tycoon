@@ -57,6 +57,27 @@ export const contenuLiberationInactiviteSchema = z.object({
 });
 export type ContenuLiberationInactivite = z.infer<typeof contenuLiberationInactiviteSchema>;
 
+/** Une quête du jour vient d'atteindre son objectif : la récompense attend d'être réclamée. */
+export const contenuQueteTermineeSchema = z.object({
+  /** `user_quests.id`, à passer à `POST /me/quests/:id/claim`. */
+  questId: entier.positive(),
+  code: z.string(),
+  title: z.string(),
+  rewardCash: entier.nonnegative(),
+  rewardGems: entier.nonnegative(),
+});
+export type ContenuQueteTerminee = z.infer<typeof contenuQueteTermineeSchema>;
+
+/** Le patrimoine a franchi un seuil (5.4) : nouveau rang, qui ne redescendra plus. */
+export const contenuNouveauRangSchema = z.object({
+  /** 1 Notable … 4 Tycoon (`RANGS`). */
+  rankLevel: entier.positive(),
+  previousLevel: entier.nonnegative(),
+  /** Limite de territoires après le passage (Baron et Magnat : +1). */
+  maxTerritories: entier.positive(),
+});
+export type ContenuNouveauRang = z.infer<typeof contenuNouveauRangSchema>;
+
 const message = { id: entier.positive(), createdAt: entier, readAt: entier.nullable() };
 
 const messageChantierFini = z.object({ ...message, kind: z.literal('building_done'), payload: chantierFiniSchema });
@@ -66,6 +87,12 @@ const messageOpaTerminee = z.object({
   kind: z.literal('takeover_resolved'),
   payload: contenuOpaTermineeSchema,
 });
+const messageQueteTerminee = z.object({
+  ...message,
+  kind: z.literal('quest_completed'),
+  payload: contenuQueteTermineeSchema,
+});
+const messageNouveauRang = z.object({ ...message, kind: z.literal('rank_up'), payload: contenuNouveauRangSchema });
 
 export const notificationSchema = z.discriminatedUnion('kind', [
   messageChantierFini,
@@ -73,6 +100,8 @@ export const notificationSchema = z.discriminatedUnion('kind', [
   messageOpaTerminee,
   z.object({ ...message, kind: z.literal('inactivity_warning'), payload: contenuAvertissementInactiviteSchema }),
   z.object({ ...message, kind: z.literal('inactivity_released'), payload: contenuLiberationInactiviteSchema }),
+  messageQueteTerminee,
+  messageNouveauRang,
 ]);
 /** Un message du jeu (à ne pas confondre avec `Notification` du navigateur). */
 export type NotificationJeu = z.infer<typeof notificationSchema>;
@@ -98,13 +127,15 @@ export const notificationsReponseSchema = z.object({
 export type NotificationsReponse = z.infer<typeof notificationsReponseSchema>;
 
 // GET /events — flux SSE : `event: <type>` puis `data: <JSON>`. Le front relit les requêtes concernées
-// (TanStack Query) et affiche un toast. `quest.completed` arrive à l'étape 5.
+// (TanStack Query) et affiche un toast.
 
 export const evenementDirectSchema = z.discriminatedUnion('type', [
-  // Les trois premiers portent le message tel qu'il apparaît dans le centre de notifications.
+  // Tous sauf le dernier portent le message tel qu'il apparaît dans le centre de notifications.
   z.object({ type: z.literal('takeover.received'), data: messageOpaRecue }),
   z.object({ type: z.literal('takeover.resolved'), data: messageOpaTerminee }),
   z.object({ type: z.literal('building.done'), data: messageChantierFini }),
+  z.object({ type: z.literal('quest.completed'), data: messageQueteTerminee }),
+  z.object({ type: z.literal('rank.up'), data: messageNouveauRang }),
   /** Le portefeuille a bougé sans que le joueur agisse (OPA, rachat) : nouveau solde et revenu. */
   z.object({
     type: z.literal('wallet.changed'),

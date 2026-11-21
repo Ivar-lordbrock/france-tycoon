@@ -1,7 +1,9 @@
+import { CLASSEMENT_TOUTES_LES_S } from '@france-tycoon/shared';
 import type { FastifyBaseLogger } from 'fastify';
 import type { Base } from '../db/connexion.ts';
 import { creerInactivite } from '../modules/inactivity/inactivite.ts';
 import { creerEncaisseurSimple } from '../modules/income/revenus.ts';
+import { creerCalculClassement } from '../modules/leaderboard/classement.ts';
 import { creerIssuesOpa } from '../modules/takeovers/issues.ts';
 
 // Tâches planifiées (docs/02, 2.6), dans le même processus que l'API. Chaque tâche appelle la même
@@ -21,11 +23,19 @@ export interface Tache {
 export function creerTaches(db: Base): Tache[] {
   const { resoudreEchues } = creerIssuesOpa(db, creerEncaisseurSimple(db));
   const { avertir, libererAbsents } = creerInactivite(db);
+  const recalculerClassement = creerCalculClassement(db);
   return [
     { nom: 'resolve-takeovers', toutesLes: 60, executer: (maintenant) => ({ resolved: resoudreEchues(maintenant) }) },
     // Toutes les heures plutôt qu'à heure fixe : chaque passage ne traite que ceux qui ont passé le cap.
     { nom: 'warn-inactive', toutesLes: 3_600, executer: (maintenant) => ({ warned: avertir(maintenant) }) },
     { nom: 'release-inactive', toutesLes: 3_600, executer: (maintenant) => ({ released: libererAbsents(maintenant) }) },
+    // Patrimoine et rang à partir du cash enregistré : encaisser tout le monde toutes les 10 min contournerait
+    // le plafond de 24 h des revenus hors ligne. Les revenus en attente comptent au prochain encaissement.
+    {
+      nom: 'leaderboard',
+      toutesLes: CLASSEMENT_TOUTES_LES_S,
+      executer: (maintenant) => ({ ...recalculerClassement(maintenant) }),
+    },
   ];
 }
 

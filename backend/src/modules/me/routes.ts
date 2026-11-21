@@ -17,6 +17,7 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ErreurMetier } from '../../erreurs.ts';
 import { exigerJoueur } from '../auth/requete.ts';
 import { creerLecteurChantiers } from '../buildings/file.ts';
+import { emettre } from '../evenements/bus.ts';
 import { creerEncaisseur } from '../income/revenus.ts';
 import { creerListeNotifications } from '../notifications/liste.ts';
 import { creerReponsesOpa } from '../takeovers/reponses.ts';
@@ -36,6 +37,7 @@ export const routesMoi: FastifyPluginAsyncZod = async (app) => {
   const { mesOpa } = creerReponsesOpa(app.db);
   const listerNotifications = creerListeNotifications(app.db);
   const files = app.db.prepare<[number], number>('SELECT build_queue_slots FROM users WHERE id = ?').pluck();
+  const cashDe = app.db.prepare<[number], number>('SELECT cash FROM users WHERE id = ?').pluck();
   const pseudoPris = app.db
     .prepare<[string, number], number>('SELECT 1 FROM users WHERE pseudo = ? AND id <> ?')
     .pluck();
@@ -107,8 +109,19 @@ export const routesMoi: FastifyPluginAsyncZod = async (app) => {
 
   app.post('/collect', { schema: { response: { 200: encaissementReponseSchema } } }, (req) => {
     const id = exigerJoueur(req);
-    const { collected, cash, incomePerHour } = app.db.transaction(() => encaisser(id, maintenant())).immediate();
-    return { collected, cash, incomePerHour };
+    const t = maintenant();
+    return app.db
+      .transaction(() => {
+        const { collected, incomePerHour } = encaisser(id, t);
+        // Seul ce clic compte pour « Trésorier » (une fois par heure, s'il rapporte) et pour le tutoriel.
+        emettre(
+          app.db,
+          { userId: id, type: 'income_collected', ref: String(Math.floor(t / 3600)), montant: collected },
+          t,
+        );
+        return { collected, cash: cashDe.get(id) ?? 0, incomePerHour }; // récompense du tutoriel comprise
+      })
+      .immediate();
   });
 
   app.get(

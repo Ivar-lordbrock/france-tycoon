@@ -52,6 +52,8 @@ Décisions prises le 17/11/2026 (détail dans [idees.md](idees.md#décisions-pri
 
 Décisions prises le 17/11/2026 ([idees.md](idees.md#décisions-prises)) : les règles de [5.5](05-equilibrage.md#55-opa-rachat-hostile) et [5.6](05-equilibrage.md#56-inactivité) sont gardées telles quelles, dont l'ancienneté de **7 jours** pour lancer une OPA. Contrat dans `shared/src/api/opa.ts` et `notifications.ts`.
 
+**Faite** le 17/11/2026 en 7 paquets (PR #25 à #31), version **v0.4.0**. Essayé à la main avec deux comptes : lancer, défendre, retirer, messages en direct. Vérifié seulement par les tests : accepter, 24 h sans réponse, inactivité.
+
 | Dev A | Dev B |
 |---|---|
 | OPA : devis, lancement (séquestre), défense, acceptation, retrait, toutes les conditions de 5.5 | Fenêtre de devis d'OPA (montants, raisons d'inéligibilité) |
@@ -64,9 +66,13 @@ Décisions prises le 17/11/2026 ([idees.md](idees.md#décisions-prises)) : les r
 
 ## Étape 5 — Rétention : tutoriel, quêtes, classement
 
+Décisions prises le 17/11/2026 ([idees.md](idees.md#décisions-prises)) : un **bouton « Encaisser »** dans la barre du haut (seul ce clic compte pour le tutoriel et la quête « Trésorier »), un **rang qui ne redescend jamais**, le tutoriel **proposé une fois aux joueurs déjà inscrits** (avec « Passer »). Contrat dans `shared/src/api/quetes.ts`, `tutoriel.ts` et `classement.ts`.
+
+**Faite** le 21/11/2026 en 7 paquets (PR #33 à #39), version **v0.5.0**. Essayé à la main : le tutoriel du premier clic au classement (nouveau compte, ancien joueur, changement de compte), « Passer », quêtes, classement et profil. Vérifié seulement par les tests : le renouvellement des quêtes à minuit. Pas encore essayé sur téléphone.
+
 | Dev A | Dev B |
 |---|---|
-| Bus d'événements interne (`territory_bought`, `building_started`...) qui fait avancer quêtes et tutoriel | Tutoriel interactif driver.js, 10 étapes, ancres `data-tuto` |
+| Bus d'événements interne (`territory_bought`, `building_started`...) qui fait avancer quêtes et tutoriel | Tutoriel interactif (bulle maison, driver.js écarté), 10 étapes, ancres `data-tuto` |
 | Tirage des 3 quêtes du jour (graine user+date), réclamation | Panneau des quêtes avec progression |
 | Tutoriel côté serveur (validation, récompenses, passer) ; `POST /events/track` | Classement national / Métropole / Outre-mer / région, profil public |
 | Tâche `leaderboard` (patrimoine, rangs, bonus de territoire) | Accueil du premier lancement, écran de rang |
