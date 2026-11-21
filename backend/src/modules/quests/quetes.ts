@@ -1,6 +1,5 @@
 import {
   type ContenuQueteTerminee,
-  type EvenementQuete,
   jourParis,
   type Portefeuille,
   prochainMinuitParis,
@@ -11,6 +10,7 @@ import {
 } from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
 import { ErreurMetier } from '../../erreurs.ts';
+import type { EvenementJeu } from '../evenements/bus.ts';
 import { creerLecteurRevenus, revenuDuJoueur } from '../income/revenus.ts';
 import { mouvementDejaFait } from '../wallet/idempotence.ts';
 import { wallet } from '../wallet/wallet.ts';
@@ -18,19 +18,6 @@ import { type ModeleQuete, tirerQuetes } from './tirage.ts';
 
 // Quêtes du jour (docs/05-equilibrage.md, 5.7) : tirées au premier appel de la journée (heure de Paris),
 // elles avancent avec les actions du joueur (bus d'événements, `backend/src/modules/evenements/bus.ts`).
-
-/** Ce qui fait avancer une quête. */
-export interface EvenementJeu {
-  userId: number;
-  type: EvenementQuete;
-  /** Ce qui ne compte qu'une fois par quête : code INSEE, zone, heure d'encaissement. */
-  ref?: string;
-  /**
-   * Tirer les quêtes du jour si ce n'est pas encore fait. Faux quand le joueur n'agit pas lui-même
-   * (chantier fini pendant son absence) : seules les quêtes déjà tirées avancent.
-   */
-  tirer?: boolean;
-}
 
 interface LigneQuete extends Omit<Quete, 'description'> {
   description: string;
@@ -121,6 +108,7 @@ export function creerQuetes(db: Base) {
     /** Une action du joueur fait avancer ses quêtes du jour du même type ; un message quand l'une est finie. */
     progresser(e: EvenementJeu, maintenant: number): void {
       exigerTransaction('progresser');
+      if (e.type === 'income_collected' && (e.montant ?? 0) <= 0) return;
       for (const q of lignesDuJour(e.userId, maintenant, e.tirer ?? true)) {
         if (q.eventType !== e.type || q.completedAt !== null) continue;
         const vus: string[] = JSON.parse(q.seenRefs);
