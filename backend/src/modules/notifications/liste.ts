@@ -15,6 +15,7 @@ const TYPES_CONNUS = {
   takeover_resolved: true,
   inactivity_warning: true,
   inactivity_released: true,
+  quest_completed: true,
 } satisfies Record<TypeNotification, true>;
 export const TYPES_NOTIFICATION = JSON.stringify(Object.keys(TYPES_CONNUS));
 

@@ -57,4 +57,23 @@ describe('événements en direct', () => {
     expect(perime(c, ['fiche', '01002'])).toBe(false);
     expect(useToasts.getState().toasts).toMatchObject([{ ton: 'alerte', commune: { insee: '01001' } }]);
   });
+
+  it('quête réussie : profil, messages et quêtes du jour relus, petit message', () => {
+    const c = client();
+    c.setQueryData(['quetes'], { quests: [] });
+    traiterEvenement(c, {
+      type: 'quest.completed',
+      data: {
+        id: 13,
+        createdAt: 1_800_000_000,
+        readAt: null,
+        kind: 'quest_completed',
+        payload: { questId: 3, code: 'chantiers', title: 'Chef de chantier', rewardCash: 1_500, rewardGems: 0 },
+      },
+    });
+    expect(perime(c, ['moi'])).toBe(true);
+    expect(perime(c, ['quetes'])).toBe(true);
+    expect(perime(c, ['fiche', '01001'])).toBe(false);
+    expect(useToasts.getState().toasts).toMatchObject([{ ton: 'info' }]);
+  });
 });

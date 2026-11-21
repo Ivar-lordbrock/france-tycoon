@@ -10,6 +10,7 @@ import {
 } from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
 import { ErreurMetier } from '../../erreurs.ts';
+import { emettre } from '../evenements/bus.ts';
 import { creerEncaisseur } from '../income/revenus.ts';
 import { mouvementDejaFait } from '../wallet/idempotence.ts';
 import { wallet } from '../wallet/wallet.ts';
@@ -160,6 +161,7 @@ export function creerAchatVente(db: Base, lireFiche: LireFiche) {
       });
       if (pris.changes !== 1) throw new Error(`Achat de ${insee} : la commune n'était plus libre`);
       noterHistorique.run(c.id, null, moi, 'purchase', c.baseValue, maintenant);
+      emettre(db, { userId: moi, type: 'territory_bought' }, maintenant);
     }).immediate();
 
     const territory = lireFiche(insee, moi, maintenant);

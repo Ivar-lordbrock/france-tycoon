@@ -1,6 +1,7 @@
 import type { MesOpaQuery, Opa, OpaReponse, Portefeuille, RoleOpa } from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
 import { ErreurMetier } from '../../erreurs.ts';
+import { emettre } from '../evenements/bus.ts';
 import { creerEncaisseur, creerEncaisseurSimple } from '../income/revenus.ts';
 import { mouvementDejaFait } from '../wallet/idempotence.ts';
 import { creerIssuesOpa, type OpaATerminer } from './issues.ts';
@@ -72,8 +73,10 @@ export function creerReponsesOpa(db: Base) {
         throw new ErreurMetier('TAKEOVER_NOT_PENDING', 409, 'Cette OPA est déjà terminée.', { status: o.status });
       }
 
-      if (reponse === 'defend') issues.defendre(o, maintenant, cle);
-      else if (reponse === 'accept') issues.transferer(o, 'accepted', maintenant);
+      if (reponse === 'defend') {
+        issues.defendre(o, maintenant, cle);
+        emettre(db, { userId: moi, type: 'takeover_defended' }, maintenant);
+      } else if (reponse === 'accept') issues.transferer(o, 'accepted', maintenant);
       else issues.retirer(o, maintenant, cle);
     }).immediate();
 

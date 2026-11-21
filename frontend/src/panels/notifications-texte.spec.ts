@@ -1,6 +1,6 @@
 import type { ContenuOpaTerminee, NotificationJeu } from '@france-tycoon/shared';
 import { describe, expect, it } from 'vitest';
-import { communeDe, ilYa, issueOpa, phraseNotification, toastDirect } from './notifications-texte.ts';
+import { communeDe, ilYa, issueOpa, phraseNotification, recompenseQuete, toastDirect } from './notifications-texte.ts';
 
 const maintenant = 1_800_000_000;
 const espaces = (texte: string | undefined) => texte?.replace(/\s/g, ' ');
@@ -130,5 +130,22 @@ describe('petits messages en direct', () => {
     expect(terminee('cancelled', 'attacker')).toBeNull();
     expect(terminee('defended', 'attacker')).toMatchObject({ ton: 'info', libelle: 'Voir' });
     expect(toastDirect({ type: 'wallet.changed', data: { cash: 1, gems: 0, incomePerHour: 0 } })).toBeNull();
+  });
+
+  it('quête réussie : la récompense à réclamer, sans commune', () => {
+    const reussie: NotificationJeu = {
+      ...message,
+      kind: 'quest_completed',
+      payload: { questId: 3, code: 'chantiers', title: 'Chef de chantier', rewardCash: 1_500, rewardGems: 0 },
+    };
+    expect(espaces(phraseNotification(reussie))).toBe('Quête « Chef de chantier » réussie : 1 500 ₮ à réclamer.');
+    expect(communeDe(reussie)).toBeNull();
+    const toast = toastDirect({ type: 'quest.completed', data: reussie });
+    expect({ ...toast, texte: espaces(toast?.texte) }).toEqual({
+      texte: 'Quête « Chef de chantier » réussie : 1 500 ₮ à réclamer.',
+      ton: 'info',
+    });
+    expect(espaces(recompenseQuete({ rewardCash: 3_000, rewardGems: 2 }))).toBe('3 000 ₮ et 2 💎');
+    expect(recompenseQuete({ rewardCash: 0, rewardGems: 2 })).toBe('2 💎');
   });
 });

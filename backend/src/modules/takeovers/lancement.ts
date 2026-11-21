@@ -7,6 +7,7 @@ import {
 } from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
 import { ErreurMetier } from '../../erreurs.ts';
+import { emettre } from '../evenements/bus.ts';
 import { creerEncaisseur } from '../income/revenus.ts';
 import { mouvementDejaFait } from '../wallet/idempotence.ts';
 import { wallet } from '../wallet/wallet.ts';
@@ -133,6 +134,7 @@ export function creerLancementOpa(db: Base) {
           expiresAt: fin,
         };
         notifier.run(c.ownerId, JSON.stringify(contenu), maintenant);
+        emettre(db, { userId: moi, type: 'takeover_launched' }, maintenant);
         return opa;
       })
       .immediate();

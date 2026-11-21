@@ -32,6 +32,13 @@ export function traiterEvenement(client: QueryClient, e: EvenementDirect) {
         client.invalidateQueries({ queryKey: ['fiche', e.data.payload.territoryInsee] }),
       ]);
       break;
+    case 'quest.completed':
+      // `moi` : le centre de notifications ; `quetes` : la liste du jour (paquet de l'écran à venir).
+      void Promise.all([
+        client.invalidateQueries({ queryKey: ['moi'] }),
+        client.invalidateQueries({ queryKey: ['quetes'] }),
+      ]);
+      break;
   }
   const toast = toastDirect(e);
   if (toast) ajouterToast(toast);
