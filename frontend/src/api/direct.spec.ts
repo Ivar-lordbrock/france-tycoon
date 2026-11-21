@@ -76,4 +76,20 @@ describe('événements en direct', () => {
     expect(perime(c, ['fiche', '01001'])).toBe(false);
     expect(useToasts.getState().toasts).toMatchObject([{ ton: 'info' }]);
   });
+
+  it('nouveau rang : profil relu, petit message', () => {
+    const c = client();
+    traiterEvenement(c, {
+      type: 'rank.up',
+      data: {
+        id: 14,
+        createdAt: 1_800_000_000,
+        readAt: null,
+        kind: 'rank_up',
+        payload: { rankLevel: 1, previousLevel: 0, maxTerritories: 4 },
+      },
+    });
+    expect(perime(c, ['moi'])).toBe(true);
+    expect(useToasts.getState().toasts).toMatchObject([{ texte: 'Nouveau rang : Notable !', ton: 'info' }]);
+  });
 });

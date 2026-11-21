@@ -5,6 +5,8 @@ export interface CommuneDeTest {
   nom: string;
   departement?: string;
   zone?: string;
+  /** `territories.region_code` (`REGIONS`), vide par défaut. */
+  region?: string;
   population?: number;
   /** V0 (3 000 par défaut). */
   valeur?: number;
@@ -26,9 +28,9 @@ const anneau = (ouest: number, sud: number, cote: number, precis: boolean) => [
 /** Insère des communes carrées (territories, contours, index spatial) sans passer par l'import. */
 export function insererCommunes(db: Base, communes: CommuneDeTest[]): void {
   const territoire = db.prepare<Record<string, unknown>, number>(`
-    INSERT INTO territories (insee_code, name, department_code, region_type, zone_code, population,
+    INSERT INTO territories (insee_code, name, department_code, region_code, region_type, zone_code, population,
       center_lat, center_lng, base_value, building_slots)
-    VALUES (@insee, @nom, @departement, @typeRegion, @zone, @population, @lat, @lng, @valeur, 3)
+    VALUES (@insee, @nom, @departement, @region, @typeRegion, @zone, @population, @lat, @lng, @valeur, 3)
     RETURNING id`);
   const contours = db.prepare('INSERT INTO territory_geometries VALUES (?, ?, ?)');
   const boite = db.prepare('INSERT INTO territories_rtree VALUES (?, ?, ?, ?, ?)');
@@ -39,6 +41,7 @@ export function insererCommunes(db: Base, communes: CommuneDeTest[]): void {
       nom,
       departement = '42',
       zone = 'MET',
+      region = null,
       population = 100,
       valeur = 3000,
       carre = CARRE_PAR_DEFAUT,
@@ -49,6 +52,7 @@ export function insererCommunes(db: Base, communes: CommuneDeTest[]): void {
         nom,
         departement,
         zone,
+        region,
         population,
         valeur,
         typeRegion: departement.length === 3 ? 'outre_mer' : 'metropole',

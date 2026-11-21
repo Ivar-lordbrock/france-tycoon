@@ -39,6 +39,10 @@ export function traiterEvenement(client: QueryClient, e: EvenementDirect) {
         client.invalidateQueries({ queryKey: ['quetes'] }),
       ]);
       break;
+    case 'rank.up':
+      // `moi` : rang, limite de territoires, centre de notifications ; le classement suit son propre rythme.
+      void client.invalidateQueries({ queryKey: ['moi'] });
+      break;
   }
   const toast = toastDirect(e);
   if (toast) ajouterToast(toast);

@@ -1,4 +1,11 @@
-import type { ContenuOpaTerminee, ContenuQueteTerminee, EvenementDirect, NotificationJeu } from '@france-tycoon/shared';
+import {
+  type ContenuNouveauRang,
+  type ContenuOpaTerminee,
+  type ContenuQueteTerminee,
+  type EvenementDirect,
+  type NotificationJeu,
+  RANGS,
+} from '@france-tycoon/shared';
 import type { OngletFiche } from '../etat/carte.ts';
 import type { NouveauToast } from '../etat/toasts.ts';
 import { phraseChantierFini } from './batiments-texte.ts';
@@ -63,6 +70,13 @@ export function recompenseQuete(p: Pick<ContenuQueteTerminee, 'rewardCash' | 're
   return gemmes ? `${tycoons(p.rewardCash)} et ${gemmes}` : tycoons(p.rewardCash);
 }
 
+/** « Nouveau rang : Baron ! Tu peux posséder 6 communes. » (la limite n'est citée que si elle a monté). */
+export function phraseNouveauRang(p: ContenuNouveauRang): string {
+  const nom = RANGS.find((r) => r.niveau === p.rankLevel)?.nom ?? `niveau ${p.rankLevel}`;
+  const plus = RANGS.some((r) => r.niveau > p.previousLevel && r.niveau <= p.rankLevel && r.bonusTerritoires > 0);
+  return plus ? `Nouveau rang : ${nom} ! Tu peux posséder ${p.maxTerritories} communes.` : `Nouveau rang : ${nom} !`;
+}
+
 /** Un message du centre de notifications, en une phrase. */
 export function phraseNotification(n: NotificationJeu): string {
   switch (n.kind) {
@@ -81,6 +95,8 @@ export function phraseNotification(n: NotificationJeu): string {
     }
     case 'quest_completed':
       return `Quête « ${n.payload.title} » réussie : ${recompenseQuete(n.payload)} à réclamer.`;
+    case 'rank_up':
+      return phraseNouveauRang(n.payload);
   }
 }
 
@@ -119,6 +135,7 @@ export function toastDirect(e: EvenementDirect): NouveauToast | null {
       return { texte: issue.texte, ton: 'info', commune: { insee: e.data.payload.territoryInsee }, libelle: 'Voir' };
     }
     case 'quest.completed':
+    case 'rank.up':
       return { texte: phraseNotification(e.data), ton: 'info' };
     default:
       return null;

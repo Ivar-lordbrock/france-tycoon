@@ -37,6 +37,8 @@ function evenementDuMessage(message: NotificationJeu): EvenementDirect | null {
       return { type: 'takeover.resolved', data: message };
     case 'quest_completed':
       return { type: 'quest.completed', data: message };
+    case 'rank_up':
+      return { type: 'rank.up', data: message };
     default:
       return null;
   }

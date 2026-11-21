@@ -114,7 +114,7 @@ Chaque règle temporelle a **deux** garde-fous : une tâche planifiée (pour que
 | `resolve-takeovers` | toutes les minutes | OPA `pending` dont `expires_at` est passé → transfert du territoire (voir 05) |
 | `release-inactive` | toutes les heures | Joueurs sans activité depuis 14 jours → territoires libérés, rachat par l'État, OPA annulées, statut `dormant` (`backend/src/modules/inactivity/inactivite.ts`) |
 | `warn-inactive` | toutes les heures | Notification « tes territoires seront libérés dans 3 jours », une fois par absence (visible au retour ; e-mail possible en V2) |
-| `leaderboard` | toutes les 10 min | Recalcule `users.net_worth` et `rank_level` |
+| `leaderboard` | toutes les 10 min | Recalcule `users.net_worth` et `rank_level` des joueurs actifs ; nouveau rang → limite de territoires et message `rank_up` (`backend/src/modules/leaderboard/classement.ts`) |
 | `cleanup` | chaque jour à 05:00 | Sessions expirées, notifications lues de plus de 30 jours |
 
 - Les chantiers terminés, les boucliers et les quêtes du jour **n'ont pas besoin de tâche** : ils se calculent à la lecture à partir des dates.

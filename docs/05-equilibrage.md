@@ -133,6 +133,7 @@ Le **reste** évite de perdre les fractions : un joueur qui gagne 50 ₮/h et ag
 | 4 Tycoon | 250 000 000 | badge et skin exclusifs |
 
 - **Rang** = le plus haut seuil atteint (`rangDuPatrimoine`), recalculé toutes les 10 min par la tâche `leaderboard` (`CLASSEMENT_TOUTES_LES_S`). Il **ne redescend jamais** (`nouveauRang`, décidé au début de l'étape 5) : sinon une OPA perdue ferait perdre un emplacement et laisserait le joueur au-dessus de sa limite de territoires.
+- La tâche calcule le patrimoine à partir du **cash enregistré**, sans encaisser : encaisser tout le monde toutes les 10 min contournerait le plafond de 24 h des revenus hors ligne. Les revenus en attente comptent au prochain encaissement du joueur. Elle ne traite que les comptes **actifs** (les seuls classés). Un nouveau rang recalcule tout de suite la limite de territoires et envoie le message `rank_up`.
 - Le skin du rang Tycoon attend la boutique (V2) ; en V1, chaque rang a son badge.
 
 ## 5.5 OPA (rachat hostile)
