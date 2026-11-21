@@ -31,8 +31,9 @@ describe('exécuteur de migrations', () => {
       '003_economie_etape3.sql',
       '004_reste_revenus.sql',
       '005_deplacement_capitale.sql',
+      '006_quetes.sql',
     ]);
-    expect(versionDuSchema(db)).toBe('005');
+    expect(versionDuSchema(db)).toBe('006');
     expect(db.prepare('SELECT count(*) FROM building_types').pluck().get()).toBe(7);
     const traces = db.prepare('SELECT version, name, length(checksum) AS l FROM schema_migrations').all();
     expect(traces).toEqual([
@@ -41,6 +42,7 @@ describe('exécuteur de migrations', () => {
       { version: '003', name: '003_economie_etape3.sql', l: 64 },
       { version: '004', name: '004_reste_revenus.sql', l: 64 },
       { version: '005', name: '005_deplacement_capitale.sql', l: 64 },
+      { version: '006', name: '006_quetes.sql', l: 64 },
     ]);
   });
 

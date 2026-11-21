@@ -132,7 +132,7 @@ describe('GET /me/notifications', () => {
 
   it('un type inconnu du contrat n’est pas listé ; limite de 50 par page', async () => {
     const { app, bruno, message } = await partie();
-    message(bruno.id, 'quest_completed', { quest: 'demain' });
+    message(bruno.id, 'achievement_unlocked', { badge: 'demain' });
     const connu = message(bruno.id, 'inactivity_warning', { releaseAt: 1_800_000_000 });
 
     const r = await app.inject({ method: 'GET', url: '/api/v1/me/notifications', headers: { cookie: bruno.cookie } });

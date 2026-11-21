@@ -35,6 +35,8 @@ function evenementDuMessage(message: NotificationJeu): EvenementDirect | null {
       return { type: 'takeover.received', data: message };
     case 'takeover_resolved':
       return { type: 'takeover.resolved', data: message };
+    case 'quest_completed':
+      return { type: 'quest.completed', data: message };
     default:
       return null;
   }

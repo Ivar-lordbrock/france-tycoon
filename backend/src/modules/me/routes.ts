@@ -17,6 +17,7 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ErreurMetier } from '../../erreurs.ts';
 import { exigerJoueur } from '../auth/requete.ts';
 import { creerLecteurChantiers } from '../buildings/file.ts';
+import { emettre } from '../evenements/bus.ts';
 import { creerEncaisseur } from '../income/revenus.ts';
 import { creerListeNotifications } from '../notifications/liste.ts';
 import { creerReponsesOpa } from '../takeovers/reponses.ts';
@@ -107,7 +108,17 @@ export const routesMoi: FastifyPluginAsyncZod = async (app) => {
 
   app.post('/collect', { schema: { response: { 200: encaissementReponseSchema } } }, (req) => {
     const id = exigerJoueur(req);
-    const { collected, cash, incomePerHour } = app.db.transaction(() => encaisser(id, maintenant())).immediate();
+    const t = maintenant();
+    const { collected, cash, incomePerHour } = app.db
+      .transaction(() => {
+        const encaissement = encaisser(id, t);
+        // « Trésorier » : seul ce clic compte, une fois par heure au plus, et s'il y avait quelque chose à prendre.
+        if (encaissement.collected > 0) {
+          emettre(app.db, { userId: id, type: 'income_collected', ref: String(Math.floor(t / 3600)) }, t);
+        }
+        return encaissement;
+      })
+      .immediate();
     return { collected, cash, incomePerHour };
   });
 
