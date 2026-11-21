@@ -65,6 +65,12 @@ export function useReclamer() {
 /** Fiche ouverte, zone choisie… : fait avancer les quêtes. Sans réponse utile : un échec ne gêne pas le jeu. */
 export function suivre(client: QueryClient, type: TypeSuivi, ref: string) {
   envoyerJson<void>('/api/v1/events/track', 'POST', { type, ref })
-    .then(() => client.invalidateQueries({ queryKey: ['quetes'] }))
+    .then(() =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: ['quetes'] }),
+        // Tutoriel (étape 10) : récompense et fin, sous `moi`.
+        type === 'leaderboard_viewed' && client.invalidateQueries({ queryKey: ['moi'] }),
+      ]),
+    )
     .catch(() => {});
 }

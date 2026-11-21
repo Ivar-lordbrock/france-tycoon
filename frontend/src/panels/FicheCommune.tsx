@@ -70,6 +70,7 @@ export function FicheCommune() {
   return (
     <section
       aria-labelledby="fiche-titre"
+      data-tuto="territory-panel"
       className="panneau pointer-events-auto flex max-h-[min(70dvh,40rem)] flex-col overflow-hidden"
     >
       <header className="flex items-start justify-between gap-2 border-b border-encre/10 p-4 pb-3">
@@ -211,6 +212,7 @@ function Onglets({
           aria-controls={`fiche-panneau-${cle}`}
           tabIndex={onglet === cle ? 0 : -1}
           onClick={() => definir(cle)}
+          data-tuto={cle === 'batiments' ? 'build-button' : undefined}
           className={`-mb-px border-b-2 px-2 py-2 text-sm font-semibold ${
             onglet === cle ? 'border-encre text-encre' : 'border-transparent text-ardoise hover:text-encre'
           }`}

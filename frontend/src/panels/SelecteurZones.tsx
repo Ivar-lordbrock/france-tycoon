@@ -91,7 +91,7 @@ export function SelecteurZones() {
     ));
 
   return (
-    <nav aria-label="Zones" className="panneau pointer-events-auto max-md:w-full">
+    <nav aria-label="Zones" data-tuto="zone-selector" className="panneau pointer-events-auto max-md:w-full">
       <div className="max-md:flex max-md:gap-1 max-md:overflow-x-auto max-md:p-1.5 md:max-h-[calc(100dvh-10rem)] md:overflow-y-auto md:p-2">
         <h2 className="titre-groupe max-md:sr-only">France métropolitaine</h2>
         <ul className="flex gap-0.5 md:flex-col">{liste(VUES_METROPOLE)}</ul>

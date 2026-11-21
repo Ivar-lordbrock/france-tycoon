@@ -70,7 +70,7 @@ Décisions prises le 17/11/2026 ([idees.md](idees.md#décisions-prises)) : un **
 
 | Dev A | Dev B |
 |---|---|
-| Bus d'événements interne (`territory_bought`, `building_started`...) qui fait avancer quêtes et tutoriel | Tutoriel interactif driver.js, 10 étapes, ancres `data-tuto` |
+| Bus d'événements interne (`territory_bought`, `building_started`...) qui fait avancer quêtes et tutoriel | Tutoriel interactif (bulle maison, driver.js écarté), 10 étapes, ancres `data-tuto` |
 | Tirage des 3 quêtes du jour (graine user+date), réclamation | Panneau des quêtes avec progression |
 | Tutoriel côté serveur (validation, récompenses, passer) ; `POST /events/track` | Classement national / Métropole / Outre-mer / région, profil public |
 | Tâche `leaderboard` (patrimoine, rangs, bonus de territoire) | Accueil du premier lancement, écran de rang |
