@@ -22,6 +22,7 @@ import { nomRang } from '../panels/classement-texte.ts';
 import { entier, tycoons } from '../panels/fiche-texte.ts';
 import { MesTerritoires } from '../panels/MesTerritoires.tsx';
 import { BoutonGoogle } from './BoutonGoogle.tsx';
+import { LiensInfos } from './LiensInfos.tsx';
 
 /** Coin du joueur : connexion, ou barre du haut (cash, gemmes, revenu) et profil. */
 export function Compte() {
@@ -104,6 +105,18 @@ function Connexion() {
           </p>
         )}
       </div>
+      <p className="mt-3 text-xs text-ardoise">
+        En te connectant, tu acceptes les{' '}
+        <a href="/legal.html#regles" target="_blank" rel="noopener" className="underline hover:text-encre">
+          règles du jeu
+        </a>{' '}
+        et la{' '}
+        <a href="/legal.html#confidentialite" target="_blank" rel="noopener" className="underline hover:text-encre">
+          politique de confidentialité
+        </a>
+        .
+      </p>
+      <LiensInfos className="mt-2" />
     </section>
   );
 }
@@ -243,7 +256,7 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
         onClick={() => basculer('territoires')}
         aria-expanded={ouvert === 'territoires'}
         aria-controls={`${id}-territoires`}
-        className={`flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60 ${ouvert ? '' : 'rounded-b-[10px]'}`}
+        className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
       >
         Mes territoires
         <span className="flex items-center gap-1.5 font-normal text-ardoise tabular-nums">
@@ -253,6 +266,7 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
       </button>
       {ouvert === 'territoires' && <MesTerritoires id={`${id}-territoires`} onChoisi={() => setOuvert(null)} />}
       {ouvert === 'profil' && <Profil id={`${id}-profil`} moi={moi} />}
+      <LiensInfos className="border-t border-encre/10 px-3 py-2" />
     </section>
   );
 }
