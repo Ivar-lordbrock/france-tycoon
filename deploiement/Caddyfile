@@ -1,0 +1,28 @@
+# France Tycoon : Caddy reçoit les joueurs, obtient tout seul le cadenas HTTPS (Let's Encrypt),
+# envoie les pages du jeu (frontend/dist) et passe les appels /api au serveur Node.
+# Modèle : installer-serveur.sh remplace DOMAINE_DU_JEU et l'écrit dans /etc/caddy/Caddyfile.
+DOMAINE_DU_JEU {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# API et flux en direct (SSE) : envoyés tout de suite, sans attendre ni compresser.
+	handle /api/* {
+		reverse_proxy 127.0.0.1:3000 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		root * /srv/france-tycoon/app/frontend/dist
+		encode zstd gzip
+		# Fichiers dont le nom change à chaque version : le navigateur peut les garder un an.
+		@fichiers_versionnes path /assets/*
+		header @fichiers_versionnes Cache-Control "public, max-age=31536000, immutable"
+		try_files {path} /index.html
+		file_server
+	}
+}
