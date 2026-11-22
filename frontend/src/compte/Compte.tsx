@@ -142,131 +142,154 @@ type Volet = 'profil' | 'messages' | 'quetes' | 'classement' | 'territoires';
 /** Barre du haut : qui je suis, mon cash (qui monte tout seul), mes gemmes, mon revenu, mon chantier, mes territoires. */
 function BarreJoueur({ moi }: { moi: MoiReponse }) {
   const [ouvert, setOuvert] = useState<Volet | null>(null);
+  // Sur téléphone, le compte tient en une ligne pour laisser la carte visible (sans effet sur grand écran).
+  const [deplie, setDeplie] = useState(false);
   const id = useId();
-  const basculer = (volet: Volet) => setOuvert((o) => (o === volet ? null : volet));
+  const basculer = (volet: Volet) => {
+    setDeplie(true);
+    setOuvert((o) => (o === volet ? null : volet));
+  };
+  const choisi = () => {
+    setOuvert(null);
+    setDeplie(false);
+  };
   const nonLus = moi.unreadNotifications;
   // Entre deux lectures de /me, le cash monte de revenu/h ÷ 3 600 chaque seconde (docs/04 § 4.4).
   const cash = useCashEnDirect() ?? moi.wallet.cash;
   const encaisser = useEncaisser();
 
   return (
-    <section aria-label="Mon compte" className="panneau pointer-events-auto">
-      <button
-        type="button"
-        onClick={() => basculer('profil')}
-        aria-expanded={ouvert === 'profil'}
-        aria-controls={`${id}-profil`}
-        className="flex w-full items-center gap-3 rounded-[10px] p-2.5 text-left hover:bg-brume/60"
-      >
-        <Avatar moi={moi} />
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-1.5 truncate font-semibold">
-            <span
-              className="size-2.5 shrink-0 rounded-full"
-              style={{ background: moi.user.markerColor }}
-              aria-hidden="true"
-            />
-            {moi.user.pseudo}
-          </span>
-          <span className="block text-xs text-ardoise">
-            {nomRang(moi.rankLevel)} · {moi.territories.owned} / {moi.territories.max} territoires
-          </span>
-        </span>
-      </button>
-      <dl className="grid grid-cols-3 border-t border-encre/10 text-center" data-tuto="hud-wallet">
-        <div className="p-2">
-          <dt className="text-xs text-ardoise">Cash</dt>
-          <dd className="font-bold tabular-nums">{tycoons(cash)}</dd>
-        </div>
-        <div className="border-x border-encre/10 p-2">
-          <dt className="text-xs text-ardoise">Gemmes</dt>
-          <dd className="font-bold tabular-nums">{entier(moi.wallet.gems)} 💎</dd>
-        </div>
-        <div className="p-2">
-          <dt className="text-xs text-ardoise">Revenu</dt>
-          <dd className="font-bold tabular-nums">{tycoons(moi.incomePerHour)}/h</dd>
-        </div>
-      </dl>
-      {/* Le cash affiché compte déjà ce montant ; le clic l'enregistre (tutoriel, quête « Trésorier »). */}
-      <div className="flex items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm">
-        <span className="text-ardoise tabular-nums">+{tycoons(cash - moi.wallet.cash)} en attente</span>
+    <section aria-label="Mon compte" className="panneau pointer-events-auto min-h-0 overflow-y-auto">
+      <div className="flex items-center">
         <button
           type="button"
-          onClick={() => encaisser.mutate()}
-          disabled={encaisser.isPending}
-          data-tuto="collect-button"
-          className="h-8 rounded-md bg-encre px-3 font-semibold text-white disabled:opacity-50"
+          onClick={() => basculer('profil')}
+          aria-expanded={ouvert === 'profil'}
+          aria-controls={`${id}-profil`}
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-[10px] p-2.5 text-left hover:bg-brume/60"
         >
-          Encaisser
+          <Avatar moi={moi} />
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-1.5 truncate font-semibold">
+              <span
+                className="size-2.5 shrink-0 rounded-full"
+                style={{ background: moi.user.markerColor }}
+                aria-hidden="true"
+              />
+              {moi.user.pseudo}
+            </span>
+            <span className="block text-xs text-ardoise">
+              {nomRang(moi.rankLevel)} · {moi.territories.owned} / {moi.territories.max} territoires
+            </span>
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setDeplie((d) => !d)}
+          aria-expanded={deplie}
+          aria-controls={`${id}-details`}
+          className="flex h-11 shrink-0 items-center gap-1.5 rounded-[10px] px-3 font-bold tabular-nums hover:bg-brume/60 md:hidden"
+        >
+          <span className="sr-only">Détails du compte, cash : </span>
+          {tycoons(cash)}
+          <Chevron ouvert={deplie} />
         </button>
       </div>
-      {encaisser.isError && (
-        <p role="alert" className="px-3 pb-2 text-sm text-red-700">
-          {messageErreur(encaisser.error)}
-        </p>
-      )}
-      <ChantierEnCours possede={moi.territories.owned} />
-      <button
-        type="button"
-        onClick={() => basculer('messages')}
-        aria-expanded={ouvert === 'messages'}
-        aria-controls={`${id}-messages`}
-        className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
-      >
-        Messages
-        <span className="flex items-center gap-1.5 font-normal text-ardoise">
-          {nonLus > 0 && (
-            <span className="rounded-full bg-orange-500 px-1.5 text-xs font-bold text-white tabular-nums">
-              {nonLus > 99 ? '99+' : nonLus}
-              <span className="sr-only"> non lu{nonLus > 1 ? 's' : ''}</span>
-            </span>
-          )}
-          <Chevron ouvert={ouvert === 'messages'} />
-        </span>
-      </button>
-      {ouvert === 'messages' && (
-        <CentreMessages id={`${id}-messages`} nonLus={nonLus} onChoisi={() => setOuvert(null)} />
-      )}
-      <button
-        type="button"
-        onClick={() => basculer('quetes')}
-        aria-expanded={ouvert === 'quetes'}
-        aria-controls={`${id}-quetes`}
-        data-tuto="quests-button"
-        className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
-      >
-        Quêtes du jour
-        <Chevron ouvert={ouvert === 'quetes'} />
-      </button>
-      {ouvert === 'quetes' && <QuetesDuJour id={`${id}-quetes`} />}
-      <button
-        type="button"
-        onClick={() => basculer('classement')}
-        aria-expanded={ouvert === 'classement'}
-        aria-controls={`${id}-classement`}
-        data-tuto="leaderboard-button"
-        className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
-      >
-        Classement
-        <Chevron ouvert={ouvert === 'classement'} />
-      </button>
-      {ouvert === 'classement' && <Classement id={`${id}-classement`} onChoisi={() => setOuvert(null)} />}
-      <button
-        type="button"
-        onClick={() => basculer('territoires')}
-        aria-expanded={ouvert === 'territoires'}
-        aria-controls={`${id}-territoires`}
-        className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
-      >
-        Mes territoires
-        <span className="flex items-center gap-1.5 font-normal text-ardoise tabular-nums">
-          {moi.territories.owned} / {moi.territories.max}
-          <Chevron ouvert={ouvert === 'territoires'} />
-        </span>
-      </button>
-      {ouvert === 'territoires' && <MesTerritoires id={`${id}-territoires`} onChoisi={() => setOuvert(null)} />}
-      {ouvert === 'profil' && <Profil id={`${id}-profil`} moi={moi} />}
-      <LiensInfos className="border-t border-encre/10 px-3 py-2" />
+      {/* `repli` : le tutoriel montre ce bloc quand il vise un élément dedans (voir Tutoriel.tsx). */}
+      <div id={`${id}-details`} className={deplie ? '' : 'repli max-md:hidden'}>
+        <dl className="grid grid-cols-3 border-t border-encre/10 text-center" data-tuto="hud-wallet">
+          <div className="p-2">
+            <dt className="text-xs text-ardoise">Cash</dt>
+            <dd className="font-bold tabular-nums">{tycoons(cash)}</dd>
+          </div>
+          <div className="border-x border-encre/10 p-2">
+            <dt className="text-xs text-ardoise">Gemmes</dt>
+            <dd className="font-bold tabular-nums">{entier(moi.wallet.gems)} 💎</dd>
+          </div>
+          <div className="p-2">
+            <dt className="text-xs text-ardoise">Revenu</dt>
+            <dd className="font-bold tabular-nums">{tycoons(moi.incomePerHour)}/h</dd>
+          </div>
+        </dl>
+        {/* Le cash affiché compte déjà ce montant ; le clic l'enregistre (tutoriel, quête « Trésorier »). */}
+        <div className="flex items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm">
+          <span className="text-ardoise tabular-nums">+{tycoons(cash - moi.wallet.cash)} en attente</span>
+          <button
+            type="button"
+            onClick={() => encaisser.mutate()}
+            disabled={encaisser.isPending}
+            data-tuto="collect-button"
+            className="h-8 rounded-md bg-encre px-3 font-semibold text-white disabled:opacity-50"
+          >
+            Encaisser
+          </button>
+        </div>
+        {encaisser.isError && (
+          <p role="alert" className="px-3 pb-2 text-sm text-red-700">
+            {messageErreur(encaisser.error)}
+          </p>
+        )}
+        <ChantierEnCours possede={moi.territories.owned} />
+        <button
+          type="button"
+          onClick={() => basculer('messages')}
+          aria-expanded={ouvert === 'messages'}
+          aria-controls={`${id}-messages`}
+          className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
+        >
+          Messages
+          <span className="flex items-center gap-1.5 font-normal text-ardoise">
+            {nonLus > 0 && (
+              <span className="rounded-full bg-orange-500 px-1.5 text-xs font-bold text-white tabular-nums">
+                {nonLus > 99 ? '99+' : nonLus}
+                <span className="sr-only"> non lu{nonLus > 1 ? 's' : ''}</span>
+              </span>
+            )}
+            <Chevron ouvert={ouvert === 'messages'} />
+          </span>
+        </button>
+        {ouvert === 'messages' && <CentreMessages id={`${id}-messages`} nonLus={nonLus} onChoisi={choisi} />}
+        <button
+          type="button"
+          onClick={() => basculer('quetes')}
+          aria-expanded={ouvert === 'quetes'}
+          aria-controls={`${id}-quetes`}
+          data-tuto="quests-button"
+          className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
+        >
+          Quêtes du jour
+          <Chevron ouvert={ouvert === 'quetes'} />
+        </button>
+        {ouvert === 'quetes' && <QuetesDuJour id={`${id}-quetes`} />}
+        <button
+          type="button"
+          onClick={() => basculer('classement')}
+          aria-expanded={ouvert === 'classement'}
+          aria-controls={`${id}-classement`}
+          data-tuto="leaderboard-button"
+          className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
+        >
+          Classement
+          <Chevron ouvert={ouvert === 'classement'} />
+        </button>
+        {ouvert === 'classement' && <Classement id={`${id}-classement`} onChoisi={choisi} />}
+        <button
+          type="button"
+          onClick={() => basculer('territoires')}
+          aria-expanded={ouvert === 'territoires'}
+          aria-controls={`${id}-territoires`}
+          className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
+        >
+          Mes territoires
+          <span className="flex items-center gap-1.5 font-normal text-ardoise tabular-nums">
+            {moi.territories.owned} / {moi.territories.max}
+            <Chevron ouvert={ouvert === 'territoires'} />
+          </span>
+        </button>
+        {ouvert === 'territoires' && <MesTerritoires id={`${id}-territoires`} onChoisi={choisi} />}
+        {ouvert === 'profil' && <Profil id={`${id}-profil`} moi={moi} />}
+        <LiensInfos className="border-t border-encre/10 px-3 py-2" />
+      </div>
     </section>
   );
 }
