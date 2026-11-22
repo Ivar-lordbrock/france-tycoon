@@ -50,7 +50,9 @@ export function Tutoriel() {
       className="panneau pointer-events-auto w-full max-w-md self-center p-4"
     >
       {etape.anchor && (
+        // `.repli` : bloc caché sur téléphone (compte replié, légende) ; montré s'il contient l'élément visé.
         <style>{`[data-tuto~="${etape.anchor}"]{outline:3px solid var(--color-surligneur);outline-offset:-3px}
+.repli:has([data-tuto~="${etape.anchor}"]){display:block}
 @media (prefers-reduced-motion:no-preference){[data-tuto~="${etape.anchor}"]{animation:tuto-cible 1s ease-in-out infinite alternate}}`}</style>
       )}
       <p className="text-xs text-ardoise tabular-nums">
