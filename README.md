@@ -1,4 +1,6 @@
-# France Tycoon
+# Kadastr
+
+En ligne : https://kadastr.fr (bêta fermée). Ancien nom : France Tycoon, gardé dans les noms techniques (dépôt, paquets, serveur).
 
 Jeu web multijoueur de gestion et de conquête immobilière **sur la vraie carte de France** (Métropole et Outre-mer) : achète des communes, construis, encaisse des revenus même hors ligne, et rachète les territoires de tes rivaux par **OPA**.
 
@@ -74,7 +76,7 @@ Pour te connecter en local, copie `.env.example` en `.env` : il active le **comp
 
 Branches `main` (stable, protégée) et `dev` (intégration, par défaut), une branche par fonctionnalité, PR relue par l'autre. Tout est dans [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Au quotidien, double-clique sur le raccourci « France Tycoon » du Bureau (ou sur `outils/0-ouvrir-les-outils`) : une fenêtre à gros boutons fait chaque étape. Tu peux aussi double-cliquer sur les fichiers numérotés du dossier [`outils/`](outils/) (ou taper `/commencer`, `/envoyer`… dans Claude Code) : mettre à jour, commencer une tâche, envoyer, proposer, fusionner. Guide pas à pas : [docs/07-travailler-a-deux.md](docs/07-travailler-a-deux.md), et vidéo de 3 minutes : [docs/medias/fenetre-des-outils.mp4](docs/medias/fenetre-des-outils.mp4).
+Au quotidien, double-clique sur le raccourci « Kadastr » du Bureau (ou sur `outils/0-ouvrir-les-outils`) : une fenêtre à gros boutons fait chaque étape. Tu peux aussi double-cliquer sur les fichiers numérotés du dossier [`outils/`](outils/) (ou taper `/commencer`, `/envoyer`… dans Claude Code) : mettre à jour, commencer une tâche, envoyer, proposer, fusionner. Guide pas à pas : [docs/07-travailler-a-deux.md](docs/07-travailler-a-deux.md), et vidéo de 3 minutes : [docs/medias/fenetre-des-outils.mp4](docs/medias/fenetre-des-outils.mp4).
 
 ## Données et licences
 

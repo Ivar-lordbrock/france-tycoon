@@ -1,4 +1,4 @@
-# France Tycoon : Caddy reçoit les joueurs, obtient tout seul le cadenas HTTPS (Let's Encrypt),
+# Kadastr : Caddy reçoit les joueurs, obtient tout seul le cadenas HTTPS (Let's Encrypt),
 # envoie les pages du jeu (frontend/dist) et passe les appels /api au serveur Node.
 # Modèle : installer-serveur.sh remplace DOMAINE_DU_JEU et l'écrit dans /etc/caddy/Caddyfile.
 DOMAINE_DU_JEU {

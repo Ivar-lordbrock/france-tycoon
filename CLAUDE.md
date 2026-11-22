@@ -1,6 +1,8 @@
-# France Tycoon — consignes pour Claude Code
+# Kadastr — consignes pour Claude Code
 
 Jeu web de gestion/conquête des communes françaises. Dossier d'architecture dans `docs/` : le lire avant de coder (surtout `03-base-de-donnees.md`, `04-api.md`, `05-equilibrage.md`).
+
+Le jeu s'appelait France Tycoon. Les noms techniques gardent `france-tycoon` (dépôt, paquets `@france-tycoon/*`, dossiers et services du serveur, en-têtes des migrations) : ne pas les renommer, le serveur en dépend.
 
 ## Langue
 

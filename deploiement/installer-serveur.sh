@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2154  # DOMAINE, B2_… : remplis par demander() (printf -v).
-# Installe France Tycoon sur un serveur Ubuntu 24.04 neuf (guide : docs/09-mise-en-ligne.md).
+# Installe Kadastr sur un serveur Ubuntu 24.04 neuf (guide : docs/09-mise-en-ligne.md).
 #
 # À lancer avec sudo, une première fois pour tout installer, puis autant de fois que voulu
 # pour changer un réglage (nom de domaine, clés de la sauvegarde…) : rien n'est cassé ni perdu.

@@ -1,4 +1,4 @@
-# Travailler à deux sur France Tycoon
+# Travailler à deux sur Kadastr
 
 ## Branches
 
