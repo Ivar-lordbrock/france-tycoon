@@ -2,7 +2,14 @@ import { type MoiReponse, PSEUDO_MAX, pseudoSchema } from '@france-tycoon/shared
 import { type FormEvent, useId, useState } from 'react';
 import { useCashEnDirect } from '../api/batiments.ts';
 import { messageErreur } from '../api/client.ts';
-import { useConfigConnexion, useConnexion, useDeconnexion, useModifierProfil, useMoi } from '../api/compte.ts';
+import {
+  useConfigConnexion,
+  useConnexion,
+  useDeconnexion,
+  useModifierProfil,
+  useMoi,
+  useSupprimerCompte,
+} from '../api/compte.ts';
 import { useFluxDirect } from '../api/direct.ts';
 import { useEncaisser } from '../api/quetes.ts';
 import { CentreMessages } from '../hud/CentreMessages.tsx';
@@ -281,51 +288,115 @@ function Profil({ id, moi }: { id: string; moi: MoiReponse }) {
   };
 
   return (
-    <form id={id} onSubmit={enregistrer} className="flex flex-col gap-3 border-t border-encre/10 p-3">
-      <div className="flex items-end gap-2">
-        <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-semibold text-ardoise">
-          Pseudo
-          <input
-            value={pseudo}
-            onChange={(e) => setPseudo(e.target.value)}
-            maxLength={PSEUDO_MAX}
-            aria-invalid={!verifie.success}
-            className="h-10 rounded-md border border-encre/15 px-2.5 text-base font-normal text-encre outline-none focus:border-encre focus:ring-2 focus:ring-surligneur"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-ardoise">
-          Couleur
-          <input
-            type="color"
-            value={couleur}
-            onChange={(e) => setCouleur(e.target.value)}
-            className="h-10 w-12 cursor-pointer rounded-md border border-encre/15 bg-white p-1"
-          />
-        </label>
+    <div id={id} className="border-t border-encre/10">
+      <form onSubmit={enregistrer} className="flex flex-col gap-3 p-3">
+        <div className="flex items-end gap-2">
+          <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-semibold text-ardoise">
+            Pseudo
+            <input
+              value={pseudo}
+              onChange={(e) => setPseudo(e.target.value)}
+              maxLength={PSEUDO_MAX}
+              aria-invalid={!verifie.success}
+              className="h-10 rounded-md border border-encre/15 px-2.5 text-base font-normal text-encre outline-none focus:border-encre focus:ring-2 focus:ring-surligneur"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-semibold text-ardoise">
+            Couleur
+            <input
+              type="color"
+              value={couleur}
+              onChange={(e) => setCouleur(e.target.value)}
+              className="h-10 w-12 cursor-pointer rounded-md border border-encre/15 bg-white p-1"
+            />
+          </label>
+        </div>
+        {!verifie.success && <p className="text-sm text-red-700">3 à 24 lettres, chiffres, espaces, . _ ou -.</p>}
+        {modifier.isError && (
+          <p role="alert" className="text-sm text-red-700">
+            {modifier.error.message}
+          </p>
+        )}
+        <div className="flex justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => deconnexion.mutate()}
+            disabled={deconnexion.isPending}
+            className="h-10 rounded-md px-3 text-sm font-semibold text-ardoise hover:bg-brume hover:text-encre"
+          >
+            Se déconnecter
+          </button>
+          <button
+            type="submit"
+            disabled={!change || !verifie.success || modifier.isPending}
+            className="h-10 rounded-md bg-encre px-3 font-semibold text-white disabled:opacity-50"
+          >
+            {modifier.isSuccess && !change ? 'Enregistré' : 'Enregistrer'}
+          </button>
+        </div>
+      </form>
+      <SupprimerCompte pseudo={moi.user.pseudo} />
+    </div>
+  );
+}
+
+/** Supprimer son compte : c'est définitif, donc le bouton rouge n'agit qu'une fois le pseudo retapé. */
+function SupprimerCompte({ pseudo }: { pseudo: string }) {
+  const supprimer = useSupprimerCompte();
+  const [ouvert, setOuvert] = useState(false);
+  const [saisie, setSaisie] = useState('');
+  // Le pseudo est unique sans tenir compte des majuscules : on les ignore ici aussi.
+  const confirme = saisie.trim().toLowerCase() === pseudo.toLowerCase();
+
+  if (!ouvert) {
+    return (
+      <div className="px-3 pb-3">
+        <button type="button" onClick={() => setOuvert(true)} className="text-sm text-red-700 hover:underline">
+          Supprimer mon compte…
+        </button>
       </div>
-      {!verifie.success && <p className="text-sm text-red-700">3 à 24 lettres, chiffres, espaces, . _ ou -.</p>}
-      {modifier.isError && (
-        <p role="alert" className="text-sm text-red-700">
-          {modifier.error.message}
+    );
+  }
+  return (
+    <div className="flex flex-col gap-2 border-t border-red-200 bg-red-50 p-3 text-sm text-encre">
+      <p>
+        <strong>C’est définitif.</strong> Tes communes redeviennent libres, tes bâtiments sont détruits, ton argent est
+        perdu et tes OPA en cours sont annulées. Ton pseudo et ton e-mail sont effacés.
+      </p>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-ardoise">
+        Pour confirmer, tape ton pseudo : {pseudo}
+        <input
+          value={saisie}
+          onChange={(e) => setSaisie(e.target.value)}
+          autoComplete="off"
+          className="h-10 rounded-md border border-encre/15 bg-white px-2.5 text-base font-normal text-encre outline-none focus:border-red-700 focus:ring-2 focus:ring-red-200"
+        />
+      </label>
+      {supprimer.isError && (
+        <p role="alert" className="text-red-700">
+          {supprimer.error.message}
         </p>
       )}
       <div className="flex justify-between gap-2">
         <button
           type="button"
-          onClick={() => deconnexion.mutate()}
-          disabled={deconnexion.isPending}
-          className="h-10 rounded-md px-3 text-sm font-semibold text-ardoise hover:bg-brume hover:text-encre"
+          onClick={() => {
+            setOuvert(false);
+            setSaisie('');
+          }}
+          className="h-10 rounded-md px-3 font-semibold text-ardoise hover:bg-brume hover:text-encre"
         >
-          Se déconnecter
+          Annuler
         </button>
         <button
-          type="submit"
-          disabled={!change || !verifie.success || modifier.isPending}
-          className="h-10 rounded-md bg-encre px-3 font-semibold text-white disabled:opacity-50"
+          type="button"
+          onClick={() => supprimer.mutate()}
+          disabled={!confirme || supprimer.isPending}
+          className="h-10 rounded-md bg-red-700 px-3 font-semibold text-white disabled:opacity-50"
         >
-          {modifier.isSuccess && !change ? 'Enregistré' : 'Enregistrer'}
+          Supprimer définitivement
         </button>
       </div>
-    </form>
+    </div>
   );
 }

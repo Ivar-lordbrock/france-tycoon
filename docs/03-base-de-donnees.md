@@ -208,4 +208,4 @@ LIMIT 3000;
 
 - **Sauvegarde** : Litestream réplique le fichier WAL en continu vers un stockage S3 ; restauration testée à l'étape 6.
 - **Migrations** : au démarrage, le serveur applique les fichiers `migrations/*.sql` pas encore joués (table `schema_migrations`, créée par le petit exécuteur de migrations de l'étape 1).
-- **RGPD** : suppression = `status = 'deleted'`, e-mail remplacé par un hachage, pseudo par « Joueur supprimé #id », `google_id` par `deleted:<id>`, territoires libérés.
+- **RGPD** : suppression = `status = 'deleted'`, e-mail remplacé par un hachage, pseudo par « Joueur supprimé #id », `google_id` par `deleted:<id>`, avatar effacé, territoires libérés (bâtiments détruits, sans rachat, historique `admin`), OPA en cours annulées (offre rendue à l'attaquant), sessions et notifications effacées. Le journal `wallet_transactions` reste tel quel. Le même compte Google peut ensuite recréer un compte neuf. Code : `backend/src/modules/me/suppression.ts`.
