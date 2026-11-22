@@ -33,7 +33,7 @@ Le site de Contabo est en anglais : les mots à choisir sont écrits ci-dessous 
 
 1. Chez OVHcloud, rubrique **Noms de domaine**, achète ton `.fr`.
 2. Dans l'espace client : **Noms de domaine** → ton domaine → onglet **Zone DNS**.
-3. **Modifie** les entrées de type **A** (elles visent une page d'attente d'OVH) : la cible devient l'**adresse IP de ton serveur**. Fais-le pour la ligne sans sous-domaine et pour `www`.
+3. **Modifie** les entrées de type **A** (elles visent une page d'attente d'OVH) : la cible devient l'**adresse IP de ton serveur**. Fais-le pour la ligne sans sous-domaine et pour `www` (le serveur renverra `www.ton-domaine.fr` vers `ton-domaine.fr`).
 4. **Supprime** les entrées de type **AAAA** s'il y en a : sinon le cadenas HTTPS peut échouer.
 5. Attends 10 à 30 minutes. Pour vérifier, dans PowerShell sur ton PC (remplace par ton domaine) :
 

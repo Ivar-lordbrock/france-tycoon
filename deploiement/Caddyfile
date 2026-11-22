@@ -26,3 +26,9 @@ DOMAINE_DU_JEU {
 		file_server
 	}
 }
+
+# Adresse en « www. » : renvoie vers l'adresse principale (connexion Google et cookies ne marchent que sur celle-ci).
+# installer-serveur.sh retire ce bloc si www.DOMAINE_DU_JEU n'existe pas dans les DNS.
+www.DOMAINE_DU_JEU {
+	redir https://DOMAINE_DU_JEU{uri} permanent
+}
