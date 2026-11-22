@@ -33,7 +33,7 @@
 | Temps réel | **Server-Sent Events** (`GET /api/v1/events`) | Notifications d'OPA sans WebSocket ni bibliothèque : le flux relit la table `notifications` chaque seconde (docs/04) |
 | Tests | **Vitest** (unitaires), **node:test** (schéma SQL, déjà en place), **Playwright** (bout en bout, étape 6) | |
 | Qualité | **Biome** (lint + format en un outil) | Une seule config pour le duo |
-| Hébergement | **Un VPS** (choisi : OVHcloud VPS-1, 2 vCores / 4 Go, en France) + **Caddy** (HTTPS auto) + **Litestream** (sauvegarde continue de SQLite vers Backblaze B2, UE). Installation : [09-mise-en-ligne.md](09-mise-en-ligne.md) | SQLite = un seul serveur, c'est voulu et suffisant pour des milliers de joueurs |
+| Hébergement | **Un VPS** (choisi : OVHcloud VPS-1, 2 vCores / 4 Go, ou VPS-2, 4 vCores / 8 Go s'il est épuisé ; en France) + **Caddy** (HTTPS auto) + **Litestream** (sauvegarde continue de SQLite vers Backblaze B2, UE). Installation : [09-mise-en-ligne.md](09-mise-en-ligne.md) | SQLite = un seul serveur, c'est voulu et suffisant pour des milliers de joueurs |
 
 > SQLite est utilisée en mode **WAL** (lecteurs et écrivain en parallèle), `foreign_keys = ON`, `busy_timeout = 5000`, `synchronous = NORMAL`. Toutes les écritures passent par `db.transaction(...)` de better-sqlite3 (`BEGIN IMMEDIATE`).
 
