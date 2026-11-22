@@ -27,6 +27,7 @@ const app = construireApp({
     devLogin: config.AUTH_DEV && !enProduction,
     cookieSecure: enProduction,
   },
+  securite: { origine: config.APP_ORIGIN },
 });
 if (config.AUTH_DEV && !enProduction) {
   app.log.warn('connexion de développement active (AUTH_DEV=true) : pour tester en local, jamais en production');

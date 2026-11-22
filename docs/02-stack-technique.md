@@ -125,8 +125,8 @@ Chaque règle temporelle a **deux** garde-fous : une tâche planifiée (pour que
 ## 2.7 Sécurité
 
 - **Session** : jeton aléatoire de 32 octets dans un cookie `HttpOnly; Secure; SameSite=Lax` ; en base, seulement son **hachage SHA-256** (`sessions.id`). Durée 30 jours, prolongée à l'usage.
-- **CSRF** : toutes les requêtes qui modifient quelque chose doivent avoir un en-tête `Origin` égal à `APP_ORIGIN`.
-- **Limitation de débit** : `@fastify/rate-limit` (ex. 120 requêtes/min par joueur, 10/min sur `/auth`).
+- **CSRF** : toutes les requêtes qui modifient quelque chose doivent avoir un en-tête `Origin` égal à `APP_ORIGIN`, sinon 403 `FORBIDDEN` (`backend/src/securite.ts`). En local, ouvrir le jeu sur `http://localhost:5173` (pas `127.0.0.1`).
+- **Limitation de débit** : `@fastify/rate-limit`, 300 requêtes/min par joueur connecté (sinon par adresse IP ; large car la carte et la recherche en font beaucoup), 10/min par adresse IP pour les connexions et déconnexions (`POST /auth/…`), sinon 429 `RATE_LIMITED`. Compteurs en mémoire (un seul serveur). Les tests ne branchent ces deux contrôles que dans `securite.spec.ts`.
 - **Idempotence** : les actions qui coûtent de l'argent acceptent un en-tête `Idempotency-Key` ; il devient `wallet_transactions.idempotency_key` (unique) : un double-clic ne paie jamais deux fois.
 - **Multi-comptes** : un compte par compte Google ; il faut 7 jours d'ancienneté pour lancer une OPA ; alerte admin si deux comptes s'échangent souvent des territoires.
 - **RGPD** : on ne garde que l'identifiant Google, l'e-mail, le pseudo et l'avatar. Suppression de compte = **anonymisation** (le journal financier doit rester cohérent). Pages « Confidentialité » et « Mentions légales » à l'étape 6.
