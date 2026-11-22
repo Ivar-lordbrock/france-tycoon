@@ -45,3 +45,25 @@ jobs:
         run: npx vitest run
       - name: Build
         run: npm run build
+
+  e2e:
+    name: Essai navigateur (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - name: Dépendances
+        run: npm ci
+      # Le Chrome déjà présent sur la machine suffit (channel: 'chrome') : pas de navigateur à télécharger.
+      - name: Connexion, recherche et achat d'une commune
+        run: npm run test:e2e
+      - name: Trace de l'essai raté
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trace-playwright
+          path: test-results/
+          retention-days: 7

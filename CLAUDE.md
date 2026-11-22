@@ -35,6 +35,7 @@ Les deux développeurs ne connaissent pas forcément Git. Pour le flux quotidien
 
 - Tests du schéma : `node --test backend/`
 - Tests des outils du duo : `node --test outils/`
+- Essai dans le navigateur (Playwright, `e2e/`) : `npm run test:e2e` (Chrome installé, base neuve, ports 3100/5199)
 - (Étape 1) `npm install`, `npm run dev`, `npm test`, `npm run lint`
 
 ## Skills du projet (`.claude/skills/`)
