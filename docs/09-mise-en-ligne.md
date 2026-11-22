@@ -4,12 +4,12 @@ Ce guide installe la bêta fermée sur un vrai serveur. Compte environ 2 heures,
 
 **Ce qu'on met en place :**
 
-- un **serveur** loué chez OVHcloud (offre **VPS-1** : 2 cœurs, 4 Go de mémoire, en France) ;
+- un **serveur** loué chez OVHcloud, en France (offre **VPS-1** : 2 cœurs, 4 Go de mémoire ; ou **VPS-2** : 4 cœurs, 8 Go, si le VPS-1 est épuisé) ;
 - un **nom de domaine** en `.fr` (l'adresse du jeu, par exemple `france-tycoon.fr`) ;
 - une **sauvegarde continue** de la base chez Backblaze B2 (dans l'Union européenne, gratuite jusqu'à 10 Go) ;
 - la **mise à jour automatique** : chaque fusion dans `main` arrive sur le serveur en quelques minutes.
 
-**Prix relevés le 22/11/2026 :** serveur 3,81 € HT par mois (4,57 € TTC) ; domaine 4,99 € HT la première année, puis 7,79 € HT par an ; sauvegarde 0 €.
+**Prix relevés le 22/11/2026 :** serveur VPS-1 3,81 € HT par mois (4,57 € TTC), VPS-2 7,21 € HT (8,65 € TTC) ; domaine 4,99 € HT la première année, puis 7,79 € HT par an ; sauvegarde 0 €.
 
 **Avant de commencer :** le dossier `deploiement/` doit être dans la branche `main` (il y arrive à la prochaine fin d'étape, `/fin-d-etape`).
 
@@ -19,7 +19,7 @@ Les mots techniques sont expliqués dans le [lexique](#lexique) en bas de page.
 
 ## 1. Louer le serveur (OVHcloud)
 
-1. Sur [ovhcloud.com](https://www.ovhcloud.com/fr/vps/), choisis l'offre **VPS-1**.
+1. Sur [ovhcloud.com](https://www.ovhcloud.com/fr/vps/), choisis l'offre **VPS-1**. S'il est épuisé, regarde les autres villes de France (le stock change selon le centre de données), sinon prends le **VPS-2** : deux fois plus puissant (de la marge pour la bêta), et les scripts marchent pareil.
 2. **Localisation** : une ville en **France** (Gravelines, Roubaix ou Strasbourg).
 3. **Système** : **Ubuntu 24.04**. Pas besoin d'option payante : une copie de tout le serveur chaque jour est déjà comprise.
 4. Paie, puis attends l'e-mail d'OVH. Il donne l'**adresse IP** du serveur (4 nombres, comme `51.83.12.34`) et l'accès au compte `ubuntu`.
