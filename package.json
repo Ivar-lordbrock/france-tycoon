@@ -18,6 +18,7 @@
     "typecheck": "npm run typecheck --workspaces --if-present && tsc -p tsconfig.json",
     "test": "vitest run && node --test backend/",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "import:communes": "node scripts/import/communes.ts",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.8",
+    "@playwright/test": "^1.65.1",
     "@turf/simplify": "^7.4.0",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^26.6.6",
