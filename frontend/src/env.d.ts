@@ -5,6 +5,8 @@ interface ImportMetaEnv {
   readonly VITE_TILE_URL?: string;
   /** Mention obligatoire du fournisseur de tuiles (HTML autorisé). */
   readonly VITE_TILE_ATTRIBUTION?: string;
+  /** « Donner mon avis » : lien d'un formulaire (https://…) ou adresse e-mail. Vide = lien caché. */
+  readonly VITE_AVIS_URL?: string;
 }
 
 interface ImportMeta {
