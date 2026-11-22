@@ -1,0 +1,34 @@
+# Serveur du jeu (API, tâches planifiées, flux en direct). Installé par installer-serveur.sh.
+# État : systemctl status france-tycoon   Journaux : journalctl -u france-tycoon -f
+[Unit]
+Description=France Tycoon : serveur du jeu
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=france-tycoon
+Group=france-tycoon
+WorkingDirectory=/srv/france-tycoon/app
+Environment=NODE_ENV=production
+Environment=TZ=Europe/Paris
+ExecStart=/usr/bin/node backend/src/server.ts
+Restart=always
+RestartSec=3
+# Arrêt propre (SIGTERM) : server.ts ferme la base avant de quitter.
+TimeoutStopSec=20
+
+# Le service ne peut écrire que dans le dossier de la base.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/france-tycoon
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target
