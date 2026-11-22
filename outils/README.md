@@ -1,6 +1,6 @@
 # Outils du duo
 
-Le plus simple : double-clique sur **`0-ouvrir-les-outils`** (ou sur le raccourci « France Tycoon » du Bureau). Une fenêtre avec de gros boutons s'ouvre et pose les questions une par une. Vidéo de 3 minutes : [docs/medias/fenetre-des-outils.mp4](../docs/medias/fenetre-des-outils.mp4).
+Le plus simple : double-clique sur **`0-ouvrir-les-outils`** (ou sur le raccourci « Kadastr » du Bureau). Une fenêtre avec de gros boutons s'ouvre et pose les questions une par une. Vidéo de 3 minutes : [docs/medias/fenetre-des-outils.mp4](../docs/medias/fenetre-des-outils.mp4).
 
 Sinon, double-clique sur les fichiers numérotés, dans l'ordre de ta journée :
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Moteur des outils du duo France Tycoon.
+// Moteur des outils du duo Kadastr.
 // Les fichiers à double-cliquer (outils/*.bat) et les commandes Claude Code (.claude/commands/) l'appellent.
 //
 // Usage : node outils/moteur/duo.mjs <action> [options]
@@ -96,7 +96,7 @@ const OPTIONS = {
 };
 
 function afficherAide() {
-  console.log(`\n${gras('Outils du duo France Tycoon')}\n`);
+  console.log(`\n${gras('Outils du duo Kadastr')}\n`);
   console.log('Usage : node outils/moteur/duo.mjs <action> [options]\n');
   for (const [nom, action] of Object.entries(ACTIONS)) {
     console.log(`  ${gras(nom.padEnd(14))} ${action.aide}`);
@@ -119,7 +119,7 @@ async function principal() {
     if (nom !== 'aide' && !action) throw new Stop(`Action inconnue : « ${nom} ».`, 2);
     return;
   }
-  process.title = `France Tycoon - ${action.titre}`;
+  process.title = `Kadastr - ${action.titre}`;
   await action.fn(analyse.values);
 }
 

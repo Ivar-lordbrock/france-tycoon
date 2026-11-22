@@ -1,7 +1,7 @@
 # Sauvegarde continue de la base avec Litestream (réglages : /etc/litestream.yml).
 # Installé par installer-serveur.sh. État : systemctl status france-tycoon-sauvegarde
 [Unit]
-Description=France Tycoon : sauvegarde continue de la base (Litestream)
+Description=Kadastr : sauvegarde continue de la base (Litestream)
 After=network-online.target france-tycoon.service
 Wants=network-online.target
 

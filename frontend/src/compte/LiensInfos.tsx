@@ -7,7 +7,7 @@ export function lienAvis(valeur: string | undefined): string | null {
   if (!v) return null;
   if (/^(https?:\/\/|mailto:)\S+$/i.test(v)) return v;
   if (/^[^\s@:/]+@[^\s@:/]+\.[^\s@:/]+$/.test(v)) {
-    return `mailto:${v}?subject=${encodeURIComponent('Mon avis sur France Tycoon')}`;
+    return `mailto:${v}?subject=${encodeURIComponent('Mon avis sur Kadastr')}`;
   }
   return null;
 }

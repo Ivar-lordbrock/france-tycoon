@@ -3,7 +3,7 @@
 Ce guide est pour toi et ton binôme, **même sans rien connaître à Git**.
 Tout se fait de trois façons, au choix :
 
-- **la fenêtre des outils** (le plus simple) : double-clic sur **« France Tycoon »** sur le Bureau, ou sur `0-ouvrir-les-outils` dans le dossier `outils/` du projet. De gros boutons, les questions une par une ;
+- **la fenêtre des outils** (le plus simple) : double-clic sur **« Kadastr »** sur le Bureau, ou sur `0-ouvrir-les-outils` dans le dossier `outils/` du projet. De gros boutons, les questions une par une ;
 - **double-clic** sur les fichiers numérotés du dossier `outils/` (une fenêtre noire pose les questions) ;
 - **dans Claude Code** : tape une commande comme `/commencer` ou `/envoyer`.
 
@@ -42,7 +42,7 @@ flowchart LR
 
 ## La fenêtre des outils
 
-Double-clic sur **« France Tycoon »** (Bureau) : une fenêtre s'ouvre.
+Double-clic sur **« Kadastr »** (Bureau) : une fenêtre s'ouvre.
 
 - **En haut à gauche, « Où j'en suis »** : sur quelle tâche tu es, ce qui n'est pas encore enregistré ou envoyé, ta proposition et ses vérifications.
 - **« Et maintenant ? »** : la prochaine étape conseillée, avec son bouton. Le bouton de l'étape conseillée est aussi entouré en bleu.
@@ -83,14 +83,14 @@ La fenêtre ne marche que sur ton PC (personne d'autre ne peut l'ouvrir). Une pe
 5. Réponds aux questions :
    - Windows peut demander l'autorisation d'installer : clique sur **Oui** ;
    - pour GitHub : un code à 8 caractères s'affiche, une page s'ouvre, colle le code et clique sur « Authorize ».
-6. À la fin, le projet est dans `C:\Users\<toi>\france-tycoon`, un raccourci **« France Tycoon »** est sur le Bureau (si tu as dit oui) et la fenêtre des outils s'ouvre.
+6. À la fin, le projet est dans `C:\Users\<toi>\france-tycoon`, un raccourci **« Kadastr »** est sur le Bureau (si tu as dit oui) et la fenêtre des outils s'ouvre.
 7. Pour les commandes Claude : installe [Claude](https://claude.ai/download), va dans l'onglet **Code** et ouvre le dossier du projet.
 
 Plus tard, `1-installer-mon-poste` sert à vérifier que tout va bien : ce qui est déjà en place est seulement vérifié.
 
 ## 2. La journée type
 
-Ouvre la fenêtre des outils (« France Tycoon » sur le Bureau) et suis « Et maintenant ? ». Dans l'ordre :
+Ouvre la fenêtre des outils (« Kadastr » sur le Bureau) et suis « Et maintenant ? ». Dans l'ordre :
 
 1. **Mettre à jour** : tu récupères le travail de ton binôme.
 2. **Commencer une tâche** : par exemple « achat de territoire », zone `api`. L'outil crée `feat/api-achat-territoire`.
@@ -138,7 +138,7 @@ Lance `8-fin-d-etape` **deux fois** :
 | « GitHub refuse l'envoi » | Tu n'as pas encore accepté l'invitation : relance `1-installer-mon-poste`. |
 | « vérifications ROUGES » | Un test échoue. Dans Claude : « pourquoi les vérifications de ma proposition sont rouges ? ». |
 | « Node.js est introuvable » | Lance `1-installer-mon-poste`. |
-| « Les outils sont fermés » (fenêtre des outils) | La petite fenêtre noire a été fermée : ferme la fenêtre et rouvre « France Tycoon ». |
+| « Les outils sont fermés » (fenêtre des outils) | La petite fenêtre noire a été fermée : ferme la fenêtre et rouvre « Kadastr ». |
 
 **Règles d'or** : ne jamais travailler directement sur `dev` ou `main` (les outils refusent), envoyer souvent, une tâche = une chose. Si tu ne comprends pas un message, copie-le à Claude.
 

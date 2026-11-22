@@ -18,7 +18,7 @@ main() {
   fi
   systemctl reset-failed france-tycoon-import.service 2>/dev/null || true
 
-  systemd-run --unit france-tycoon-import --description "France Tycoon : import des données" \
+  systemd-run --unit france-tycoon-import --description "Kadastr : import des données" \
     --uid france-tycoon --gid france-tycoon \
     --working-directory /srv/france-tycoon/app \
     --setenv=HOME=/srv/france-tycoon --setenv=PATH=/usr/bin:/bin --setenv=TZ=Europe/Paris \

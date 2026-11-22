@@ -1,4 +1,4 @@
-# Dossier d'architecture — France Tycoon
+# Dossier d'architecture — Kadastr
 
 1. [Skills et dépôt GitHub](01-skills-et-depot.md)
 2. [Besoins et stack technique](02-stack-technique.md)

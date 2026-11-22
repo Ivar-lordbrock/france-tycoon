@@ -70,7 +70,7 @@ export async function ouvrirInterface(options) {
     process.on(signal, () => process.exit(0));
   }
 
-  console.log('\nFrance Tycoon - outils');
+  console.log('\nKadastr - outils');
   console.log(`Adresse : ${url}`);
   console.log('Cette fenêtre-ci fait tourner les outils : elle se fermera toute seule avec la page.\n');
   if (!options['sans-navigateur']) ouvrirFenetre(url);
@@ -126,7 +126,7 @@ export function montrerErreur(message) {
     [
       '-NoProfile',
       '-Command',
-      "Add-Type -AssemblyName PresentationFramework; [void][System.Windows.MessageBox]::Show($env:DUO_MESSAGE, 'France Tycoon - outils')",
+      "Add-Type -AssemblyName PresentationFramework; [void][System.Windows.MessageBox]::Show($env:DUO_MESSAGE, 'Kadastr - outils')",
     ],
     { env: { ...process.env, DUO_MESSAGE: message }, stdio: 'ignore', windowsHide: true },
   ).on('error', () => {});
@@ -204,7 +204,7 @@ class Serveur {
       return envoyerTexte(
         res,
         403,
-        'Cette page a expiré. Rouvre les outils : double-clic sur « France Tycoon » sur le Bureau (ou sur 0-ouvrir-les-outils, dans le dossier outils du projet).',
+        'Cette page a expiré. Rouvre les outils : double-clic sur « Kadastr » sur le Bureau (ou sur 0-ouvrir-les-outils, dans le dossier outils du projet).',
       );
     }
     this.pageVue = true;
@@ -417,7 +417,7 @@ class Serveur {
         if (process.platform !== 'win32' || !existsSync(bat)) {
           return envoyerJson(res, 400, { erreur: 'Installateur introuvable.' });
         }
-        spawn('cmd.exe', ['/c', 'start', '"France Tycoon - installation"', `"${bat}"`], {
+        spawn('cmd.exe', ['/c', 'start', '"Kadastr - installation"', `"${bat}"`], {
           ...detache,
           windowsHide: false,
           windowsVerbatimArguments: true,

@@ -1,7 +1,7 @@
 # Serveur du jeu (API, tâches planifiées, flux en direct). Installé par installer-serveur.sh.
 # État : systemctl status france-tycoon   Journaux : journalctl -u france-tycoon -f
 [Unit]
-Description=France Tycoon : serveur du jeu
+Description=Kadastr : serveur du jeu
 After=network-online.target
 Wants=network-online.target
 
