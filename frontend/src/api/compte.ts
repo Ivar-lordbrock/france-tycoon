@@ -80,6 +80,15 @@ export function useDeconnexion() {
   });
 }
 
+/** Supprimer son compte (définitif) : le serveur l'anonymise et déconnecte partout. */
+export function useSupprimerCompte() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => envoyerJson<void>('/api/v1/me', 'DELETE'),
+    onSuccess: () => toutRelire(client),
+  });
+}
+
 export function useModifierProfil() {
   const client = useQueryClient();
   return useMutation({

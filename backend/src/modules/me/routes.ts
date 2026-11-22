@@ -15,7 +15,7 @@ import {
 } from '@france-tycoon/shared';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ErreurMetier } from '../../erreurs.ts';
-import { exigerJoueur } from '../auth/requete.ts';
+import { effacerCookie, exigerJoueur } from '../auth/requete.ts';
 import { creerLecteurChantiers } from '../buildings/file.ts';
 import { emettre } from '../evenements/bus.ts';
 import { creerEncaisseur } from '../income/revenus.ts';
@@ -23,6 +23,7 @@ import { creerListeNotifications } from '../notifications/liste.ts';
 import { creerReponsesOpa } from '../takeovers/reponses.ts';
 import { creerDeplacementCapitale } from './capitale.ts';
 import { creerLecteurMoi } from './requetes.ts';
+import { creerSuppressionCompte } from './suppression.ts';
 import { creerLecteurMesTerritoires } from './territoires.ts';
 
 const maintenant = () => Math.floor(Date.now() / 1000);
@@ -36,6 +37,7 @@ export const routesMoi: FastifyPluginAsyncZod = async (app) => {
   const deplacerCapitale = creerDeplacementCapitale(app.db);
   const { mesOpa } = creerReponsesOpa(app.db);
   const listerNotifications = creerListeNotifications(app.db);
+  const supprimerCompte = creerSuppressionCompte(app.db);
   const files = app.db.prepare<[number], number>('SELECT build_queue_slots FROM users WHERE id = ?').pluck();
   const cashDe = app.db.prepare<[number], number>('SELECT cash FROM users WHERE id = ?').pluck();
   const pseudoPris = app.db
@@ -169,5 +171,12 @@ export const routesMoi: FastifyPluginAsyncZod = async (app) => {
         return lireMoi(id, t);
       })
       .immediate();
+  });
+
+  // Supprimer son compte (RGPD) : anonymisé, communes libérées, OPA annulées, déconnecté partout.
+  app.delete('/', async (req, reply) => {
+    supprimerCompte(exigerJoueur(req), maintenant());
+    effacerCookie(reply);
+    await reply.code(204).send();
   });
 };

@@ -57,7 +57,7 @@
 | GET | `/me` | 🔒 | → profil, portefeuille, revenu/h (sol + bâtiments), `maxTerritories`, territoires possédés/max, `rankLevel` (rang, 0 Entrepreneur … 4 Tycoon), file de construction, notifications non lues, `finishedWorks` : chantiers finis pas encore vus (résumé au retour, 50 au plus, avec `notificationId` pour les marquer lus) ; état du tutoriel plus tard |
 | PATCH | `/me` | 🔒 | `{ pseudo?, markerColor? }` (pseudo 3 à 24 caractères, couleur `#rrggbb`) → même réponse que `GET /me` ; `PSEUDO_TAKEN` si le pseudo est pris |
 | POST | `/me/collect` | 🔒 | → `{ collected, cash, incomePerHour }` (encaissement explicite, utile pour le tutoriel et les quêtes) ; `collected` vaut 0 si moins d'un ₮ s'est accumulé (la fraction est gardée). Fait avancer « Trésorier » si `collected > 0`, une fois par heure au plus |
-| DELETE | `/me` | 🔒 | → 204, anonymisation RGPD |
+| DELETE | `/me` | 🔒 | → 204 + cookie effacé : supprime le compte (anonymisation RGPD, voir [03](03-base-de-donnees.md#35-exploitation)). Définitif ; l'écran demande de retaper son pseudo |
 
 ### Carte
 
