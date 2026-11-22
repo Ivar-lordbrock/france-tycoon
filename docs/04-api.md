@@ -19,7 +19,7 @@
 | Code | HTTP | Quand |
 |---|---|---|
 | `UNAUTHENTICATED` | 401 | Pas de session valide |
-| `FORBIDDEN` | 403 | Pas le propriétaire, pas admin ; OPA sur une commune libre ou à soi |
+| `FORBIDDEN` | 403 | Pas le propriétaire, pas admin ; OPA sur une commune libre ou à soi ; requête qui modifie sans en-tête `Origin` du jeu |
 | `TERRITORY_NOT_FOUND` | 404 | Code INSEE inconnu (= hors France ou TAAF) |
 | `TERRITORY_NOT_FREE` | 409 | Achat d'une commune déjà possédée |
 | `TERRITORY_LIMIT_REACHED` | 409 | `max_territories` atteint (OPA en cours comprises) |
@@ -41,7 +41,7 @@
 | `PSEUDO_TAKEN` | 409 | Pseudo déjà pris par un autre joueur (majuscules ignorées) |
 | `QUEST_NOT_CLAIMABLE` | 409 | Réclamer une quête pas encore finie ou déjà réclamée ; `details.reason` (`not_completed`, `already_claimed`) |
 | `VALIDATION_ERROR` | 400 | Corps de requête invalide |
-| `RATE_LIMITED` | 429 | Trop de requêtes |
+| `RATE_LIMITED` | 429 | Trop de requêtes (300/min par joueur, 10/min sur `POST /auth/…`, 60/min sur `/events/track`) |
 | `FEATURE_DISABLED` | 404 | Boutique en V1, connexion Google pas configurée |
 
 ## 4.2 Points d'entrée
