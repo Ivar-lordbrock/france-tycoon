@@ -12,16 +12,16 @@ En attendant, le jeu marche déjà en local sans Google : avec `AUTH_DEV=true` d
 
 1. Va sur <https://console.cloud.google.com> et connecte-toi avec ton compte Google.
 2. En haut à gauche, clique sur la liste des projets (à côté du logo Google Cloud), puis **Nouveau projet**.
-3. Nom du projet : `France Tycoon`. Clique **Créer**.
+3. Nom du projet : `Kadastr`. Clique **Créer**.
 4. Attends quelques secondes, puis choisis ce projet dans la liste en haut (son nom doit s'afficher).
 
 ## 2. Décrire le jeu (écran de consentement)
 
-C'est ce que les joueurs verront quand Google leur demande « Autoriser France Tycoon ? ».
+C'est ce que les joueurs verront quand Google leur demande « Autoriser Kadastr ? ».
 
 1. Menu ☰ en haut à gauche → **API et services** → **Écran de consentement OAuth**. (La page peut s'appeler **Google Auth Platform** : c'est la même chose.)
 2. Clique **Commencer**.
-3. **Informations sur l'application** : nom `France Tycoon`, adresse e-mail d'assistance = la tienne. **Suivant**.
+3. **Informations sur l'application** : nom `Kadastr`, adresse e-mail d'assistance = la tienne. **Suivant**.
 4. **Audience** : choisis **Externe** (tous les comptes Google). **Suivant**.
 5. **Coordonnées** : ton adresse e-mail. **Suivant**.
 6. Coche l'accord avec le règlement de Google, puis **Créer**.
@@ -39,7 +39,7 @@ Plus tard, à la mise en ligne (étape 6), on cliquera **Publier l'application**
 
 1. Dans le menu de gauche, clique **Clients**, puis **Créer un client**.
 2. **Type d'application** : **Application Web**.
-3. **Nom** : `France Tycoon local`.
+3. **Nom** : `Kadastr local`.
 4. **Origines JavaScript autorisées** : clique **Ajouter un URI** deux fois et tape exactement :
    - `http://localhost:5173`
    - `http://localhost`

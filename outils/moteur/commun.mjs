@@ -380,7 +380,7 @@ export function allerALaRacine() {
   const r = git(['rev-parse', '--show-toplevel'], { autoriserEchec: true });
   if (r.code !== 0) {
     throw new Stop(
-      "Ce dossier n'est pas une copie du projet. Lance l'outil depuis le dossier outils du projet France Tycoon.",
+      "Ce dossier n'est pas une copie du projet. Lance l'outil depuis le dossier outils du projet Kadastr.",
     );
   }
   process.chdir(r.sortie.trim());

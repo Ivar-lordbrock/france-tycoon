@@ -13,13 +13,13 @@ export function App() {
   return (
     <div className="relative h-dvh w-full overflow-hidden">
       <main className="absolute inset-0" data-tuto="map">
-        <h1 className="sr-only">France Tycoon : carte des communes</h1>
+        <h1 className="sr-only">Kadastr : carte des communes</h1>
         <CarteFrance />
       </main>
 
       <div className="pointer-events-none absolute inset-x-4 top-4 z-[1000] flex flex-col gap-3 md:right-auto md:w-80">
         <header className="panneau pointer-events-auto p-2.5">
-          <p className="marque px-0.5 pb-2">France Tycoon</p>
+          <p className="marque px-0.5 pb-2">Kadastr</p>
           <Recherche />
         </header>
         <div className="max-md:hidden">

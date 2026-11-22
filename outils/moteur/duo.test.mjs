@@ -66,7 +66,7 @@ function preparer(t) {
   g(dossier, 'init', '--quiet', '--bare', '--initial-branch=dev', origine);
   g(dossier, 'init', '--quiet', '--initial-branch=dev', moi);
   identite(moi, 'moi');
-  ecrire(moi, 'README.md', 'France Tycoon\nligne 2\n');
+  ecrire(moi, 'README.md', 'Kadastr\nligne 2\n');
   g(moi, 'add', '.');
   g(moi, 'commit', '--quiet', '-m', 'chore: départ');
   g(moi, 'remote', 'add', 'origin', origine);
@@ -187,7 +187,7 @@ describe('commencer une tâche', { concurrency: 4 }, () => {
 
   test('des modifications faites sur dev par erreur suivent la nouvelle tâche', (t) => {
     const { moi } = preparer(t);
-    ecrire(moi, 'README.md', 'France Tycoon\nmodifié sur dev\n');
+    ecrire(moi, 'README.md', 'Kadastr\nmodifié sur dev\n');
     const r = duo(moi, ['commencer', '--type', 'fix', '--zone', 'docs', '--sujet', 'readme']);
     assert.equal(r.code, 0, r.sortie);
     assert.equal(branche(moi), 'fix/docs-readme');
@@ -338,10 +338,10 @@ describe('mettre à jour', { concurrency: 4 }, () => {
   test('conflit avec dev : tout est remis comme avant', (t) => {
     const { moi, binome } = preparer(t);
     duo(moi, ['commencer', '--type', 'feat', '--zone', 'docs', '--sujet', 'readme']);
-    ecrire(moi, 'README.md', 'France Tycoon\nma ligne 2\n');
+    ecrire(moi, 'README.md', 'Kadastr\nma ligne 2\n');
     duo(moi, ['envoyer', '--message', 'readme']);
     const avant = tete(moi);
-    binomeFusionneSurDev(binome, 'README.md', 'France Tycoon\nligne 2 du binôme\n', 'docs: readme');
+    binomeFusionneSurDev(binome, 'README.md', 'Kadastr\nligne 2 du binôme\n', 'docs: readme');
     const r = duo(moi, ['mettre-a-jour', '--integrer']);
     assert.equal(r.code, 1, r.sortie);
     assert.match(r.sortie, /Conflit/);

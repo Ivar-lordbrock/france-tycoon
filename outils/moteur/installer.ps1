@@ -1,4 +1,4 @@
-# Installe (ou vérifie) le poste d'un développeur France Tycoon sous Windows :
+# Installe (ou vérifie) le poste d'un développeur Kadastr sous Windows :
 #   - Git, Node.js LTS et GitHub CLI (avec winget) ;
 #   - connexion à GitHub et signature Git ;
 #   - copie du projet, sur la branche dev.
@@ -193,23 +193,26 @@ function Creer-Raccourci($racine) {
   $outils = Join-Path $racine 'outils'
   $lanceur = Join-Path $outils '0-ouvrir-les-outils.bat'
   if (-not (Test-Path $lanceur)) { return }
-  $lien = Join-Path ([Environment]::GetFolderPath('Desktop')) 'France Tycoon.lnk'
-  if (Test-Path $lien) { Ok 'Raccourci « France Tycoon » déjà présent sur le Bureau.'; return }
-  if (Oui 'Créer un raccourci « France Tycoon » sur le Bureau (il ouvre la fenêtre des outils) ?') {
+  $lien = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Kadastr.lnk'
+  # Le jeu s'appelait France Tycoon : l'ancien raccourci prend le nouveau nom.
+  $ancien = Join-Path ([Environment]::GetFolderPath('Desktop')) 'France Tycoon.lnk'
+  if ((Test-Path $ancien) -and -not (Test-Path $lien)) { Rename-Item $ancien 'Kadastr.lnk'; Ok 'Raccourci du Bureau renommé « Kadastr ».'; return }
+  if (Test-Path $lien) { Ok 'Raccourci « Kadastr » déjà présent sur le Bureau.'; return }
+  if (Oui 'Créer un raccourci « Kadastr » sur le Bureau (il ouvre la fenêtre des outils) ?') {
     $raccourci = (New-Object -ComObject WScript.Shell).CreateShortcut($lien)
     $raccourci.TargetPath = $lanceur
     $raccourci.WorkingDirectory = $outils
     $raccourci.WindowStyle = 7
-    $raccourci.Description = 'France Tycoon : outils du duo'
+    $raccourci.Description = 'Kadastr : outils du duo'
     $icone = Join-Path $outils 'moteur\icone.ico'
     if (Test-Path $icone) { $raccourci.IconLocation = "$icone,0" }
     $raccourci.Save()
-    Ok 'Raccourci « France Tycoon » créé sur le Bureau.'
+    Ok 'Raccourci « Kadastr » créé sur le Bureau.'
   }
 }
 
 function Installer-Poste {
-  Titre "Installation du poste France Tycoon$(if ($Essai) { ' (essai : rien ne sera modifié)' })"
+  Titre "Installation du poste Kadastr$(if ($Essai) { ' (essai : rien ne sera modifié)' })"
   Actualiser-Chemins
 
   Titre '1. Les logiciels'
@@ -231,7 +234,7 @@ function Installer-Poste {
 
   Titre 'Tout est prêt.'
   if ($projet.Racine) { Info "Le projet est dans : $($projet.Racine)" }
-  Info 'Pour travailler : double-clique sur « France Tycoon » sur le Bureau'
+  Info 'Pour travailler : double-clique sur « Kadastr » sur le Bureau'
   Info '(ou sur 0-ouvrir-les-outils, dans le dossier outils du projet) : une fenêtre avec de gros boutons s''ouvre.'
   Info 'Avec Claude : ouvre le dossier du projet dans Claude (onglet Code) et tape /commencer, /envoyer...'
   Info 'Claude se télécharge sur https://claude.ai/download'

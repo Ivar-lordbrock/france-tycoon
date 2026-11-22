@@ -15,6 +15,6 @@ setlocal EnableDelayedExpansion
     if not defined DUO_SANS_PAUSE pause
     exit /b 1
   )
-  start "France Tycoon - outils (se ferme tout seul)" /min "!NODE_EXE!" "%~dp0moteur\duo.mjs" interface %*
+  start "Kadastr - outils (se ferme tout seul)" /min "!NODE_EXE!" "%~dp0moteur\duo.mjs" interface %*
   exit /b 0
 )

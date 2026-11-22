@@ -8,7 +8,7 @@ describe('lienAvis (réglage VITE_AVIS_URL)', () => {
   });
 
   it('transforme une adresse e-mail en mailto: avec un sujet', () => {
-    expect(lienAvis('avis@exemple.fr')).toBe('mailto:avis@exemple.fr?subject=Mon%20avis%20sur%20France%20Tycoon');
+    expect(lienAvis('avis@exemple.fr')).toBe('mailto:avis@exemple.fr?subject=Mon%20avis%20sur%20Kadastr');
   });
 
   it('rien, ou un réglage invalide : pas de lien', () => {

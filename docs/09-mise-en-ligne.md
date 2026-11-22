@@ -148,7 +148,14 @@ Si tout le serveur est perdu : dans le panneau de Contabo, remets le dernier **S
 
 ## 10. Finir les pages légales
 
-Dans `frontend/public/legal.html`, il reste des passages surlignés `<mark>` à remplir : l'éditeur (ton nom ou celui de l'association), l'adresse e-mail de contact, le directeur de la publication, le téléphone de l'hébergeur (Contabo n'en met pas dans ses mentions légales : prends celui de sa page de contact) et le fond de carte. Remplis-les dans le dépôt comme un changement normal : à la fusion dans `main`, ils arrivent tout seuls sur le serveur.
+Fait le 22/11/2026 dans `frontend/public/legal.html` :
+
+- éditeur : particulier **anonyme**. La loi (LCEN) le permet à qui publie sans but professionnel, si l'hébergeur connaît son identité. Le jour où le jeu vend quelque chose, il faut afficher le nom et l'adresse de l'éditeur (ou de la société) et le directeur de la publication ;
+- contact : `contact@kadastr.fr`, une redirection OVH vers la boîte de l'éditeur (gestionnaire OVH → **Web Cloud** → **E-mails**) ;
+- téléphone de Contabo : `+49 89 21268372`. Contabo n'en met pas dans ses mentions légales : ce numéro vient du registre RIPE, dont le fax est le même que celui de Contabo ;
+- fond de carte : tuiles d'OpenStreetMap (`VITE_TILE_URL` vide). Si tu en changes, mets à jour la section « Sources ».
+
+Pour changer un passage : modifie le fichier dans le dépôt comme un changement normal. À la fusion dans `main`, il arrive tout seul sur le serveur.
 
 ---
 
