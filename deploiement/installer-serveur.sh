@@ -252,7 +252,11 @@ ecrire_services() {
 
 ecrire_caddy() {
   etape "Caddy pour $DOMAINE"
-  sed "s/DOMAINE_DU_JEU/$DOMAINE/" "$APP/deploiement/Caddyfile" >/etc/caddy/Caddyfile
+  sed "s/DOMAINE_DU_JEU/$DOMAINE/g" "$APP/deploiement/Caddyfile" >/etc/caddy/Caddyfile
+  # Sans entrée DNS pour www, Caddy réclamerait en vain un cadenas : on retire le bloc www.
+  if ! getent ahostsv4 "www.$DOMAINE" >/dev/null; then
+    sed -i '/^# Adresse en « www. »/,/^}/d' /etc/caddy/Caddyfile
+  fi
   caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null
   # Caddy doit pouvoir lire les pages du jeu (frontend/dist), sans accès au reste.
   chmod 751 "$DOSSIER" "$APP"
