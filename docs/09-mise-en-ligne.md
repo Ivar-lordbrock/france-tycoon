@@ -4,12 +4,12 @@ Ce guide installe la bêta fermée sur un vrai serveur. Compte environ 2 heures,
 
 **Ce qu'on met en place :**
 
-- un **serveur** loué chez OVHcloud (offre **VPS-1** : 2 cœurs, 4 Go de mémoire, en France) ;
+- un **serveur** loué chez Contabo, dans l'Union européenne (Allemagne) : offre **Cloud VPS 4** (4 cœurs, 8 Go de mémoire), payée au mois, sans engagement. Les VPS d'OVH en France étaient épuisés le 22/11/2026 ; les scripts marchent chez tout hébergeur qui propose Ubuntu 24.04 ;
 - un **nom de domaine** en `.fr` (l'adresse du jeu, par exemple `france-tycoon.fr`) ;
 - une **sauvegarde continue** de la base chez Backblaze B2 (dans l'Union européenne, gratuite jusqu'à 10 Go) ;
 - la **mise à jour automatique** : chaque fusion dans `main` arrive sur le serveur en quelques minutes.
 
-**Prix relevés le 22/11/2026 :** serveur 3,81 € HT par mois (4,57 € TTC) ; domaine 4,99 € HT la première année, puis 7,79 € HT par an ; sauvegarde 0 €.
+**Prix relevés le 22/11/2026 :** serveur 5,50 € HT par mois (6,60 € TTC), plus 2,40 € TTC d'installation une seule fois ; domaine 4,99 € HT la première année, puis 7,79 € HT par an ; sauvegarde 0 €.
 
 **Avant de commencer :** le dossier `deploiement/` doit être dans la branche `main` (il y arrive à la prochaine fin d'étape, `/fin-d-etape`).
 
@@ -17,12 +17,17 @@ Les mots techniques sont expliqués dans le [lexique](#lexique) en bas de page.
 
 ---
 
-## 1. Louer le serveur (OVHcloud)
+## 1. Louer le serveur (Contabo)
 
-1. Sur [ovhcloud.com](https://www.ovhcloud.com/fr/vps/), choisis l'offre **VPS-1**.
-2. **Localisation** : une ville en **France** (Gravelines, Roubaix ou Strasbourg).
-3. **Système** : **Ubuntu 24.04**. Pas besoin d'option payante : une copie de tout le serveur chaque jour est déjà comprise.
-4. Paie, puis attends l'e-mail d'OVH. Il donne l'**adresse IP** du serveur (4 nombres, comme `51.83.12.34`) et l'accès au compte `ubuntu`.
+Le site de Contabo est en anglais : les mots à choisir sont écrits ci-dessous tels qu'ils apparaissent.
+
+1. Sur [contabo.com](https://contabo.com/en/vps/), choisis **Cloud VPS 4** (4 cœurs, 8 Go de mémoire, 100 Go de disque) et clique sur **Get Started**.
+2. **Term length** : **1 Month** (sans engagement : tu peux arrêter à la fin de n'importe quel mois).
+3. **Region** : **European Union**.
+4. **Storage** : laisse **100 GB SSD**. **Image** : **Ubuntu 24.04**.
+5. Pas besoin d'option payante (ni « Auto Backup », ni panneau) : la base est déjà sauvegardée chez Backblaze (étape 3).
+6. Quand on te le demande, choisis le **mot de passe du compte `root`** : long (au moins 16 caractères), gardé dans un gestionnaire de mots de passe.
+7. Paie, puis attends l'e-mail de Contabo (de quelques minutes à quelques heures). Il donne l'**adresse IP** du serveur (4 nombres, comme `51.83.12.34`).
 
 ## 2. Acheter le nom de domaine et le relier au serveur
 
@@ -63,14 +68,15 @@ Suis la partie « Pour la mise en ligne » de [08-connexion-google.md](08-connex
 1. Sur ton PC, ouvre PowerShell et connecte-toi au serveur (remplace par l'adresse IP) :
 
    ```powershell
-   ssh ubuntu@51.83.12.34
+   ssh root@51.83.12.34
    ```
 
-   À la première connexion, il demande si tu fais confiance au serveur : tape `yes`. Puis le mot de passe d'OVH (rien ne s'affiche quand tu tapes, c'est normal). Le serveur peut demander de choisir un nouveau mot de passe.
+   À la première connexion, il demande si tu fais confiance au serveur : tape `yes`. Puis le mot de passe `root` choisi à la commande (rien ne s'affiche quand tu tapes, c'est normal).
 
-2. Une fois connecté (la ligne commence par `ubuntu@`), tape :
+2. Une fois connecté (la ligne commence par `root@`), tape :
 
    ```bash
+   apt-get update && apt-get install -y git
    git clone --branch main https://github.com/Ivar-lordbrock/france-tycoon.git
    sudo bash france-tycoon/deploiement/installer-serveur.sh
    ```
@@ -122,7 +128,7 @@ sudo bash /srv/france-tycoon/app/deploiement/verifier-sauvegarde.sh
 
 Le script récupère la dernière copie depuis Backblaze, vérifie qu'elle n'est pas abîmée et la compare au jeu. Il doit finir par « La sauvegarde est bonne. ». Fais-le maintenant, puis une fois par mois.
 
-Comment marche la sauvegarde : chaque modification de la base part chez Backblaze en quelques secondes, et une copie complète est faite chaque jour ; les copies de plus de 7 jours sont effacées. En plus, OVH garde chaque jour une copie de tout le serveur.
+Comment marche la sauvegarde : chaque modification de la base part chez Backblaze en quelques secondes, et une copie complète est faite chaque jour ; les copies de plus de 7 jours sont effacées. En plus, le panneau de Contabo permet de garder une copie de tout le serveur (**Snapshot**, une seule comprise) : fais-en une quand le jeu marche, et refais-la après un gros changement.
 
 ## 9. En cas de gros problème : remettre la sauvegarde
 
@@ -138,11 +144,11 @@ Il demande de taper `OUI`, arrête le jeu, range l'ancienne base de côté (rien
 sudo bash /srv/france-tycoon/app/deploiement/restaurer-sauvegarde.sh -timestamp 2026-12-01T18:00:00Z
 ```
 
-Si tout le serveur est perdu : dans l'espace client OVH, **Sauvegarde automatisée** remet la copie de la veille.
+Si tout le serveur est perdu : dans le panneau de Contabo, remets le dernier **Snapshot** (tout le serveur revient comme au jour de la copie).
 
 ## 10. Finir les pages légales
 
-Dans `frontend/public/legal.html`, il reste des passages surlignés `<mark>` à remplir : l'éditeur (ton nom ou celui de l'association), l'adresse e-mail de contact, le directeur de la publication, le téléphone de l'hébergeur (celui des mentions légales d'OVHcloud) et le fond de carte. Remplis-les dans le dépôt comme un changement normal : à la fusion dans `main`, ils arrivent tout seuls sur le serveur.
+Dans `frontend/public/legal.html`, il reste des passages surlignés `<mark>` à remplir : l'éditeur (ton nom ou celui de l'association), l'adresse e-mail de contact, le directeur de la publication, le téléphone de l'hébergeur (Contabo n'en met pas dans ses mentions légales : prends celui de sa page de contact) et le fond de carte. Remplis-les dans le dépôt comme un changement normal : à la fusion dans `main`, ils arrivent tout seuls sur le serveur.
 
 ---
 

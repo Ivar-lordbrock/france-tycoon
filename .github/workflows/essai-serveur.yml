@@ -44,7 +44,7 @@ jobs:
           ouvrir() { curl -fsSk --retry 10 --retry-delay 2 --retry-all-errors "https://localhost$1"; }
           ouvrir / | grep -q 'id="racine"'
           ouvrir /une-page-du-jeu | grep -q 'id="racine"'
-          ouvrir /legal.html | grep -q 'OVH SAS'
+          ouvrir /legal.html | grep -q 'Contabo GmbH'
           ouvrir /api/v1/admin/health | tee /dev/stderr | grep -q '"status":"ok"'
           curl -fsSkI https://localhost/ | grep -qi '^strict-transport-security'
 
