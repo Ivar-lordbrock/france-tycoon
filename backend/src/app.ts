@@ -15,6 +15,7 @@ import { routesQuetes } from './modules/quests/routes.ts';
 import { routesOpa } from './modules/takeovers/routes.ts';
 import { routesTerritoires } from './modules/territories/routes.ts';
 import { routesTutoriel } from './modules/tutorial/routes.ts';
+import { brancherSecurite, type OptionsSecurite } from './securite.ts';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -29,10 +30,12 @@ export interface OptionsApp {
   auth?: Partial<OptionsAuth>;
   /** Flux en direct `/events` : passage toutes les secondes par défaut. */
   direct?: OptionsDirect;
+  /** Contrôle `Origin` + limite de débit : branchés par `server.ts`, absents des tests (sauf `securite.spec.ts`). */
+  securite?: OptionsSecurite;
 }
 
 /** Construit l'application sans l'écouter : utilisée par `server.ts` et par les tests (`app.inject`). */
-export function construireApp({ db, logger = false, auth = {}, direct = {} }: OptionsApp) {
+export function construireApp({ db, logger = false, auth = {}, direct = {}, securite }: OptionsApp) {
   const app = Fastify({ logger, trustProxy: true }).withTypeProvider<ZodTypeProvider>();
   const optionsAuth: OptionsAuth = { googleClientId: null, devLogin: false, cookieSecure: false, ...auth };
 
@@ -41,6 +44,7 @@ export function construireApp({ db, logger = false, auth = {}, direct = {} }: Op
   app.decorate('db', db);
   brancherGestionErreurs(app);
   brancherSessions(app, { cookieSecure: optionsAuth.cookieSecure });
+  if (securite) brancherSecurite(app, securite);
 
   app.register(routesAdmin, { prefix: '/api/v1/admin' });
   app.register(routesAuth, { prefix: '/api/v1/auth', ...optionsAuth });

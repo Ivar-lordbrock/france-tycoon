@@ -36,7 +36,7 @@ export function App() {
       <div className="pointer-events-none absolute inset-x-4 bottom-7 z-[1000] flex flex-col items-start gap-2">
         <Tutoriel />
         <BarreEtat />
-        <div className="max-md:hidden">
+        <div className="repli max-md:hidden">
           <Legende />
         </div>
         <div className="w-full md:hidden">
