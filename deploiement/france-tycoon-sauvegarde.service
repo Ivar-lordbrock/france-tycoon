@@ -1,0 +1,30 @@
+# Sauvegarde continue de la base avec Litestream (réglages : /etc/litestream.yml).
+# Installé par installer-serveur.sh. État : systemctl status france-tycoon-sauvegarde
+[Unit]
+Description=France Tycoon : sauvegarde continue de la base (Litestream)
+After=network-online.target france-tycoon.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=france-tycoon
+Group=france-tycoon
+ExecStart=/usr/bin/litestream replicate -config /etc/litestream.yml
+Restart=always
+RestartSec=10
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/france-tycoon
+# Seulement pour l'essai automatique (sauvegarde dans un dossier au lieu de Backblaze B2).
+ReadWritePaths=-/var/lib/france-tycoon-sauvegarde
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

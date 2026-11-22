@@ -1,0 +1,69 @@
+name: Essai du serveur
+
+# Installe vraiment le jeu sur une machine Ubuntu 24.04 neuve, comme le VPS, avec
+# deploiement/installer-serveur.sh, puis vérifie le site, l'API, la sauvegarde et la restauration.
+# Seule différence avec le vrai serveur : la sauvegarde va dans un dossier au lieu de Backblaze B2.
+on:
+  pull_request:
+    branches: [main, dev]
+    paths:
+      - "deploiement/**"
+      - ".github/workflows/essai-serveur.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: essai-serveur-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DEPOT_URL: ${{ github.event.pull_request.head.repo.clone_url || format('https://github.com/{0}.git', github.repository) }}
+  BRANCHE: ${{ github.head_ref || github.ref_name }}
+
+jobs:
+  essai:
+    name: Installation sur Ubuntu 24.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vérification des scripts (ShellCheck)
+        run: shellcheck deploiement/*.sh
+
+      - name: Installation complète
+        run: |
+          sudo ESSAI=1 DOMAINE=localhost DEPOT_URL="$DEPOT_URL" BRANCHE="$BRANCHE" \
+            SAUVEGARDE_DOSSIER=/var/lib/france-tycoon-sauvegarde \
+            bash deploiement/installer-serveur.sh </dev/null
+
+      - name: Le site, l'API et les pages légales répondent (HTTPS par Caddy)
+        run: |
+          ouvrir() { curl -fsSk --retry 10 --retry-delay 2 --retry-all-errors "https://localhost$1"; }
+          ouvrir / | grep -q 'id="racine"'
+          ouvrir /une-page-du-jeu | grep -q 'id="racine"'
+          ouvrir /legal.html | grep -q 'OVH SAS'
+          ouvrir /api/v1/admin/health | tee /dev/stderr | grep -q '"status":"ok"'
+          curl -fsSkI https://localhost/ | grep -qi '^strict-transport-security'
+
+      - name: La sauvegarde marche
+        run: sudo bash deploiement/verifier-sauvegarde.sh
+
+      - name: La restauration marche
+        run: |
+          sudo CONFIRMER=OUI bash deploiement/restaurer-sauvegarde.sh
+          sudo bash deploiement/verifier-sauvegarde.sh
+
+      - name: Une deuxième installation ne casse rien, puis une mise à jour
+        run: |
+          sudo ESSAI=1 DOMAINE=localhost DEPOT_URL="$DEPOT_URL" BRANCHE="$BRANCHE" \
+            SAUVEGARDE_DOSSIER=/var/lib/france-tycoon-sauvegarde \
+            bash deploiement/installer-serveur.sh </dev/null
+          cd / && sudo -u france-tycoon -H bash /srv/france-tycoon/app/deploiement/deployer.sh
+          curl -fsSk https://localhost/api/v1/admin/health
+
+      - name: Journaux du serveur (en cas d'échec)
+        if: failure()
+        run: sudo journalctl -u france-tycoon -u france-tycoon-sauvegarde -u caddy --no-pager -n 200

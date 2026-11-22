@@ -8,3 +8,4 @@
 6. [Feuille de route en 6 étapes](06-feuille-de-route.md)
 7. [Travailler à deux (outils du duo)](07-travailler-a-deux.md)
 8. [Brancher la connexion Google (pas à pas)](08-connexion-google.md)
+9. [Mettre le jeu en ligne (pas à pas)](09-mise-en-ligne.md)

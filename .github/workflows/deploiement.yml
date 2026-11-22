@@ -1,0 +1,46 @@
+name: Déploiement
+
+# Après chaque CI réussie sur main, GitHub demande au serveur de se mettre à jour
+# (deploiement/deployer.sh : nouvelle version, construction du site, redémarrage du jeu).
+# Ne fait rien tant que la variable SERVEUR_HOTE n'est pas remplie : docs/09-mise-en-ligne.md, étape 7.
+# Relancer à la main : onglet Actions > Déploiement > Run workflow.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploiement
+  cancel-in-progress: false
+
+jobs:
+  deployer:
+    name: Mise à jour du serveur
+    if: >-
+      vars.SERVEUR_HOTE != '' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Mise à jour par SSH
+        env:
+          HOTE: ${{ vars.SERVEUR_HOTE }}
+          CLE: ${{ secrets.SERVEUR_CLE_SSH }}
+          EMPREINTE: ${{ secrets.SERVEUR_EMPREINTE }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$CLE" >~/.ssh/cle
+          chmod 600 ~/.ssh/cle
+          # L'empreinte du serveur évite d'envoyer la mise à jour à une machine qui se ferait passer pour lui.
+          printf '%s %s\n' "$HOTE" "$EMPREINTE" >~/.ssh/known_hosts
+          # La clé ne peut lancer que deployer.sh (commande imposée côté serveur).
+          ssh -i ~/.ssh/cle -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
+            "france-tycoon@$HOTE" deployer
