@@ -156,6 +156,7 @@ describe('aperçus des chantiers (mêmes formules que le serveur)', () => {
       raison: null,
     });
     expect(net(apercuConstruction(residence, contexte({ cash: 1_000 })).raison)).toBe('Il te manque 3 430 ₮.');
+    expect(apercuConstruction(residence, contexte({ premierChantier: true })).duree).toBe(10);
   });
 
   it('le bonus d’un équipement public s’applique à toute la commune', () => {

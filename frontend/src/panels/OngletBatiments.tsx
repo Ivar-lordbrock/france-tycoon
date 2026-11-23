@@ -16,6 +16,7 @@ import {
 } from '../api/batiments.ts';
 import { messageErreur, nouvelleCle } from '../api/client.ts';
 import { useMesTerritoires } from '../api/territoires.ts';
+import { useTutoriel } from '../api/tutoriel.ts';
 import { useMaintenant } from '../etat/horloge.ts';
 import {
   apercuAmelioration,
@@ -50,6 +51,7 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
   const { data: catalogue, isPending, isError } = useCatalogue();
   const { data: file } = useFileChantiers(true);
   const { data: mesTerritoires } = useMesTerritoires(true);
+  const { data: tuto } = useTutoriel(true);
   const cash = useCashEnDirect() ?? moi.wallet.cash;
   const maintenant = useMaintenant(1_000);
   const action = useActionBatiment();
@@ -66,6 +68,12 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
     catalogue,
     cash,
     aUnSiege: fiche.isCapital || (mesTerritoires?.territories.some((t) => t.isCapital) ?? false),
+    // shortcut: un 2ᵉ chantier lancé pendant les 10 s du premier affiche aussi 10 s (le serveur, lui, compte juste).
+    premierChantier:
+      tuto != null &&
+      tuto.completedAt === null &&
+      !tuto.skipped &&
+      !tuto.steps.some((e) => e.key === 'premiere_construction' && e.completedAt !== null),
   };
   const fT = facteurTaille(fiche.baseValue);
   const typeDe = (code: string) => catalogue.find((t) => t.code === code);

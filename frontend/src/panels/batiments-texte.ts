@@ -3,6 +3,7 @@ import {
   bonusNiveau,
   type ChantierFini,
   coutNiveau,
+  DUREE_CHANTIER_TUTORIEL_S,
   dureeChantier,
   type FicheCommune,
   type FileConstruction,
@@ -68,6 +69,8 @@ export interface Contexte {
   cash: number;
   /** Le joueur a déjà un siège social (une seule capitale par joueur). */
   aUnSiege: boolean;
+  /** Tout premier chantier, pendant le tutoriel : il dure 10 s (le serveur décide, l'écran l'annonce). */
+  premierChantier?: boolean;
 }
 
 type Niveaux = { id: number | null; typeCode: string; niveau: number }[];
@@ -117,7 +120,7 @@ export function apercuConstruction(type: TypeBatiment, ctx: Contexte): ApercuCha
   return {
     cout,
     resteCash: ctx.cash - cout,
-    duree: dureeChantier(type, 1),
+    duree: ctx.premierChantier ? DUREE_CHANTIER_TUTORIEL_S : dureeChantier(type, 1),
     revenu: {
       avant: revenuAvec(ctx, actuels),
       apres: revenuAvec(ctx, [...actuels, { id: null, typeCode: type.code, niveau: 1 }]),
