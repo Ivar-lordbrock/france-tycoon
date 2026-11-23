@@ -1,4 +1,4 @@
-import { type LigneClassement, type PorteeClassement, REGIONS } from '@france-tycoon/shared';
+import { CLASSEMENT_TOUTES_LES_S, type LigneClassement, type PorteeClassement, REGIONS } from '@france-tycoon/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useState } from 'react';
 import { useClassement, useProfil } from '../api/classement.ts';
@@ -106,7 +106,10 @@ function ListeClassement({ portee, onJoueur }: { portee: PorteeClassement; onJou
       {/* Ma ligne, si elle n'est pas encore dans les pages chargées. */}
       {me && me.rank > lignes.length && <ul className="border-t border-dashed border-encre/15">{ligne(me)}</ul>}
       <p className="border-t border-encre/10 px-3 py-2 text-xs text-ardoise">
-        {updatedAt === null ? 'Classement pas encore calculé.' : `Mis à jour ${ilYa(updatedAt, maintenant)}.`}
+        Patrimoine : cash et valeur des communes.{' '}
+        {updatedAt === null
+          ? 'Classement pas encore calculé.'
+          : `Mis à jour ${ilYa(updatedAt, maintenant)} (toutes les ${CLASSEMENT_TOUTES_LES_S / 60} min).`}
       </p>
     </>
   );

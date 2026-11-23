@@ -7,7 +7,7 @@ import { requeteCase } from '../api/carte.ts';
 import { useCarte } from '../etat/carte.ts';
 import { type Affiche, type CaseChargee, communesVoulues, planifier } from './affichage.ts';
 import { casesPourVue } from './cases.ts';
-import { styleCommune } from './style.ts';
+import { bulleCommune, styleCommune } from './style.ts';
 
 interface Dessin extends Affiche {
   calque: L.Polygon;
@@ -71,7 +71,10 @@ export function Communes({ actif }: { actif: boolean }) {
       survol.current = commune.id;
       restyler(ancien);
       restyler(commune.id);
-      bulle.setContent(commune.properties.name).setLatLng(e.latlng);
+      // textContent, pas innerHTML : le pseudo vient d'un joueur.
+      const texte = document.createElement('span');
+      texte.textContent = bulleCommune(commune.properties);
+      bulle.setContent(texte).setLatLng(e.latlng);
       carte.openTooltip(bulle);
     });
     g.on('mousemove', (e: L.LeafletMouseEvent) => bulle.setLatLng(e.latlng));

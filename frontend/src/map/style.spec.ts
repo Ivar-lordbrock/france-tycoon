@@ -1,6 +1,6 @@
 import type { ProprietesCommuneCarte } from '@france-tycoon/shared';
 import { describe, expect, it } from 'vitest';
-import { COULEURS, styleCommune } from './style.ts';
+import { bulleCommune, COULEURS, styleCommune } from './style.ts';
 
 const proprietes = (p: Partial<ProprietesCommuneCarte> = {}): ProprietesCommuneCarte => ({
   insee: '42218',
@@ -43,5 +43,16 @@ describe('style des communes', () => {
       dashArray: undefined,
       fillColor: COULEURS.surligneur,
     });
+  });
+});
+
+describe('bulle des communes', () => {
+  it('dit à qui est la commune', () => {
+    expect(bulleCommune(proprietes())).toBe('Saint-Étienne · libre');
+    expect(bulleCommune(proprietes({ state: 'mine', ownerPseudo: 'Moi' }))).toBe('Saint-Étienne · à toi');
+    expect(bulleCommune(proprietes({ state: 'shield', ownerPseudo: 'Alice' }))).toBe(
+      'Saint-Étienne · à Alice, sous bouclier',
+    );
+    expect(bulleCommune(proprietes({ state: 'takeover', ownerPseudo: 'Alice' }))).toBe('Saint-Étienne · OPA en cours');
   });
 });

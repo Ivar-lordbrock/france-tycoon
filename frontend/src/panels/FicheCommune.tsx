@@ -125,7 +125,7 @@ export function FicheCommune() {
               <dd className="text-lg font-bold tabular-nums">{tycoons(fiche.incomePerHour)} /h</dd>
             </div>
             <div>
-              <dt className="text-xs text-ardoise">Emplacements</dt>
+              <dt className="text-xs text-ardoise">Places de bâtiments</dt>
               <dd className="tabular-nums">
                 {fiche.buildingSlots.used} / {fiche.buildingSlots.total}
               </dd>

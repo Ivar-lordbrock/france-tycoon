@@ -11,7 +11,7 @@ import {
   useSupprimerCompte,
 } from '../api/compte.ts';
 import { useFluxDirect } from '../api/direct.ts';
-import { useEncaisser } from '../api/quetes.ts';
+import { useEncaisser, useQuetes } from '../api/quetes.ts';
 import { useCarte } from '../etat/carte.ts';
 import { CentreMessages } from '../hud/CentreMessages.tsx';
 import { ChantierEnCours } from '../hud/ChantierEnCours.tsx';
@@ -165,6 +165,9 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
   // Entre deux lectures de /me, le cash monte de revenu/h ÷ 3 600 chaque seconde (docs/04 § 4.4).
   const cash = useCashEnDirect() ?? moi.wallet.cash;
   const encaisser = useEncaisser();
+  // Lues dès l'arrivée (et pas seulement volet ouvert) pour signaler une récompense à réclamer.
+  const { data: quetes } = useQuetes(true);
+  const aReclamer = quetes?.quests.filter((q) => q.completedAt !== null && q.claimedAt === null).length ?? 0;
 
   // min-h-14 : quand la fiche prend la place, la première ligne du compte reste visible.
   return (
@@ -222,7 +225,9 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
         </dl>
         {/* Le cash affiché compte déjà ce montant ; le clic l'enregistre (tutoriel, quête « Trésorier »). */}
         <div className="flex items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm">
-          <span className="text-ardoise tabular-nums">+{tycoons(cash - moi.wallet.cash)} en attente</span>
+          <span className="text-ardoise tabular-nums">
+            {cash > moi.wallet.cash ? `+${tycoons(cash - moi.wallet.cash)} en attente` : 'Rien à encaisser'}
+          </span>
           <button
             type="button"
             onClick={() => encaisser.mutate()}
@@ -267,7 +272,15 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
           className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
         >
           Quêtes du jour
-          <Chevron ouvert={ouvert === 'quetes'} />
+          <span className="flex items-center gap-1.5 font-normal">
+            {aReclamer > 0 && (
+              <span className="rounded-full bg-surligneur px-1.5 text-xs font-bold text-encre tabular-nums">
+                {aReclamer}
+                <span className="sr-only"> à réclamer</span>
+              </span>
+            )}
+            <Chevron ouvert={ouvert === 'quetes'} />
+          </span>
         </button>
         {ouvert === 'quetes' && <QuetesDuJour id={`${id}-quetes`} />}
         <button

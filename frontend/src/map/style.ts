@@ -71,3 +71,15 @@ export function styleCommune(
   }
   return style;
 }
+
+/** Bulle au survol : le nom et à qui est la commune (sur la carte, « bouclier » ne vise que les rivaux). */
+export function bulleCommune({ name, state, ownerPseudo }: ProprietesCommuneCarte): string {
+  const etat = {
+    free: 'libre',
+    mine: 'à toi',
+    rival: `à ${ownerPseudo}`,
+    shield: `à ${ownerPseudo}, sous bouclier`,
+    takeover: 'OPA en cours',
+  }[state];
+  return `${name} · ${etat}`;
+}
