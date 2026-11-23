@@ -1,0 +1,15 @@
+# Envoie une copie chiffrée de la base sur Google Drive (sauvegarde-drive.sh, installé dans /usr/local/sbin).
+# Lancé chaque heure par france-tycoon-sauvegarde-drive.timer. Dernier envoi : systemctl status france-tycoon-sauvegarde-drive
+# Tourne en root : le jeton Google et le mot de passe (/etc/france-tycoon/rclone.conf) restent hors de portée du jeu.
+[Unit]
+Description=Kadastr : copie de la base sur Google Drive
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/etc/france-tycoon/rclone.conf
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/kadastr-sauvegarde-drive envoyer
+PrivateTmp=true
+Nice=10
+IOSchedulingClass=idle

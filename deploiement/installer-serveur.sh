@@ -121,7 +121,7 @@ installer_paquets() {
   export DEBIAN_FRONTEND=noninteractive
   apt-get update -q
   apt-get install -y -q ca-certificates curl gnupg git sqlite3 ufw fail2ban unattended-upgrades \
-    debian-keyring debian-archive-keyring apt-transport-https
+    debian-keyring debian-archive-keyring apt-transport-https rclone
   timedatectl set-timezone Europe/Paris || true
 }
 
@@ -246,8 +246,16 @@ ecrire_services() {
   etape "Services (démarrage automatique)"
   install -m 644 "$APP/deploiement/france-tycoon.service" /etc/systemd/system/france-tycoon.service
   install -m 644 "$APP/deploiement/france-tycoon-sauvegarde.service" /etc/systemd/system/france-tycoon-sauvegarde.service
+  install -m 644 "$APP/deploiement/france-tycoon-sauvegarde-drive.service" /etc/systemd/system/france-tycoon-sauvegarde-drive.service
+  install -m 644 "$APP/deploiement/france-tycoon-sauvegarde-drive.timer" /etc/systemd/system/france-tycoon-sauvegarde-drive.timer
+  # Copié hors du dossier du jeu : root le lance, le jeu ne doit pas pouvoir le modifier.
+  install -m 755 "$APP/deploiement/sauvegarde-drive.sh" /usr/local/sbin/kadastr-sauvegarde-drive
   systemctl daemon-reload
   systemctl enable france-tycoon.service
+  # Google Drive se branche à la main, une fois (docs/09-mise-en-ligne.md) ; ensuite, une copie par heure.
+  if [[ -f /etc/france-tycoon/rclone.conf ]]; then
+    systemctl enable --now france-tycoon-sauvegarde-drive.timer
+  fi
 }
 
 ecrire_caddy() {
@@ -377,6 +385,9 @@ resume() {
     echo "Sauvegarde continue : active. Vérifier : sudo bash $APP/deploiement/verifier-sauvegarde.sh"
   else
     echo "Sauvegarde continue : PAS ENCORE ACTIVE (clés Backblaze B2 manquantes)."
+  fi
+  if [[ -f /etc/france-tycoon/rclone.conf ]]; then
+    echo "Copie chaque heure sur Google Drive : active. Vérifier : sudo kadastr-sauvegarde-drive verifier"
   fi
   [[ -n $GOOGLE_CLIENT_ID ]] || echo "Connexion Google : ID client manquant, relancer ce script pour l'ajouter."
   echo
