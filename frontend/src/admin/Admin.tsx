@@ -5,6 +5,7 @@ import { ErreurApi, messageErreur } from '../api/client.ts';
 import { Icone } from '../hud/Icone.tsx';
 import { ControleLive } from './ControleLive.tsx';
 import { Joueurs } from './Joueurs.tsx';
+import { Sauvegardes } from './Sauvegardes.tsx';
 import { Signalements } from './Signalements.tsx';
 import { Territoires } from './Territoires.tsx';
 import { VueEnsemble } from './VueEnsemble.tsx';
@@ -169,7 +170,12 @@ function Tableau({ pseudo, grade }: { pseudo: string; grade: Grade }) {
         ) : vue.id === 'config' ? (
           <ControleLive />
         ) : vue.id === 'sauvegardes' ? (
-          <Signalements />
+          <>
+            <div className="mt-4">
+              <Sauvegardes admin={grade === 'admin'} />
+            </div>
+            <Signalements />
+          </>
         ) : (
           <p className="mt-3 text-ardoise">Cette vue arrive à l’étape {vue.etape} du dashboard.</p>
         )}

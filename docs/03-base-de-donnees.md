@@ -226,6 +226,15 @@ LIMIT 3000;
 
 ## 3.5 Exploitation
 
-- **Sauvegarde** : Litestream réplique le fichier WAL en continu vers un stockage S3 ; restauration testée à l'étape 6.
+- **Sauvegarde** : Litestream réplique le fichier WAL en continu vers un stockage S3 ; restauration testée à l'étape 6. En ligne, c'est la copie chiffrée horaire sur Google Drive qui sert (`sauvegarde-drive.sh`).
+- **Copies du dashboard** (étape 5) : bouton « Sauvegarder maintenant » (admins) → copie à chaud par l'API de sauvegarde de SQLite dans `sauvegardes-admin/` à côté de la base (en ligne : `/var/lib/france-tycoon/sauvegardes-admin/`, droits 700). Nom `kadastr-AAAAMMJJ-HHMMSS-mmm.sqlite` (heure UTC), les 20 plus récentes gardées. Refusé si le disque n'a pas deux fois la taille de la base plus 200 Mo (`DISK_FULL`). **Restaurer une copie, par SSH seulement** :
+  ```
+  sudo systemctl stop france-tycoon
+  cd /var/lib/france-tycoon
+  d=avant-restauration-$(date +%F-%H%M); sudo -u france-tycoon mkdir "$d"
+  sudo -u france-tycoon mv france-tycoon.sqlite* "$d"/   # l'ancienne base (et son WAL) est gardée
+  sudo -u france-tycoon cp sauvegardes-admin/kadastr-….sqlite france-tycoon.sqlite
+  sudo systemctl start france-tycoon
+  ```
 - **Migrations** : au démarrage, le serveur applique les fichiers `migrations/*.sql` pas encore joués (table `schema_migrations`, créée par le petit exécuteur de migrations de l'étape 1).
 - **RGPD** : suppression = `status = 'deleted'`, e-mail remplacé par un hachage, pseudo par « Joueur supprimé #id », `google_id` par `deleted:<id>`, avatar effacé, territoires libérés (bâtiments détruits, sans rachat, historique `admin`), OPA en cours annulées (offre rendue à l'attaquant), sessions et notifications effacées. Le journal `wallet_transactions` reste tel quel. Le même compte Google peut ensuite recréer un compte neuf. Code : `backend/src/modules/me/suppression.ts`.
