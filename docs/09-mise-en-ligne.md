@@ -6,7 +6,7 @@ Ce guide installe la bêta fermée sur un vrai serveur. Compte environ 2 heures,
 
 - un **serveur** loué chez Contabo, dans l'Union européenne (Allemagne) : offre **Cloud VPS 4** (4 cœurs, 8 Go de mémoire), payée au mois, sans engagement. Les VPS d'OVH en France étaient épuisés le 22/11/2026 ; les scripts marchent chez tout hébergeur qui propose Ubuntu 24.04 ;
 - un **nom de domaine** en `.fr` (l'adresse du jeu, par exemple `france-tycoon.fr`) ;
-- une **sauvegarde continue** de la base chez Backblaze B2 (dans l'Union européenne, gratuite jusqu'à 10 Go) ;
+- une **sauvegarde** de la base : depuis le 23/11/2026, une copie chiffrée chaque heure sur Google Drive (section 8) ; la sauvegarde continue chez Backblaze B2 reste possible (section 3) ;
 - la **mise à jour automatique** : chaque fusion dans `main` arrive sur le serveur en quelques minutes.
 
 **Prix relevés le 22/11/2026 :** serveur 5,50 € HT par mois (6,60 € TTC), plus 2,40 € TTC d'installation une seule fois ; domaine 4,99 € HT la première année, puis 7,79 € HT par an ; sauvegarde 0 €.
@@ -25,7 +25,7 @@ Le site de Contabo est en anglais : les mots à choisir sont écrits ci-dessous 
 2. **Term length** : **1 Month** (sans engagement : tu peux arrêter à la fin de n'importe quel mois).
 3. **Region** : **European Union**.
 4. **Storage** : laisse **100 GB SSD**. **Image** : **Ubuntu 24.04**.
-5. Pas besoin d'option payante (ni « Auto Backup », ni panneau) : la base est déjà sauvegardée chez Backblaze (étape 3).
+5. Pas besoin d'option payante (ni « Auto Backup », ni panneau) : la base est déjà sauvegardée sur Google Drive (section 8).
 6. Quand on te le demande, choisis le **mot de passe du compte `root`** : long (au moins 16 caractères), gardé dans un gestionnaire de mots de passe.
 7. Paie, puis attends l'e-mail de Contabo (de quelques minutes à quelques heures). Il donne l'**adresse IP** du serveur (4 nombres, comme `51.83.12.34`).
 
@@ -44,6 +44,8 @@ Le site de Contabo est en anglais : les mots à choisir sont écrits ci-dessous 
    La réponse doit montrer l'adresse IP de ton serveur.
 
 ## 3. Préparer la sauvegarde (Backblaze B2)
+
+Facultatif depuis le 23/11/2026 : la sauvegarde va sur Google Drive (section 8). Passe à la section 4 si tu n'as pas de compte Backblaze.
 
 1. Crée un compte sur [backblaze.com](https://www.backblaze.com/cloud-storage) (offre **B2 Cloud Storage**). **Au moment de l'inscription, choisis la région « EU Central »** : elle ne se change plus après.
 2. **Buckets** → **Create a Bucket** :
@@ -124,6 +126,26 @@ La clé ne peut **que** lancer la mise à jour : même volée, elle ne donne pas
 
 ## 8. Vérifier la sauvegarde
 
+### Google Drive (en service depuis le 23/11/2026)
+
+Chaque heure, `kadastr-sauvegarde-drive` envoie une copie de la base, compressée puis **chiffrée sur le serveur** : Google ne peut pas la lire. Dans ton Drive, dossier `Kadastr-sauvegardes` : `heure-00` à `heure-23` (les dernières 24 heures) et `jour-1` (lundi) à `jour-7` (la copie de 3 h du matin), soit 7 jours comme promis dans les pages légales. Environ 40 Mo par copie, 1,2 Go en tout.
+
+```bash
+sudo kadastr-sauvegarde-drive verifier            # récupère la dernière copie et la contrôle : une fois par mois
+sudo kadastr-sauvegarde-drive liste               # les copies et leur heure
+sudo kadastr-sauvegarde-drive restaurer heure-14  # remet le jeu sur cette copie (voir section 9)
+```
+
+Le **mot de passe de chiffrement** est dans `/etc/france-tycoon/rclone.conf` (lisible par root seul) et dans ton gestionnaire de mots de passe. Garde-le bien : si le serveur est perdu, sans lui les copies du Drive sont illisibles.
+
+Brancher Google Drive (fait le 23/11/2026 ; à refaire seulement sur un nouveau serveur) :
+
+1. `sudo rclone --config /etc/france-tycoon/rclone.conf config create kadastr-gdrive drive scope=drive.file` demande l'accord de Google (rclone ne voit que les fichiers qu'il a créés). Le serveur n'a pas de navigateur : depuis le PC, garde ouvert un tunnel `ssh -L 53682:127.0.0.1:53682 root@<adresse du serveur>` et ouvre le lien `http://127.0.0.1:53682/auth…` affiché.
+2. `sudo rclone --config /etc/france-tycoon/rclone.conf config create kadastr-drive crypt remote=kadastr-gdrive:Kadastr-sauvegardes filename_encryption=off directory_name_encryption=false password=<mot de passe> --obscure` (le même mot de passe qu'avant, pour relire les anciennes copies).
+3. Relance `installer-serveur.sh` : il active la copie de chaque heure.
+
+### Backblaze (si réglé à la section 3)
+
 ```bash
 sudo bash /srv/france-tycoon/app/deploiement/verifier-sauvegarde.sh
 ```
@@ -134,7 +156,16 @@ Comment marche la sauvegarde : chaque modification de la base part chez Backblaz
 
 ## 9. En cas de gros problème : remettre la sauvegarde
 
-Si la base est abîmée ou si une erreur a tout cassé :
+Si la base est abîmée ou si une erreur a tout cassé, avec **Google Drive** :
+
+```bash
+sudo kadastr-sauvegarde-drive liste
+sudo kadastr-sauvegarde-drive restaurer heure-14
+```
+
+Il récupère la copie et la contrôle (le jeu tourne encore), demande de taper `OUI`, arrête le jeu, range l'ancienne base de côté (rien n'est effacé) et redémarre le jeu sur la copie. Si tout le serveur est perdu : nouveau serveur, `installer-serveur.sh`, brancher Google Drive avec le **même mot de passe** (section 8), puis `restaurer`.
+
+Avec **Backblaze** :
 
 ```bash
 sudo bash /srv/france-tycoon/app/deploiement/restaurer-sauvegarde.sh
