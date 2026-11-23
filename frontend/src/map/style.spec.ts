@@ -25,7 +25,7 @@ describe('style des communes', () => {
     expect(styleCommune(proprietes({ state: 'rival', ownerColor: '#dc2626' }))).toMatchObject({
       color: '#e87272',
       fillColor: '#e87272',
-      fillOpacity: 0.3,
+      fillOpacity: 0.22,
     });
   });
 
