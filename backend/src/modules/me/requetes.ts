@@ -1,6 +1,7 @@
 import type { ChantierFini, MoiReponse, Profil } from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
 import { creerLecteurRevenus, revenuDuJoueur } from '../income/revenus.ts';
+import { creerLecteurReglages } from '../reglages/calendrier.ts';
 
 interface LigneProfil {
   id: number;
@@ -46,6 +47,7 @@ export function creerLecteurMoi(db: Base) {
     ORDER BY created_at, id
     LIMIT ?`);
   const lireTerritoires = creerLecteurRevenus(db);
+  const reglages = creerLecteurReglages(db);
 
   return function lireMoi(userId: number, maintenant: number): MoiReponse {
     const ligne = moi.get(userId);
@@ -55,7 +57,7 @@ export function creerLecteurMoi(db: Base) {
     return {
       user,
       wallet: { cash, gems },
-      incomePerHour: revenuDuJoueur(territoires, maintenant),
+      incomePerHour: revenuDuJoueur(territoires, maintenant, reglages(maintenant).income),
       territories: { owned: territoires.length, max: maxTerritories },
       rankLevel,
       buildQueueSlots,

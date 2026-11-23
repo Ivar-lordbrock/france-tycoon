@@ -1,5 +1,6 @@
 import {
   type AnnulationReponse,
+  ajuster,
   type Batiment,
   bonusNiveau,
   type ChantierReponse,
@@ -16,6 +17,7 @@ import {
 import type { Base } from '../../db/connexion.ts';
 import { ErreurMetier } from '../../erreurs.ts';
 import { creerEncaisseur } from '../income/revenus.ts';
+import { creerLecteurReglages } from '../reglages/calendrier.ts';
 import { mouvementDejaFait } from '../wallet/idempotence.ts';
 import { wallet } from '../wallet/wallet.ts';
 
@@ -95,6 +97,8 @@ const nombre = new Intl.NumberFormat('fr-FR');
 /** Les quatre actions, avec leurs requêtes préparées une fois. */
 export function creerChantiers(db: Base) {
   const encaisser = creerEncaisseur(db);
+  // Coût × réglage des bâtiments, figé dans `works_cost` : l'annulation rend ce qui a été payé.
+  const reglages = creerLecteurReglages(db);
   const typeParCode = db.prepare<[string], LigneType>(
     `SELECT ${COLONNES_TYPE} FROM building_types AS bt WHERE bt.code = ? AND bt.is_active = 1`,
   );
@@ -260,7 +264,11 @@ export function creerChantiers(db: Base) {
           );
         }
 
-        const cout = coutNiveau(parametres(type), 1, facteurTaille(c.baseValue));
+        const cout = ajuster(
+          coutNiveau(parametres(type), 1, facteurTaille(c.baseValue)),
+          reglages(maintenant).building,
+          10,
+        );
         const duree = premierChantierDuTutoriel.get(moi)
           ? DUREE_CHANTIER_TUTORIEL_S
           : dureeChantier(parametres(type), 1);
@@ -307,7 +315,11 @@ export function creerChantiers(db: Base) {
       verifierFile(moi);
 
       const type = parametres(b);
-      const cout = coutNiveau(type, b.level + 1, facteurTaille(b.baseValue));
+      const cout = ajuster(
+        coutNiveau(type, b.level + 1, facteurTaille(b.baseValue)),
+        reglages(maintenant).building,
+        10,
+      );
       const fin = maintenant + dureeChantier(type, b.level + 1);
       if (lancer.run({ id, debut: maintenant, fin, cout }).changes !== 1)
         throw new Error(`Bâtiment ${id} déjà en chantier`);

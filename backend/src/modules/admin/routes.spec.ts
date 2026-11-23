@@ -25,7 +25,7 @@ describe('GET /api/v1/admin/health', () => {
     expect(reponse.statusCode).toBe(200);
     const corps = santeReponseSchema.parse(reponse.json());
     expect(corps.status).toBe('ok');
-    expect(corps.database).toEqual({ ok: true, schemaVersion: '013', territories: 0 });
+    expect(corps.database).toEqual({ ok: true, schemaVersion: '014', territories: 0 });
     expect(corps.jobs).toEqual([
       { name: 'cleanup', status: 'error', startedAt: 50, finishedAt: 60 },
       { name: 'leaderboard', status: 'running', startedAt: 200, finishedAt: null },

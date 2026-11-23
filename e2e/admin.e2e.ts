@@ -21,7 +21,7 @@ test('sans compte puis en simple joueur, /admin refuse l’entrée', async ({ pa
   await expect(page.getByRole('heading', { name: 'Accès réservé' })).toBeVisible();
 });
 
-test('un admin (ADMIN_EMAILS) voit les 6 vues et la vue d’ensemble', async ({ page }) => {
+test('un admin voit les 6 vues, puis prévoit un événement pour demain et l’arrête', async ({ page }) => {
   await entrer(page, 'Chef');
   await page.goto('/admin');
 
@@ -31,6 +31,27 @@ test('un admin (ADMIN_EMAILS) voit les 6 vues et la vue d’ensemble', async ({ 
 
   await page.getByRole('button', { name: 'Joueurs' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Joueurs' })).toBeVisible();
+
+  // Événement à venir seulement : un événement en cours changerait les prix des essais lancés en même temps.
+  // Même connexion : la limite de connexions par minute vaut pour tous les essais (même adresse).
+  await page.getByRole('button', { name: 'Live config & events' }).click();
+  const bloc = page.locator('section', { has: page.getByRole('heading', { name: 'Événements' }) });
+  const demain = new Date(Date.now() + 86_400_000);
+  const local = (n: number) => String(n).padStart(2, '0');
+  const debut = `${demain.getFullYear()}-${local(demain.getMonth() + 1)}-${local(demain.getDate())}T10:00`;
+
+  await bloc.getByLabel('Titre (vu par les joueurs)').fill('Essai e2e doré');
+  await bloc.getByLabel('Revenus (%)').fill('200');
+  await bloc.getByLabel('Début (vide : tout de suite)').fill(debut);
+  await bloc.getByRole('button', { name: 'Voir avant de lancer' }).click();
+  await expect(bloc.getByText('Revenus × 2')).toBeVisible();
+  await bloc.getByRole('button', { name: 'Lancer' }).click();
+
+  const ligne = bloc.getByRole('row').filter({ hasText: 'Essai e2e doré' }).first();
+  await expect(ligne.getByText('À venir')).toBeVisible();
+  await ligne.getByRole('button', { name: 'Arrêter' }).click();
+  await ligne.getByRole('button', { name: 'Confirmer l’arrêt' }).click();
+  await expect(ligne.getByText('Annulé')).toBeVisible();
 });
 
 test('un admin trouve un joueur, le suspend, et le joueur voit le motif', async ({ browser }) => {

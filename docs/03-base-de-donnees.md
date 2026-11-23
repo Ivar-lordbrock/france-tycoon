@@ -194,7 +194,7 @@ LIMIT 3000;
 
 **`roadmap_features`** (migration 009) — la feuille de route publique (page `/roadmap`, `GET /roadmap`). `code` unique (`intercommunalite`, `jumelage`, `saisons`, `gemmes`, `aleas`), `position` = ordre d’affichage, `category` (`social`, `gameplay`, `economy`), `status` (`planned` Prévu, `in_progress` En cours, `released` Déployé), `details` = tableau JSON de textes. Remplie par la migration elle-même, rejouable sans doublon (`ON CONFLICT (code) DO NOTHING`). Changer un statut ou un texte : nouvelle migration avec un `UPDATE`. Table seule, sans lien avec les autres.
 
-### Dashboard /admin (migrations 010 à 013)
+### Dashboard /admin (migrations 010 à 014)
 
 **`staff_roles`** (010) — grade de l'équipe : `role` `moderator` ou `admin`, `granted_by`, `granted_at`. Un joueur sans ligne n'a pas de grade. Les e-mails de `ADMIN_EMAILS` (`.env`) sont admin d'office, sans ligne ici. `users.role` (ancien) n'est pas lu.
 
@@ -209,6 +209,10 @@ LIMIT 3000;
 **`site_status`** (013) — une seule ligne (`id = 1`) : `maintenance_message` (3 à 300 caractères ; `NULL` = pas de maintenance), `banner_text` et `banner_until` (bannière d'annonce ; `until NULL` = sans fin). Lue par `GET /status` et le crochet de `auth/requete.ts`.
 
 **`player_reports`** (013) — « Signaler un bug » : `body` (10 à 2 000), `page` (chemin de la page, 200 max), `status` `open` → `in_progress` → `resolved` ou `rejected`, `staff_note` (vue de l'équipe seulement). `user_id` passe à `NULL` si le compte est supprimé.
+
+**`live_config`** (014) — réglages à chaud permanents, une ligne par changement (ajout seul) : `price_pct`, `income_pct`, `building_pct` (25 à 400 ; 100 = normal), `reason`, `created_by`, `starts_at` (jamais dans le passé). La plus récente déjà commencée s'applique ; aucune ligne = tout à 100 %.
+
+**`game_events`** (014) — événements datés : `title` (3 à 80), les trois `*_pct`, `starts_at`, `ends_at` (fin automatique), `cancelled_at` (arrêt avant la fin ; le passé ne change pas). Leurs % multiplient ceux de `live_config` pendant `[starts_at ; min(ends_at, cancelled_at))`. On ne modifie pas un événement : on l'arrête et on en crée un autre. Les deux tables gardent tout : les revenus non encaissés se calculent par morceaux avec elles (docs/05 § 5.10).
 
 **`admin_audit`** (011) — journal des actions de l'équipe : qui (`actor_*`, recopiés), quoi (`action`, `target_type`, `target_id`), `before_json` / `after_json`, `reason`. **En ajout seul** : des déclencheurs refusent `UPDATE` et `DELETE`. Pas de clé étrangère, pour qu'une ligne ne bouge jamais.
 

@@ -3,17 +3,18 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import type { Base } from '../../db/connexion.ts';
 import { ErreurMetier } from '../../erreurs.ts';
 import { exigerJoueur } from '../auth/requete.ts';
+import { creerLecteurCalendrier } from '../reglages/calendrier.ts';
 
 // État du site (maintenance, bannière) et « Signaler un bug ». L'équipe les règle dans le dashboard /admin.
 
 const maintenant = () => Math.floor(Date.now() / 1000);
 
 /** Maintenance et bannière du moment ; une bannière dont la fin est passée n'est plus montrée. */
-export function creerLecteurEtatSite(db: Base) {
+export function creerLecteurEtatSite(db: Base): (instant: number) => Omit<EtatSite, 'settings' | 'events'> {
   const ligne = db.prepare<[], { maintenance: string | null; text: string | null; until: number | null }>(
     'SELECT maintenance_message AS maintenance, banner_text AS text, banner_until AS until FROM site_status WHERE id = 1',
   );
-  return (instant: number): EtatSite => {
+  return (instant) => {
     const l = ligne.get();
     if (!l) return { maintenance: null, banner: null };
     const visible = l.text !== null && (l.until === null || l.until > instant);
@@ -24,10 +25,16 @@ export function creerLecteurEtatSite(db: Base) {
 export const routesSite: FastifyPluginAsyncZod = async (app) => {
   const db = app.db;
   const lireEtat = creerLecteurEtatSite(db);
+  const lireReglages = creerLecteurCalendrier(db);
 
-  app.get('/status', { schema: { response: { 200: etatSiteSchema } } }, (_req, reply) => {
+  app.get('/status', { schema: { response: { 200: etatSiteSchema } } }, (_req, reply): EtatSite => {
     reply.header('cache-control', 'no-cache');
-    return lireEtat(maintenant());
+    const t = maintenant();
+    const reglages = lireReglages(t);
+    const events = reglages
+      .evenementsA(t)
+      .map(({ title, fin, price, income, building }) => ({ title, endsAt: fin, price, income, building }));
+    return { ...lireEtat(t), settings: reglages.a(t), events };
   });
 
   const recents = db
