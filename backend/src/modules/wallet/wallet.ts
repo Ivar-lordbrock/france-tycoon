@@ -57,7 +57,8 @@ interface LigneJournal {
 
 const COLONNE: Record<Devise, 'cash' | 'premium_currency'> = { cash: 'cash', gems: 'premium_currency' };
 const nombre = new Intl.NumberFormat('fr-FR');
-const montant = (n: number, devise: Devise) => `${nombre.format(n)} ${devise === 'cash' ? '₮' : '💎'}`;
+const montant = (n: number, devise: Devise) =>
+  `${nombre.format(n)} ${devise === 'cash' ? '₮' : `gemme${n > 1 ? 's' : ''}`}`;
 
 /**
  * La seule fonction qui modifie un solde (`users.cash` ou `users.premium_currency`).

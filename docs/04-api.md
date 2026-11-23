@@ -12,7 +12,7 @@
 | Revenus | Toute requête 🔒 qui lit ou dépense le portefeuille **encaisse d'abord** les revenus en attente (calcul différé) et termine les chantiers finis : `GET`/`PATCH /me`, `GET /me/territories`, `GET /me/construction-queue`, `GET /me/notifications`, `GET /me/quests`, `POST /me/collect`, achat, vente, bâtiments, capitale, OPA. Avant de compter les revenus, les OPA dont les 24 h sont passées sont résolues (la commune change de main à `expires_at`, chacun touche les revenus pour son temps). Moteur : `backend/src/modules/income/revenus.ts` |
 | Pagination | `?cursor=...&limit=50` → `{ items, nextCursor }` |
 | Erreurs | `{ "error": { "code": "INSUFFICIENT_FUNDS", "message": "Il manque 1 200 ₮", "details": {...} } }` avec un statut HTTP cohérent |
-| Monnaie affichée | `₮` (« tycoon ») pour le cash, 💎 pour les gemmes |
+| Monnaie affichée | `₮` (« tycoon ») pour le cash ; les gemmes sont écrites en toutes lettres (« 2 gemmes ») |
 
 ### Codes d'erreur métier
 
