@@ -21,7 +21,7 @@ export function Classement({ id, onChoisi }: { id: string; onChoisi: () => void 
   useEffect(() => suivre(client, 'leaderboard_viewed', portee), [client, portee]);
 
   return (
-    <div id={id} className="border-t border-encre/10">
+    <div id={id}>
       {joueur ? (
         <ProfilJoueur pseudo={joueur} onRetour={() => setJoueur(null)} onChoisi={onChoisi} />
       ) : (
@@ -31,7 +31,7 @@ export function Classement({ id, onChoisi }: { id: string; onChoisi: () => void 
             <select
               value={portee}
               onChange={(e) => setPortee(e.target.value as PorteeClassement)}
-              className="h-9 min-w-0 flex-1 rounded-md border border-encre/15 bg-white px-2 text-sm font-normal text-encre outline-none focus:border-encre focus:ring-2 focus:ring-surligneur"
+              className="h-9 min-w-0 flex-1 rounded-md border border-encre/15 bg-fond px-2 text-sm font-normal text-encre outline-none focus:border-encre focus:ring-2 focus:ring-surligneur"
             >
               <option value="national">France entière</option>
               <option value="metropole">Métropole</option>
@@ -67,7 +67,7 @@ function ListeClassement({ portee, onJoueur }: { portee: PorteeClassement; onJou
       <button
         type="button"
         onClick={() => onJoueur(l.pseudo)}
-        className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-brume/60 ${l.pseudo === me?.pseudo ? 'bg-surligneur/30' : ''}`}
+        className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-brume/60 ${l.pseudo === me?.pseudo ? 'bg-brume' : ''}`}
       >
         <span className="w-7 shrink-0 text-right text-ardoise tabular-nums">{l.rank}</span>
         <span className="size-2.5 shrink-0 rounded-full" style={{ background: l.markerColor }} aria-hidden="true" />
@@ -87,7 +87,7 @@ function ListeClassement({ portee, onJoueur }: { portee: PorteeClassement; onJou
       {lignes.length === 0 ? (
         <p className="p-3 text-sm text-ardoise">Personne ici pour l’instant : il faut y posséder une commune.</p>
       ) : (
-        <ul className="mt-1 max-h-72 overflow-y-auto">
+        <ul className="mt-1">
           {lignes.map(ligne)}
           {hasNextPage && (
             <li>
@@ -157,7 +157,7 @@ function ProfilJoueur({ pseudo, onRetour, onChoisi }: { pseudo: string; onRetour
         <p className="border-t border-encre/10 px-3 pt-2 text-xs font-semibold text-ardoise">
           {communes(data.territories.length)}
         </p>
-        <ul className="max-h-60 overflow-y-auto pb-1">
+        <ul className="pb-1">
           {data.territories.map((t) => (
             <li key={t.insee}>
               <button

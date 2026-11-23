@@ -10,7 +10,7 @@ test('un nouveau joueur se connecte et achète une commune', async ({ page }) =>
   // Connexion de test (AUTH_DEV), sans Google.
   await page.getByPlaceholder('Ton pseudo').fill('Robot Essai');
   await page.getByRole('button', { name: 'Entrer' }).click();
-  await expect(page.getByText('0 / 4 territoires')).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Encaisser/ })).toBeVisible();
   // Sans le tutoriel : ses récompenses fausseraient le compte du cash.
   await page.getByRole('button', { name: 'Passer le tutoriel' }).click();
   await page.getByRole('button', { name: 'Oui, passer' }).click();
@@ -22,14 +22,14 @@ test('un nouveau joueur se connecte et achète une commune', async ({ page }) =>
   await expect(page.getByRole('heading', { name: 'Testville' })).toBeVisible();
 
   // L'acheter, avec la confirmation.
-  const bouton = page.getByRole('button', { name: /^Acheter · / });
+  const bouton = page.getByRole('button', { name: /^Acheter pour / });
   const prix = chiffres(await bouton.textContent());
   expect(prix).toBeGreaterThan(0);
   await bouton.click();
   await page.getByRole('button', { name: 'Acheter', exact: true }).click();
 
   // Elle est à moi, et mon cash a baissé du prix (il remonte ensuite un peu avec le revenu).
-  await expect(page.getByText('1 / 4 territoires')).toBeVisible();
+  await expect(page.getByText(/Testville est à toi/)).toBeVisible();
   const cash = page.locator('dt:has-text("Cash") + dd');
   const attendu = 30_000 - prix;
   await expect.poll(async () => chiffres(await cash.textContent())).toBeLessThan(attendu + 100);

@@ -23,7 +23,7 @@ export function ResumeRetour({ moi }: { moi: MoiReponse }) {
   const autres = finis.length - recents.length;
 
   return (
-    <section aria-labelledby={`${id}-titre`} className="panneau pointer-events-auto p-3">
+    <section aria-labelledby={`${id}-titre`} className="panneau pointer-events-auto w-full shrink-0 rounded-[22px] p-4">
       <h2 id={`${id}-titre`} className="font-semibold">
         {titreResume(finis, OUVERTURE)}
       </h2>
@@ -46,7 +46,7 @@ export function ResumeRetour({ moi }: { moi: MoiReponse }) {
         </p>
       )}
       {marquer.isError && (
-        <p role="alert" className="mt-1 text-sm text-red-700">
+        <p role="alert" className="mt-1 text-sm text-danger">
           {messageErreur(marquer.error)}
         </p>
       )}

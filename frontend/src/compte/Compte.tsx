@@ -1,5 +1,5 @@
 import { type MoiReponse, PSEUDO_MAX, pseudoSchema } from '@france-tycoon/shared';
-import { type FormEvent, useEffect, useId, useState } from 'react';
+import { type FormEvent, useId, useState } from 'react';
 import { useCashEnDirect } from '../api/batiments.ts';
 import { messageErreur } from '../api/client.ts';
 import {
@@ -11,21 +11,19 @@ import {
   useSupprimerCompte,
 } from '../api/compte.ts';
 import { useFluxDirect } from '../api/direct.ts';
-import { useEncaisser, useQuetes } from '../api/quetes.ts';
+import { useEncaisser } from '../api/quetes.ts';
 import { useCarte } from '../etat/carte.ts';
-import { CentreMessages } from '../hud/CentreMessages.tsx';
-import { ChantierEnCours } from '../hud/ChantierEnCours.tsx';
-import { Classement } from '../hud/Classement.tsx';
+import { ajouterToast } from '../etat/toasts.ts';
+import { SuiviChantiers } from '../hud/ChantierEnCours.tsx';
+import { Icone, Piece } from '../hud/Icone.tsx';
 import { MesOpa } from '../hud/MesOpa.tsx';
-import { QuetesDuJour } from '../hud/QuetesDuJour.tsx';
 import { ResumeRetour } from '../hud/ResumeRetour.tsx';
-import { nomRang } from '../panels/classement-texte.ts';
+import { clair } from '../map/style.ts';
 import { entier, tycoons } from '../panels/fiche-texte.ts';
-import { MesTerritoires } from '../panels/MesTerritoires.tsx';
 import { BoutonGoogle } from './BoutonGoogle.tsx';
 import { LiensInfos } from './LiensInfos.tsx';
 
-/** Coin du joueur : connexion, ou barre du haut (cash, gemmes, revenu) et profil. */
+/** Coin du joueur : connexion, ou ses ressources en haut à droite (cash, revenu, gemmes, encaisser). */
 export function Compte() {
   const { data: moi, isPending, isError } = useMoi();
   if (isPending) return null;
@@ -37,7 +35,18 @@ export function Compte() {
     <>
       {/* Une clé par joueur : changer de compte rouvre le flux avec la bonne session. */}
       <FluxDirect key={moi.user.id} />
-      <BarreJoueur moi={moi} />
+      <SuiviChantiers />
+      <Ressources moi={moi} />
+    </>
+  );
+}
+
+/** Sous les ressources : les OPA en cours et le résumé des chantiers finis pendant l'absence. */
+export function Alertes() {
+  const { data: moi } = useMoi();
+  if (!moi) return null;
+  return (
+    <>
       <MesOpa />
       <ResumeRetour moi={moi} />
     </>
@@ -62,7 +71,7 @@ function Connexion() {
   };
 
   return (
-    <section aria-labelledby={`${id}-titre`} className="panneau pointer-events-auto p-4">
+    <section aria-labelledby={`${id}-titre`} className="panneau pointer-events-auto w-full rounded-[28px] p-5 md:w-80">
       <h2 id={`${id}-titre`} className="font-bold">
         Connecte-toi pour jouer
       </h2>
@@ -85,13 +94,9 @@ function Connexion() {
                 maxLength={PSEUDO_MAX}
                 placeholder="Ton pseudo"
                 autoComplete="nickname"
-                className="h-10 min-w-0 flex-1 rounded-md border border-encre/15 px-2.5 outline-none placeholder:text-ardoise focus:border-encre focus:ring-2 focus:ring-surligneur"
+                className="h-10 min-w-0 flex-1 rounded-xl border border-encre/15 px-3 outline-none placeholder:text-ardoise focus:border-encre focus:ring-2 focus:ring-surligneur"
               />
-              <button
-                type="submit"
-                disabled={connexion.isPending || !pseudo.trim()}
-                className="h-10 rounded-md bg-encre px-3 font-semibold text-white disabled:opacity-50"
-              >
+              <button type="submit" disabled={connexion.isPending || !pseudo.trim()} className="relief h-10 px-4">
                 Entrer
               </button>
             </div>
@@ -101,7 +106,7 @@ function Connexion() {
           <p className="text-sm text-ardoise">Connexion pas encore configurée (voir docs/08-connexion-google.md).</p>
         )}
         {connexion.isError && (
-          <p role="alert" className="text-sm text-red-700">
+          <p role="alert" className="text-sm text-danger">
             {connexion.error.message}
           </p>
         )}
@@ -122,15 +127,16 @@ function Connexion() {
   );
 }
 
-function Avatar({ moi }: { moi: MoiReponse }) {
+/** Rond à la couleur du joueur (éclaircie, comme sur la carte), ou sa photo Google. */
+export function Avatar({ moi }: { moi: MoiReponse }) {
   const { avatarUrl, pseudo, markerColor } = moi.user;
   if (avatarUrl) {
-    return <img src={avatarUrl} alt="" referrerPolicy="no-referrer" className="size-9 shrink-0 rounded-full" />;
+    return <img src={avatarUrl} alt="" referrerPolicy="no-referrer" className="size-[34px] shrink-0 rounded-full" />;
   }
   return (
     <span
-      className="grid size-9 shrink-0 place-items-center rounded-full font-bold text-white"
-      style={{ background: markerColor }}
+      className="grid size-[34px] shrink-0 place-items-center rounded-full text-sm font-extrabold text-fond"
+      style={{ background: clair(markerColor) }}
       aria-hidden="true"
     >
       {pseudo.slice(0, 1).toUpperCase()}
@@ -138,198 +144,79 @@ function Avatar({ moi }: { moi: MoiReponse }) {
   );
 }
 
-type Volet = 'profil' | 'messages' | 'quetes' | 'classement' | 'territoires';
+/** Bouton rond de l'avatar : ouvre la fenêtre du profil. */
+export function BoutonProfil({ moi, className = '' }: { moi: MoiReponse; className?: string }) {
+  const volet = useCarte((etat) => etat.volet);
+  const basculerVolet = useCarte((etat) => etat.basculerVolet);
+  return (
+    <button
+      type="button"
+      onClick={() => basculerVolet('profil')}
+      aria-expanded={volet === 'profil'}
+      aria-controls="fenetre"
+      aria-label={`Mon profil (${moi.user.pseudo})`}
+      className={`grid shrink-0 place-items-center rounded-full ${className}`}
+    >
+      <Avatar moi={moi} />
+    </button>
+  );
+}
 
-/** Barre du haut : qui je suis, mon cash (qui monte tout seul), mes gemmes, mon revenu, mon chantier, mes territoires. */
-function BarreJoueur({ moi }: { moi: MoiReponse }) {
-  const [ouvert, setOuvert] = useState<Volet | null>(null);
-  // Sur téléphone, le compte tient en une ligne pour laisser la carte visible (sans effet sur grand écran).
-  const [deplie, setDeplie] = useState(false);
-  const id = useId();
-  const basculer = (volet: Volet) => {
-    setDeplie(true);
-    setOuvert((o) => (o === volet ? null : volet));
-  };
-  const choisi = () => {
-    setOuvert(null);
-    setDeplie(false);
-  };
-  // Une fiche s'ouvre : le compte se replie pour lui laisser la place.
-  const selection = useCarte((etat) => etat.selection);
-  useEffect(() => {
-    if (!selection) return;
-    setOuvert(null);
-    setDeplie(false);
-  }, [selection]);
-  const nonLus = moi.unreadNotifications;
+/** En haut à droite : mon cash (qui monte tout seul), mon revenu, mes gemmes, et « Encaisser ». */
+function Ressources({ moi }: { moi: MoiReponse }) {
   // Entre deux lectures de /me, le cash monte de revenu/h ÷ 3 600 chaque seconde (docs/04 § 4.4).
   const cash = useCashEnDirect() ?? moi.wallet.cash;
+  const enAttente = cash - moi.wallet.cash;
   const encaisser = useEncaisser();
-  // Lues dès l'arrivée (et pas seulement volet ouvert) pour signaler une récompense à réclamer.
-  const { data: quetes } = useQuetes(true);
-  const aReclamer = quetes?.quests.filter((q) => q.completedAt !== null && q.claimedAt === null).length ?? 0;
 
-  // min-h-14 : quand la fiche prend la place, la première ligne du compte reste visible.
   return (
-    <section aria-label="Mon compte" className="panneau pointer-events-auto min-h-14 overflow-y-auto">
-      <div className="flex items-center">
-        <button
-          type="button"
-          onClick={() => basculer('profil')}
-          aria-expanded={ouvert === 'profil'}
-          aria-controls={`${id}-profil`}
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-[10px] p-2.5 text-left hover:bg-brume/60"
-        >
-          <Avatar moi={moi} />
-          <span className="min-w-0 flex-1">
-            <span className="flex items-center gap-1.5 truncate font-semibold">
-              <span
-                className="size-2.5 shrink-0 rounded-full"
-                style={{ background: moi.user.markerColor }}
-                aria-hidden="true"
-              />
-              {moi.user.pseudo}
-            </span>
-            <span className="block text-xs text-ardoise">
-              {nomRang(moi.rankLevel)} · {moi.territories.owned} / {moi.territories.max} territoires
-            </span>
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setDeplie((d) => !d)}
-          aria-expanded={deplie}
-          aria-controls={`${id}-details`}
-          className="flex h-11 shrink-0 items-center gap-1.5 rounded-[10px] px-3 font-bold tabular-nums hover:bg-brume/60 md:hidden"
-        >
-          <span className="sr-only">Détails du compte, cash : </span>
-          {tycoons(cash)}
-          <Chevron ouvert={deplie} />
-        </button>
-      </div>
-      {/* `repli` : le tutoriel montre ce bloc quand il vise un élément dedans (voir Tutoriel.tsx). */}
-      <div id={`${id}-details`} className={deplie ? '' : 'repli max-md:hidden'}>
-        <dl className="grid grid-cols-3 border-t border-encre/10 text-center" data-tuto="hud-wallet">
-          <div className="p-2">
-            <dt className="text-xs text-ardoise">Cash</dt>
-            <dd className="font-bold tabular-nums">{tycoons(cash)}</dd>
-          </div>
-          <div className="border-x border-encre/10 p-2">
-            <dt className="text-xs text-ardoise">Gemmes</dt>
-            <dd className="font-bold text-violet-700 tabular-nums">{entier(moi.wallet.gems)} 💎</dd>
-          </div>
-          <div className="p-2">
-            <dt className="text-xs text-ardoise">Revenu</dt>
-            <dd className="font-bold text-green-700 tabular-nums">+{tycoons(moi.incomePerHour)}/h</dd>
-          </div>
-        </dl>
-        {/* Le cash affiché compte déjà ce montant ; le clic l'enregistre (tutoriel, quête « Trésorier »). */}
-        <div className="flex items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm">
-          <span className="text-ardoise tabular-nums">
-            {cash > moi.wallet.cash ? `+${tycoons(cash - moi.wallet.cash)} en attente` : 'Rien à encaisser'}
-          </span>
-          <button
-            type="button"
-            onClick={() => encaisser.mutate()}
-            disabled={encaisser.isPending}
-            data-tuto="collect-button"
-            className="h-8 rounded-md bg-surligneur px-3 font-semibold text-encre hover:bg-surligneur/80 disabled:opacity-50"
-          >
-            Encaisser
-          </button>
+    <section
+      aria-label="Mon compte"
+      className="panneau pointer-events-auto flex h-[52px] items-center gap-0.5 rounded-[26px] px-2 max-md:h-[46px] max-md:w-full max-md:justify-between max-md:pr-1.5 max-md:pl-1"
+    >
+      <BoutonProfil moi={moi} className="max-md:hidden" />
+      <dl data-tuto="hud-wallet" className="flex items-center text-[15px] font-bold tabular-nums max-md:text-sm">
+        <div className="px-2.5 max-md:px-1.5">
+          <dt className="sr-only">Cash</dt>
+          <dd className="flex items-center gap-[7px]">
+            <Piece />
+            {entier(cash)}
+          </dd>
         </div>
-        {encaisser.isError && (
-          <p role="alert" className="px-3 pb-2 text-sm text-red-700">
-            {messageErreur(encaisser.error)}
-          </p>
-        )}
-        <ChantierEnCours possede={moi.territories.owned} />
-        <button
-          type="button"
-          onClick={() => basculer('messages')}
-          aria-expanded={ouvert === 'messages'}
-          aria-controls={`${id}-messages`}
-          className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
-        >
-          Messages
-          <span className="flex items-center gap-1.5 font-normal text-ardoise">
-            {nonLus > 0 && (
-              <span className="rounded-full bg-orange-700 px-1.5 text-xs font-bold text-white tabular-nums">
-                {nonLus > 99 ? '99+' : nonLus}
-                <span className="sr-only"> non lu{nonLus > 1 ? 's' : ''}</span>
-              </span>
-            )}
-            <Chevron ouvert={ouvert === 'messages'} />
-          </span>
-        </button>
-        {ouvert === 'messages' && <CentreMessages id={`${id}-messages`} nonLus={nonLus} onChoisi={choisi} />}
-        <button
-          type="button"
-          onClick={() => basculer('quetes')}
-          aria-expanded={ouvert === 'quetes'}
-          aria-controls={`${id}-quetes`}
-          data-tuto="quests-button"
-          className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
-        >
-          Quêtes du jour
-          <span className="flex items-center gap-1.5 font-normal">
-            {aReclamer > 0 && (
-              <span className="rounded-full bg-surligneur px-1.5 text-xs font-bold text-encre tabular-nums">
-                {aReclamer}
-                <span className="sr-only"> à réclamer</span>
-              </span>
-            )}
-            <Chevron ouvert={ouvert === 'quetes'} />
-          </span>
-        </button>
-        {ouvert === 'quetes' && <QuetesDuJour id={`${id}-quetes`} />}
-        <button
-          type="button"
-          onClick={() => basculer('classement')}
-          aria-expanded={ouvert === 'classement'}
-          aria-controls={`${id}-classement`}
-          data-tuto="leaderboard-button"
-          className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
-        >
-          Classement
-          <Chevron ouvert={ouvert === 'classement'} />
-        </button>
-        {ouvert === 'classement' && <Classement id={`${id}-classement`} onChoisi={choisi} />}
-        <button
-          type="button"
-          onClick={() => basculer('territoires')}
-          aria-expanded={ouvert === 'territoires'}
-          aria-controls={`${id}-territoires`}
-          className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
-        >
-          Mes territoires
-          <span className="flex items-center gap-1.5 font-normal text-ardoise tabular-nums">
-            {moi.territories.owned} / {moi.territories.max}
-            <Chevron ouvert={ouvert === 'territoires'} />
-          </span>
-        </button>
-        {ouvert === 'territoires' && <MesTerritoires id={`${id}-territoires`} onChoisi={choisi} />}
-        {ouvert === 'profil' && <Profil id={`${id}-profil`} moi={moi} />}
-        <LiensInfos className="border-t border-encre/10 px-3 py-2" />
-      </div>
+        <div className="px-2.5 max-md:px-1.5">
+          <dt className="sr-only">Revenu par heure</dt>
+          <dd className="text-succes">
+            +{entier(moi.incomePerHour)}
+            <span className="text-xs font-medium text-ardoise">/h</span>
+          </dd>
+        </div>
+        <div className="px-2.5 max-md:px-1.5">
+          <dt className="sr-only">Gemmes</dt>
+          <dd className="flex items-center gap-1.5 text-[#c4b5fd]">
+            <Icone nom="gemme" className="size-[17px]" />
+            {entier(moi.wallet.gems)}
+          </dd>
+        </div>
+      </dl>
+      {/* Le cash affiché compte déjà ce montant ; le clic l'enregistre (tutoriel, quête « Trésorier »). */}
+      <button
+        type="button"
+        onClick={() =>
+          encaisser.mutate(undefined, { onError: (e) => ajouterToast({ ton: 'erreur', texte: messageErreur(e) }) })
+        }
+        disabled={encaisser.isPending}
+        data-tuto="collect-button"
+        className="relief relief-jaune ml-1.5 h-9 shrink-0 rounded-[18px] px-3.5 text-sm whitespace-nowrap tabular-nums"
+      >
+        Encaisser
+        {enAttente > 0 && <span className="font-semibold opacity-70 max-sm:hidden"> +{tycoons(enAttente)}</span>}
+      </button>
     </section>
   );
 }
 
-function Chevron({ ouvert }: { ouvert: boolean }) {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      className={`size-4 stroke-current stroke-2 transition-transform motion-reduce:transition-none ${ouvert ? 'rotate-180' : ''}`}
-      fill="none"
-      aria-hidden="true"
-    >
-      <path d="m5 8 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function Profil({ id, moi }: { id: string; moi: MoiReponse }) {
+/** Fenêtre « Mon profil » : pseudo, couleur, déconnexion, suppression du compte et liens. */
+export function Profil({ moi }: { moi: MoiReponse }) {
   const modifier = useModifierProfil();
   const deconnexion = useDeconnexion();
   const [pseudo, setPseudo] = useState(moi.user.pseudo);
@@ -347,7 +234,7 @@ function Profil({ id, moi }: { id: string; moi: MoiReponse }) {
   };
 
   return (
-    <div id={id} className="border-t border-encre/10">
+    <div>
       <form onSubmit={enregistrer} className="flex flex-col gap-3 p-3">
         <div className="flex items-end gap-2">
           <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-semibold text-ardoise">
@@ -357,7 +244,7 @@ function Profil({ id, moi }: { id: string; moi: MoiReponse }) {
               onChange={(e) => setPseudo(e.target.value)}
               maxLength={PSEUDO_MAX}
               aria-invalid={!verifie.success}
-              className="h-10 rounded-md border border-encre/15 px-2.5 text-base font-normal text-encre outline-none focus:border-encre focus:ring-2 focus:ring-surligneur"
+              className="h-10 rounded-xl border border-encre/15 px-3 text-base font-normal text-encre outline-none focus:border-encre focus:ring-2 focus:ring-surligneur"
             />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-ardoise">
@@ -366,13 +253,13 @@ function Profil({ id, moi }: { id: string; moi: MoiReponse }) {
               type="color"
               value={couleur}
               onChange={(e) => setCouleur(e.target.value)}
-              className="h-10 w-12 cursor-pointer rounded-md border border-encre/15 bg-white p-1"
+              className="h-10 w-12 cursor-pointer rounded-xl border border-encre/15 bg-fond p-1"
             />
           </label>
         </div>
-        {!verifie.success && <p className="text-sm text-red-700">3 à 24 lettres, chiffres, espaces, . _ ou -.</p>}
+        {!verifie.success && <p className="text-sm text-danger">3 à 24 lettres, chiffres, espaces, . _ ou -.</p>}
         {modifier.isError && (
-          <p role="alert" className="text-sm text-red-700">
+          <p role="alert" className="text-sm text-danger">
             {modifier.error.message}
           </p>
         )}
@@ -381,20 +268,21 @@ function Profil({ id, moi }: { id: string; moi: MoiReponse }) {
             type="button"
             onClick={() => deconnexion.mutate()}
             disabled={deconnexion.isPending}
-            className="h-10 rounded-md px-3 text-sm font-semibold text-ardoise hover:bg-brume hover:text-encre"
+            className="h-10 rounded-xl px-3 text-sm font-semibold text-ardoise hover:bg-brume hover:text-encre"
           >
             Se déconnecter
           </button>
           <button
             type="submit"
             disabled={!change || !verifie.success || modifier.isPending}
-            className="h-10 rounded-md bg-encre px-3 font-semibold text-white disabled:opacity-50"
+            className="relief h-10 px-4"
           >
             {modifier.isSuccess && !change ? 'Enregistré' : 'Enregistrer'}
           </button>
         </div>
       </form>
       <SupprimerCompte pseudo={moi.user.pseudo} />
+      <LiensInfos className="border-t border-encre/10 px-3 pt-2" />
     </div>
   );
 }
@@ -410,14 +298,14 @@ function SupprimerCompte({ pseudo }: { pseudo: string }) {
   if (!ouvert) {
     return (
       <div className="px-3 pb-3">
-        <button type="button" onClick={() => setOuvert(true)} className="text-sm text-red-700 hover:underline">
+        <button type="button" onClick={() => setOuvert(true)} className="text-sm text-danger hover:underline">
           Supprimer mon compte…
         </button>
       </div>
     );
   }
   return (
-    <div className="flex flex-col gap-2 border-t border-red-200 bg-red-50 p-3 text-sm text-encre">
+    <div className="flex flex-col gap-2 border-t border-danger/30 bg-danger/10 p-3 text-sm text-encre">
       <p>
         <strong>C’est définitif.</strong> Tes communes redeviennent libres, tes bâtiments sont détruits, ton argent est
         perdu et tes OPA en cours sont annulées. Ton pseudo et ton e-mail sont effacés.
@@ -428,11 +316,11 @@ function SupprimerCompte({ pseudo }: { pseudo: string }) {
           value={saisie}
           onChange={(e) => setSaisie(e.target.value)}
           autoComplete="off"
-          className="h-10 rounded-md border border-encre/15 bg-white px-2.5 text-base font-normal text-encre outline-none focus:border-red-700 focus:ring-2 focus:ring-red-200"
+          className="h-10 rounded-xl border border-encre/15 bg-fond px-2.5 text-base font-normal text-encre outline-none focus:border-danger focus:ring-2 focus:ring-danger/30"
         />
       </label>
       {supprimer.isError && (
-        <p role="alert" className="text-red-700">
+        <p role="alert" className="text-danger">
           {supprimer.error.message}
         </p>
       )}
@@ -443,7 +331,7 @@ function SupprimerCompte({ pseudo }: { pseudo: string }) {
             setOuvert(false);
             setSaisie('');
           }}
-          className="h-10 rounded-md px-3 font-semibold text-ardoise hover:bg-brume hover:text-encre"
+          className="h-10 rounded-xl px-3 font-semibold text-ardoise hover:bg-brume hover:text-encre"
         >
           Annuler
         </button>
@@ -451,7 +339,7 @@ function SupprimerCompte({ pseudo }: { pseudo: string }) {
           type="button"
           onClick={() => supprimer.mutate()}
           disabled={!confirme || supprimer.isPending}
-          className="h-10 rounded-md bg-red-700 px-3 font-semibold text-white disabled:opacity-50"
+          className="h-10 rounded-xl bg-danger px-3 font-semibold text-fond disabled:opacity-50"
         >
           Supprimer définitivement
         </button>

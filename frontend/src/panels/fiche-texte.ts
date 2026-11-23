@@ -11,20 +11,40 @@ const nombre = new Intl.NumberFormat('fr-FR');
 export const tycoons = (montant: number) => `${nombre.format(montant)} ₮`;
 export const entier = (n: number) => nombre.format(n);
 
-export const LIBELLES_EQUIPEMENTS: Record<CategorieInfra, string> = {
-  commerce: 'Commerces',
-  service: 'Services',
-  sante: 'Santé',
-  education: 'Écoles',
-  sport_loisir: 'Sports et loisirs',
-  hotel: 'Hébergements',
-  restaurant: 'Restaurants',
-  gare: 'Gares',
-  aeroport: 'Aéroports',
-  port: 'Ports',
-  monument: 'Monuments historiques',
-  musee_attraction: 'Musées et attractions',
+/** Nom de chaque équipement, au singulier et au pluriel, pour la phrase de la fiche. */
+const NOMS_EQUIPEMENTS: Record<CategorieInfra, [string, string]> = {
+  commerce: ['commerce', 'commerces'],
+  service: ['service', 'services'],
+  sante: ['lieu de santé', 'lieux de santé'],
+  education: ['école', 'écoles'],
+  sport_loisir: ['lieu de sport ou de loisirs', 'lieux de sport et de loisirs'],
+  hotel: ['hébergement', 'hébergements'],
+  restaurant: ['restaurant', 'restaurants'],
+  gare: ['gare', 'gares'],
+  aeroport: ['aéroport', 'aéroports'],
+  port: ['port', 'ports'],
+  monument: ['monument historique', 'monuments historiques'],
+  musee_attraction: ['musée ou attraction', 'musées et attractions'],
 };
+
+/** « 2 commerces, 8 services et 1 école sur 44 km². » */
+export function phraseEquipements({ equipments, areaKm2 }: Pick<FicheCommune, 'equipments' | 'areaKm2'>): string {
+  const parties = equipments
+    .filter((e) => e.count > 0)
+    .map((e) => `${nombre.format(e.count)} ${NOMS_EQUIPEMENTS[e.category][e.count > 1 ? 1 : 0]}`);
+  const surface = areaKm2 === null ? '' : ` sur ${nombre.format(Math.round(areaKm2))} km²`;
+  if (parties.length === 0) return `Aucun équipement recensé${surface}.`;
+  const liste = parties.length === 1 ? parties[0] : `${parties.slice(0, -1).join(', ')} et ${parties.at(-1)}`;
+  return `${liste}${surface}.`;
+}
+
+/** « 6 places de bâtiments libres », ou toutes prises. */
+export function phrasePlaces({ used, total }: FicheCommune['buildingSlots']): string {
+  const libres = total - used;
+  if (libres <= 0) return 'Toutes les places de bâtiments sont prises';
+  const s = libres > 1 ? 's' : '';
+  return `${libres} place${s} de bâtiment${s} libre${s}`;
+}
 
 /** Sous le nom : département (Métropole) ou zone d'outre-mer. */
 export function lieu(fiche: Pick<FicheCommune, 'zone' | 'department'>): string {

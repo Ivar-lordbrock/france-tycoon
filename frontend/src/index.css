@@ -1,12 +1,29 @@
 @import "tailwindcss";
 
-/* Palette de la carte (mêmes valeurs que src/map/style.ts). */
+/*
+ * Thème sombre (obligatoire depuis le 23/11/2026), sobre, au niveau de Google Maps en sombre.
+ * Les noms d'avant sont gardés : « encre » est la couleur du texte (claire), « ardoise » le texte
+ * secondaire, « brume » le fond en relief (survol, champ, puce), « surligneur » le jaune de
+ * l'hexagone, seul accent. Mêmes valeurs que src/map/style.ts.
+ */
 @theme {
   --font-sans: "Archivo Variable", "Archivo", system-ui, sans-serif;
-  --color-encre: #1b2a41;
-  --color-ardoise: #5b6577;
-  --color-brume: #e6eaf0;
+  --color-encre: #e8eaed;
+  --color-ardoise: #9aa0a6;
+  --color-brume: #2d3036;
   --color-surligneur: #ffd23f;
+  --color-fond: #16181b;
+  --color-surface: #202227;
+  --color-danger: #f28b82;
+  --color-alerte: #fcad70;
+  --color-succes: #81c995;
+}
+
+:root {
+  /* Champs, listes déroulantes et barres de défilement du navigateur en sombre aussi. */
+  color-scheme: dark;
+  scrollbar-color: #4a4e56 transparent;
+  caret-color: var(--color-surligneur);
 }
 
 html,
@@ -17,12 +34,25 @@ body,
 
 body {
   margin: 0;
-  background: #dfe3ea;
+  background: var(--color-fond);
   color: var(--color-encre);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   /* Pas de mot tout seul sur la dernière ligne d'un paragraphe. */
   text-wrap: pretty;
+}
+
+::selection {
+  background: rgb(255 210 63 / 0.35);
+  color: #fff;
+}
+
+/* Dans la couche « base » : les classes des composants (outline-none, focus-visible:…) gardent la main. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-surligneur);
+    outline-offset: 2px;
+  }
 }
 
 /* Au doigt : cibles d'au moins 44 px (boutons à icône seule : en largeur aussi). */
@@ -38,22 +68,44 @@ body {
 }
 
 @layer components {
-  /* Panneau posé sur la carte : blanc net, filet d'encre, ombre courte. */
+  /* Panneau posé sur la carte : à peine plus clair que la carte, un filet très fin et une ombre douce. */
   .panneau {
-    border-radius: 10px;
-    background: #fff;
+    border-radius: 12px;
+    background: var(--color-surface);
     box-shadow:
-      0 0 0 1px rgb(27 42 65 / 0.14),
-      0 6px 18px -6px rgb(27 42 65 / 0.35);
+      0 0 0 1px rgb(255 255 255 / 0.06),
+      0 8px 24px -6px rgb(0 0 0 / 0.55);
   }
 
-  /* Logo en lettres larges, comme un titre de carte. */
-  .marque {
-    font-stretch: 125%;
-    font-weight: 800;
-    font-size: 1.05rem;
-    letter-spacing: -0.01em;
-    line-height: 1;
+  /*
+   * Bouton en relief : il s'enfonce quand on appuie (seulement transform et ombre, 120 ms).
+   * Clair pour l'action principale, jaune (`relief-jaune`) pour ce qui rapporte (encaisser, réclamer).
+   */
+  .relief {
+    border-radius: 14px;
+    background: var(--color-encre);
+    color: var(--color-fond);
+    font-weight: 700;
+    box-shadow: 0 4px 0 #8f949b;
+    transition:
+      transform 120ms ease-out,
+      box-shadow 120ms ease-out;
+  }
+  .relief:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #8f949b;
+  }
+  .relief-jaune {
+    background: var(--color-surligneur);
+    box-shadow: 0 3px 0 #c9a21a;
+  }
+  .relief-jaune:active:not(:disabled) {
+    box-shadow: 0 1px 0 #c9a21a;
+  }
+  .relief:disabled {
+    background: var(--color-brume);
+    color: var(--color-ardoise);
+    box-shadow: 0 4px 0 #1f2125;
   }
 
   .titre-groupe {
@@ -72,6 +124,36 @@ body {
   }
 }
 
+/* Une fenêtre du bas sort de son onglet : elle grandit depuis sa pointe (200 ms, rien si l'on préfère moins d'animations). */
+@media (prefers-reduced-motion: no-preference) {
+  .entree-fenetre {
+    transform-origin: var(--bec, 50%) 100%;
+    animation: entree-fenetre 200ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+}
+
+@keyframes entree-fenetre {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+}
+
+/* Sur ordinateur, la fenêtre pointe vers son onglet (--bec, posé par hud/Dock.tsx). */
+@media (width >= 48rem) {
+  .fenetre[style*="--bec"]::after {
+    content: "";
+    position: absolute;
+    bottom: -9px;
+    left: var(--bec);
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background: var(--color-surface);
+    transform: rotate(45deg);
+  }
+}
+
 @keyframes entree-toast {
   from {
     opacity: 0;
@@ -87,46 +169,70 @@ body {
 }
 
 /* Leaflet */
-/* Fond de carte moins coloré : les couleurs des joueurs ressortent. */
+/*
+ * Fond de carte sombre sans autre fournisseur : les tuiles OpenStreetMap sont inversées (la mer
+ * redevient bleue grâce à la rotation de teinte) puis éteintes, pour que les couleurs des joueurs
+ * ressortent. Les communes sont dessinées dans d'autres calques : le filtre ne les touche pas.
+ */
 .leaflet-tile-pane {
-  filter: saturate(0.55);
+  filter: invert(1) hue-rotate(180deg) grayscale(1) brightness(0.78) contrast(0.88);
+  opacity: 0.85;
 }
 
+/* Gris bleuté sous les tuiles à 85 % : la carte reste froide, les couleurs des joueurs ressortent. */
 .leaflet-container {
-  background: #dfe3ea;
+  background: #1a2029;
   font-family: var(--font-sans);
 }
 
 .leaflet-control-zoom.leaflet-bar {
+  margin: 0 16px 28px 0;
   border: none;
-  border-radius: 10px;
+  border-radius: 18px;
   overflow: hidden;
   box-shadow:
-    0 0 0 1px rgb(27 42 65 / 0.14),
-    0 6px 18px -6px rgb(27 42 65 / 0.35);
+    0 0 0 1px rgb(255 255 255 / 0.06),
+    0 8px 24px -6px rgb(0 0 0 / 0.55);
 }
 
-.leaflet-control-zoom a {
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  width: 42px;
+  height: 42px;
+  line-height: 42px;
+  font-size: 20px;
+  border-bottom-color: rgb(255 255 255 / 0.08);
+  background: var(--color-surface);
   color: var(--color-encre);
 }
 
-.leaflet-control-attribution {
+.leaflet-bar a:hover {
+  background: var(--color-brume);
+}
+
+.leaflet-control-attribution.leaflet-control {
+  background: rgb(22 24 27 / 0.75);
+  color: var(--color-ardoise);
   font-size: 11px;
+}
+
+.leaflet-control-attribution a {
+  color: var(--color-encre);
 }
 
 .leaflet-tooltip.etiquette {
   border: none;
-  border-radius: 6px;
-  background: var(--color-encre);
-  box-shadow: 0 4px 12px -4px rgb(27 42 65 / 0.5);
-  color: #fff;
+  border-radius: 8px;
+  background: var(--color-brume);
+  box-shadow: 0 6px 16px -4px rgb(0 0 0 / 0.6);
+  color: var(--color-encre);
   font-size: 0.85rem;
   font-weight: 600;
   padding: 3px 8px;
 }
 
 .leaflet-tooltip-top.etiquette::before {
-  border-top-color: var(--color-encre);
+  border-top-color: var(--color-brume);
 }
 
 /* Le zoom est en bas à droite (le haut appartient au compte et à la fiche) ; sur téléphone, on zoome avec les doigts. */

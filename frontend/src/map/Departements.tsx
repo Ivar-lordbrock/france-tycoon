@@ -7,13 +7,13 @@ import { COULEURS } from './style.ts';
 
 const STYLE: PathOptions = {
   color: COULEURS.encre,
-  weight: 1.1,
-  opacity: 0.75,
+  weight: 1,
+  opacity: 0.22,
   fill: true,
   fillColor: COULEURS.surligneur,
   fillOpacity: 0,
 };
-const STYLE_SURVOL: PathOptions = { fillOpacity: 0.35, weight: 2, opacity: 1 };
+const STYLE_SURVOL: PathOptions = { fillOpacity: 0.15, weight: 2, opacity: 1 };
 
 /** Zooms < 9 : les départements, cliquables pour plonger jusqu'aux communes. */
 export function Departements() {

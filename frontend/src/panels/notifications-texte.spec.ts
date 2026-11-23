@@ -153,8 +153,8 @@ describe('petits messages en direct', () => {
       texte: 'Quête « Chef de chantier » réussie : 1 500 ₮ à réclamer.',
       ton: 'info',
     });
-    expect(espaces(recompenseQuete({ rewardCash: 3_000, rewardGems: 2 }))).toBe('3 000 ₮ et 2 💎');
-    expect(recompenseQuete({ rewardCash: 0, rewardGems: 2 })).toBe('2 💎');
+    expect(espaces(recompenseQuete({ rewardCash: 3_000, rewardGems: 2 }))).toBe('3 000 ₮ et 2 gemmes');
+    expect(recompenseQuete({ rewardCash: 0, rewardGems: 1 })).toBe('1 gemme');
   });
 
   it('nouveau rang : son nom, et la limite seulement si elle a monté', () => {
