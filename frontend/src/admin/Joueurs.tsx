@@ -305,7 +305,7 @@ function Fiche({ id, moi, grade, onRetour }: { id: number; moi: string; grade: G
       )}
 
       <dl className="panneau grid grid-cols-2 divide-encre/10 sm:grid-cols-5 sm:divide-x">
-        <Chiffre libelle="₮">{tycoons(p.cash)}</Chiffre>
+        <Chiffre libelle="Cash">{tycoons(p.cash)}</Chiffre>
         <Chiffre libelle="Gemmes">{entier(p.gems)}</Chiffre>
         <Chiffre libelle="Revenus">{tycoons(p.incomePerHour)} / h</Chiffre>
         <Chiffre libelle="Communes">{entier(p.territories)}</Chiffre>
