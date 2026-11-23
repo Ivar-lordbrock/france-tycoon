@@ -12,9 +12,9 @@ export function lienAvis(valeur: string | undefined): string | null {
   return null;
 }
 
-const AVIS = lienAvis(import.meta.env.VITE_AVIS_URL);
+export const AVIS = lienAvis(import.meta.env.VITE_AVIS_URL);
 
-/** Petits liens : « Donner mon avis » et les pages légales (`public/legal.html`), ouverts dans un nouvel onglet. */
+/** Petits liens : « Donner mon avis », la feuille de route (/roadmap) et les pages légales (`public/legal.html`, nouvel onglet). */
 export function LiensInfos({ className = '' }: { className?: string }) {
   // Au doigt : 44 px de haut.
   const lien = 'hover:text-encre hover:underline pointer-coarse:py-3.5';
@@ -28,6 +28,9 @@ export function LiensInfos({ className = '' }: { className?: string }) {
           Donner mon avis
         </a>
       )}
+      <a href="/roadmap" className={lien}>
+        Feuille de route
+      </a>
       <a href="/legal.html#regles" target="_blank" rel="noopener" className={lien}>
         Règles
       </a>

@@ -7,6 +7,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App.tsx';
 import { messageErreur } from './api/client.ts';
 import { ajouterToast } from './etat/toasts.ts';
+import { FeuilleDeRoute } from './FeuilleDeRoute.tsx';
 
 const client = new QueryClient({
   defaultOptions: { queries: { retry: 2, refetchOnWindowFocus: false } },
@@ -22,10 +23,13 @@ const client = new QueryClient({
 const racine = document.getElementById('racine');
 if (!racine) throw new Error('Élément #racine absent de index.html');
 
+// shortcut: une seule autre page, choisie par l'adresse (Caddy et Vite servent index.html partout) ; passer à un routeur s'il en vient d'autres.
+const Page = location.pathname.replace(/\/$/, '') === '/roadmap' ? FeuilleDeRoute : App;
+
 createRoot(racine).render(
   <StrictMode>
     <QueryClientProvider client={client}>
-      <App />
+      <Page />
     </QueryClientProvider>
   </StrictMode>,
 );
