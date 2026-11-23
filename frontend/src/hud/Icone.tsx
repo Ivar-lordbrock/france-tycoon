@@ -9,6 +9,7 @@ const DESSINS = {
   fermer: ['M6 6l12 12M18 6 6 18'],
   chevron: ['m6 9 6 6 6-6'],
   coche: ['m5 12.5 4.5 4.5L19 7'],
+  menu: ['M4 7h16M4 12h16M4 17h16'],
 } as const;
 
 export type NomIcone = keyof typeof DESSINS;

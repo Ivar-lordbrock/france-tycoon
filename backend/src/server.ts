@@ -28,7 +28,9 @@ const app = construireApp({
     cookieSecure: enProduction,
   },
   securite: { origine: config.APP_ORIGIN },
+  adminEmails: config.ADMIN_EMAILS,
 });
+if (config.ADMIN_EMAILS.length === 0) app.log.warn('ADMIN_EMAILS vide : aucun admin d’office pour /admin');
 if (config.AUTH_DEV && !enProduction) {
   app.log.warn('connexion de développement active (AUTH_DEV=true) : pour tester en local, jamais en production');
 }
