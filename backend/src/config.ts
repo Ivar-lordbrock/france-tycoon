@@ -23,6 +23,8 @@ const schemaConfig = z
     GOOGLE_CLIENT_ID: z.string().trim().default(''),
     /** Connexion de développement sans Google : pour tester en local, refusée en production. */
     AUTH_DEV: booleen,
+    /** Sel secret pour hacher les IP des connexions (anti-triche). Vide = connexions non notées. */
+    IP_SALT: z.string().trim().default(''),
     /** E-mails Google admin d'office du dashboard /admin, séparés par des virgules (docs/10-admin.md). */
     ADMIN_EMAILS: z
       .string()

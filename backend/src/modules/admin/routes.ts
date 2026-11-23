@@ -14,6 +14,7 @@ import { versionDuSchema } from '../../db/migrations.ts';
 import { ErreurMetier } from '../../erreurs.ts';
 import { exigerJoueur } from '../auth/requete.ts';
 import { creerLecteurRevenus, revenuDuJoueur } from '../income/revenus.ts';
+import { routesAdminJoueurs } from './joueurs.ts';
 
 const VERSION = process.env.npm_package_version ?? '0.1.0';
 const JOUR_S = 86_400;
@@ -75,16 +76,23 @@ export const routesAdmin: FastifyPluginAsyncZod<OptionsAdmin> = async (app, { ad
   app.register(async (equipe) => {
     equipe.decorateRequest('equipe', null);
     equipe.addHook('preHandler', async (req) => {
-      const compte = lireCompte.get(exigerJoueur(req));
-      const grade = compte && (adminEmails.includes(compte.email.toLowerCase()) ? 'admin' : compte.role);
+      const id = exigerJoueur(req);
+      const compte = lireCompte.get(id);
+      const fixe = !!compte && adminEmails.includes(compte.email.toLowerCase());
+      const grade = compte && (fixe ? 'admin' : compte.role);
       if (!compte || !grade) {
         throw new ErreurMetier('FORBIDDEN', 403, 'Réservé à l’équipe Kadastr (modérateurs et admins).');
       }
-      req.equipe = { pseudo: compte.pseudo, grade };
+      req.equipe = { id, pseudo: compte.pseudo, grade, fixe };
     });
 
     // Le crochet ci-dessus a rempli `req.equipe` ou refusé la requête.
-    equipe.get('/me', { schema: { response: { 200: adminMoiReponseSchema } } }, (req) => req.equipe as AdminMoiReponse);
+    equipe.get('/me', { schema: { response: { 200: adminMoiReponseSchema } } }, (req) => {
+      const { pseudo, grade } = req.equipe as AdminMoiReponse;
+      return { pseudo, grade };
+    });
+
+    equipe.register(routesAdminJoueurs, { adminEmails });
 
     const joueurs = app.db.prepare<[number, number, number], VueEnsembleReponse['players']>(`
       SELECT count(*) AS total,
@@ -144,6 +152,6 @@ export const routesAdmin: FastifyPluginAsyncZod<OptionsAdmin> = async (app, { ad
 declare module 'fastify' {
   interface FastifyRequest {
     /** Membre de l'équipe connecté (routes 🛡️ /admin seulement), sinon `null`. */
-    equipe: { pseudo: string; grade: Grade } | null;
+    equipe: { id: number; pseudo: string; grade: Grade; fixe: boolean } | null;
   }
 }

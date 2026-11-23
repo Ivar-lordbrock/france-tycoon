@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import {
   type ConfigConnexion,
   configConnexionSchema,
@@ -19,6 +20,8 @@ export interface OptionsAuth {
   googleClientId: string | null;
   /** Connexion de développement (`AUTH_DEV`), jamais en production. */
   devLogin: boolean;
+  /** `IP_SALT` : sel des IP hachées notées à chaque connexion (anti-triche) ; vide = rien n'est noté. */
+  ipSalt?: string;
   cookieSecure: boolean;
   /** Pour les tests : remplace la vérification auprès de Google. */
   verifierGoogle?: VerifierGoogle;
@@ -26,13 +29,23 @@ export interface OptionsAuth {
 
 /** Routes /auth : configuration de l'écran de connexion, Google, compte de test, déconnexion. */
 export const routesAuth: FastifyPluginAsyncZod<OptionsAuth> = async (app, options) => {
-  const { googleClientId, devLogin, cookieSecure } = options;
+  const { googleClientId, devLogin, cookieSecure, ipSalt = '' } = options;
   const verifier = options.verifierGoogle ?? (googleClientId ? creerVerifierGoogle(googleClientId) : null);
 
-  /** Ouvre la session, pose le cookie et renvoie le profil. */
-  const connecter = (identite: Identite, userAgent: string | undefined) => {
+  const hacher = (texte: string) => createHash('sha256').update(ipSalt).update(texte).digest('hex').slice(0, 16);
+  const noterConnexion = app.db.prepare<[number, string, string]>(
+    'INSERT INTO login_events (user_id, ip_hash, ua_hash) VALUES (?, ?, ?)',
+  );
+  const oublierConnexions = app.db.prepare<[number]>('DELETE FROM login_events WHERE created_at < unixepoch() - ?');
+
+  /** Ouvre la session, note la connexion (IP et navigateur hachés), pose le cookie et renvoie le profil. */
+  const connecter = (identite: Identite, userAgent: string | undefined, ip: string) => {
     const { userId, isNew } = connecterJoueur(app.db, identite);
     const jeton = ouvrirSession(app.db, userId, userAgent);
+    if (ipSalt) {
+      noterConnexion.run(userId, hacher(ip), hacher(userAgent ?? ''));
+      oublierConnexions.run(90 * 86_400); // 90 jours, comme le disent les mentions légales
+    }
     return { jeton, corps: { user: lireProfil(app.db, userId), isNew } };
   };
 
@@ -64,6 +77,7 @@ export const routesAuth: FastifyPluginAsyncZod<OptionsAuth> = async (app, option
       const { jeton, corps } = connecter(
         { googleId: google.sub, email: google.email, nom: google.nom, avatarUrl: google.photo ?? null },
         req.headers['user-agent'],
+        req.ip,
       );
       poserCookie(reply, jeton, cookieSecure);
       return corps;
@@ -80,6 +94,7 @@ export const routesAuth: FastifyPluginAsyncZod<OptionsAuth> = async (app, option
         const { jeton, corps } = connecter(
           { googleId: `dev:${cle}`, email: `${cle}@dev.invalid`, nom: req.body.pseudo },
           req.headers['user-agent'],
+          req.ip,
         );
         poserCookie(reply, jeton, cookieSecure);
         return corps;

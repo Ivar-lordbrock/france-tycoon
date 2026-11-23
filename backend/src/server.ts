@@ -26,6 +26,7 @@ const app = construireApp({
     // Double garde : lireConfig refuse déjà AUTH_DEV en production.
     devLogin: config.AUTH_DEV && !enProduction,
     cookieSecure: enProduction,
+    ipSalt: config.IP_SALT,
   },
   securite: { origine: config.APP_ORIGIN },
   adminEmails: config.ADMIN_EMAILS,

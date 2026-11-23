@@ -79,6 +79,8 @@ lire_reglages() {
   BRANCHE=${BRANCHE:-${deja[BRANCHE]:-main}}
   SAUVEGARDE_DOSSIER=${SAUVEGARDE_DOSSIER:-${deja[SAUVEGARDE_DOSSIER]:-}}
   B2_ENDPOINT=${B2_ENDPOINT#https://}
+  # Sel secret des empreintes de connexion (anti-triche) : tiré une fois, gardé ensuite, jamais affiché.
+  IP_SALT=${IP_SALT:-${deja[IP_SALT]:-$(openssl rand -hex 32)}}
 
   if [[ ! $DOMAINE =~ ^[A-Za-z0-9.-]+$ ]]; then
     echo "Nom de domaine invalide : « $DOMAINE » (lettres, chiffres, points et tirets seulement)." >&2
@@ -88,7 +90,7 @@ lire_reglages() {
   install -d -m 700 /etc/france-tycoon
   (
     umask 077
-    for cle in DOMAINE GOOGLE_CLIENT_ID AVIS_URL ADMIN_EMAILS B2_BUCKET B2_ENDPOINT B2_KEY_ID B2_APP_KEY DEPOT_URL BRANCHE SAUVEGARDE_DOSSIER; do
+    for cle in DOMAINE GOOGLE_CLIENT_ID AVIS_URL ADMIN_EMAILS IP_SALT B2_BUCKET B2_ENDPOINT B2_KEY_ID B2_APP_KEY DEPOT_URL BRANCHE SAUVEGARDE_DOSSIER; do
       printf "%s='%s'\n" "$cle" "${!cle//\'/}"
     done >"$REGLAGES"
   )
@@ -227,6 +229,7 @@ DATABASE_PATH=$BASE
 GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
 AUTH_DEV=false
 ADMIN_EMAILS=$ADMIN_EMAILS
+IP_SALT=$IP_SALT
 VITE_TILE_URL=$tuiles
 VITE_TILE_ATTRIBUTION=$attribution
 VITE_AVIS_URL=$AVIS_URL

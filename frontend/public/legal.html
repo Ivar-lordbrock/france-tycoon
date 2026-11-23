@@ -142,7 +142,9 @@
           </li>
           <li>
             <strong>Des données techniques</strong> : ton adresse IP et ton navigateur, dans les journaux du serveur et
-            pour limiter le nombre de requêtes (protection contre les abus).
+            pour limiter le nombre de requêtes (protection contre les abus). À chaque connexion, on garde aussi une
+            empreinte brouillée (hachée avec une clé secrète) de ton IP et de ton navigateur, impossible à relire en
+            clair, pour repérer la triche (plusieurs comptes pour une même personne).
           </li>
         </ul>
 
@@ -171,6 +173,7 @@
         <ul>
           <li>Ton compte et ta partie : tant que ton compte existe.</li>
           <li>Les journaux techniques du serveur (qui contiennent les adresses IP) : 30 jours.</li>
+          <li>Les empreintes brouillées des connexions : 90 jours.</li>
           <li>Les copies de sauvegarde : 7 jours.</li>
         </ul>
 
