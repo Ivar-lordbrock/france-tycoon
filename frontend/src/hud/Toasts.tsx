@@ -10,15 +10,15 @@ const BORD: Record<Toast['ton'], string> = {
 };
 
 /**
- * Petits messages par-dessus la carte : en haut au milieu sur grand écran, au-dessus de la barre
- * du bas sur téléphone. La zone existe toujours, pour que les lecteurs d'écran annoncent les nouveaux.
+ * Petits messages par-dessus la carte : en haut (au milieu sur grand écran), loin des boutons de la
+ * fiche. La zone existe toujours, pour que les lecteurs d'écran annoncent les nouveaux.
  */
 export function Toasts() {
   const toasts = useToasts((etat) => etat.toasts);
   return (
     <section
       aria-label="Messages"
-      className="pointer-events-none absolute inset-x-4 bottom-36 z-[1100] md:inset-x-auto md:top-4 md:bottom-auto md:left-1/2 md:w-[min(26rem,calc(100%-44rem))] md:-translate-x-1/2"
+      className="pointer-events-none absolute inset-x-4 top-4 z-[1100] md:inset-x-auto md:left-1/2 md:w-[min(26rem,calc(100%-44rem))] md:-translate-x-1/2"
     >
       <ol aria-live="polite" className="flex flex-col gap-2">
         {toasts.map((toast) => (

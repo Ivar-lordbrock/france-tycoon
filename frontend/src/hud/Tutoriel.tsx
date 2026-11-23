@@ -40,6 +40,18 @@ export function Tutoriel() {
     mutate(etape.key);
   }, [etape, fait, mutate]);
 
+  // L'élément visé peut être caché dans un panneau qui défile (compte, fiche) et qui rétrécit quand
+  // un autre s'ouvre (téléphone) : on le garde en vue.
+  const ancre = etape?.anchor;
+  useEffect(() => {
+    const cible = ancre ? document.querySelector(`[data-tuto~="${ancre}"]`) : null;
+    const panneau = cible?.closest('.panneau');
+    if (!cible || !panneau) return;
+    const suivi = new ResizeObserver(() => cible.scrollIntoView({ block: 'nearest' }));
+    suivi.observe(panneau);
+    return () => suivi.disconnect();
+  }, [ancre]);
+
   if (!etape || !data) return null;
   const erreur = faire.error ?? passer.error;
 

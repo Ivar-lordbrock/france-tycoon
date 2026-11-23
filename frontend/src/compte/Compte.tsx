@@ -1,5 +1,5 @@
 import { type MoiReponse, PSEUDO_MAX, pseudoSchema } from '@france-tycoon/shared';
-import { type FormEvent, useId, useState } from 'react';
+import { type FormEvent, useEffect, useId, useState } from 'react';
 import { useCashEnDirect } from '../api/batiments.ts';
 import { messageErreur } from '../api/client.ts';
 import {
@@ -12,6 +12,7 @@ import {
 } from '../api/compte.ts';
 import { useFluxDirect } from '../api/direct.ts';
 import { useEncaisser } from '../api/quetes.ts';
+import { useCarte } from '../etat/carte.ts';
 import { CentreMessages } from '../hud/CentreMessages.tsx';
 import { ChantierEnCours } from '../hud/ChantierEnCours.tsx';
 import { Classement } from '../hud/Classement.tsx';
@@ -153,13 +154,21 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
     setOuvert(null);
     setDeplie(false);
   };
+  // Une fiche s'ouvre : le compte se replie pour lui laisser la place.
+  const selection = useCarte((etat) => etat.selection);
+  useEffect(() => {
+    if (!selection) return;
+    setOuvert(null);
+    setDeplie(false);
+  }, [selection]);
   const nonLus = moi.unreadNotifications;
   // Entre deux lectures de /me, le cash monte de revenu/h ÷ 3 600 chaque seconde (docs/04 § 4.4).
   const cash = useCashEnDirect() ?? moi.wallet.cash;
   const encaisser = useEncaisser();
 
+  // min-h-14 : quand la fiche prend la place, la première ligne du compte reste visible.
   return (
-    <section aria-label="Mon compte" className="panneau pointer-events-auto min-h-0 overflow-y-auto">
+    <section aria-label="Mon compte" className="panneau pointer-events-auto min-h-14 overflow-y-auto">
       <div className="flex items-center">
         <button
           type="button"
