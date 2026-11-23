@@ -24,7 +24,14 @@ export function App() {
       <div className="group pointer-events-none absolute inset-0 z-[1000] flex flex-col gap-2 p-4 pb-7 md:block">
         <div className="contents md:absolute md:top-4 md:left-4 md:flex md:w-80 md:flex-col md:gap-3">
           <header className="panneau pointer-events-auto p-2.5">
-            <p className="marque px-0.5 pb-2">Kadastr</p>
+            <p className="marque flex items-center gap-1.5 px-0.5 pb-2">
+              {/* Même dessin que favicon.svg : l'hexagone de la France, en jaune sur encre. */}
+              <svg viewBox="0 0 32 32" className="size-5" aria-hidden="true">
+                <rect width="32" height="32" rx="7" fill="#1b2a41" />
+                <path d="M16 5 26 10.5 25 21.5 16 27 7 21.5 6 10.5Z" fill="#ffd23f" />
+              </svg>
+              Kadastr
+            </p>
             <Recherche />
           </header>
           <div className="max-md:hidden">

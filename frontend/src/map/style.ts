@@ -35,7 +35,8 @@ export function styleCommune(
 
   const parEtat: Record<ProprietesCommuneCarte['state'], PathOptions> = {
     free: {},
-    mine: { color: couleurJoueur, opacity: 0.9, weight: 1.6, fillColor: couleurJoueur, fillOpacity: 0.45 },
+    // Contour épais : on reconnaît ses communes même quand un rival a une couleur proche.
+    mine: { color: couleurJoueur, opacity: 1, weight: 3, fillColor: couleurJoueur, fillOpacity: 0.5 },
     rival: { color: couleurJoueur, opacity: 0.8, weight: 1, fillColor: couleurJoueur, fillOpacity: 0.3 },
     shield: {
       color: COULEURS.bouclier,

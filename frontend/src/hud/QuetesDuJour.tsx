@@ -44,7 +44,7 @@ export function QuetesDuJour({ id }: { id: string }) {
                       type="button"
                       onClick={() => reclamer.mutate(q.id)}
                       disabled={reclamer.isPending}
-                      className="h-8 rounded-md bg-encre px-3 font-semibold text-white disabled:opacity-50"
+                      className="h-8 rounded-md bg-surligneur px-3 font-semibold text-encre hover:bg-surligneur/80 disabled:opacity-50"
                     >
                       Réclamer
                     </button>

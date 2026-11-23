@@ -98,6 +98,8 @@ describe('POST /api/v1/auth/google', () => {
     });
 
     expect(reponse.json().user.pseudo).toBe('Julie Martin 2');
+    // Couleur suivante de la palette : on ne confond pas les deux joueurs sur la carte.
+    expect(reponse.json().user.markerColor).toBe('#dc2626');
   });
 
   it('refuse un jeton invalide ou une adresse non vérifiée (401)', async () => {
