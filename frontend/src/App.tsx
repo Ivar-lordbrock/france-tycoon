@@ -8,7 +8,11 @@ import { FicheCommune } from './panels/FicheCommune.tsx';
 import { Recherche } from './panels/Recherche.tsx';
 import { SelecteurZones } from './panels/SelecteurZones.tsx';
 
-/** Écran principal : la carte en plein écran, les panneaux flottent par-dessus. */
+/**
+ * Écran principal : la carte en plein écran, les panneaux flottent par-dessus, aux coins sur grand écran.
+ * Sur téléphone, les blocs `contents` s'effacent : tout tient dans une seule colonne, donc rien ne se
+ * chevauche, et la fiche comme le tutoriel arrivent en bas, sous le pouce.
+ */
 export function App() {
   return (
     <div className="relative h-dvh w-full overflow-hidden">
@@ -17,30 +21,36 @@ export function App() {
         <CarteFrance />
       </main>
 
-      <div className="pointer-events-none absolute inset-x-4 top-4 z-[1000] flex flex-col gap-3 md:right-auto md:w-80">
-        <header className="panneau pointer-events-auto p-2.5">
-          <p className="marque px-0.5 pb-2">Kadastr</p>
-          <Recherche />
-        </header>
-        <div className="max-md:hidden">
-          <SelecteurZones />
+      <div className="group pointer-events-none absolute inset-0 z-[1000] flex flex-col gap-2 p-4 pb-7 md:block">
+        <div className="contents md:absolute md:top-4 md:left-4 md:flex md:w-80 md:flex-col md:gap-3">
+          <header className="panneau pointer-events-auto p-2.5">
+            <p className="marque px-0.5 pb-2">Kadastr</p>
+            <Recherche />
+          </header>
+          <div className="max-md:hidden">
+            <SelecteurZones />
+          </div>
         </div>
-      </div>
 
-      {/* À droite sur grand écran ; sous la recherche sur téléphone, en s'arrêtant au-dessus de la barre du bas. */}
-      <div className="pointer-events-none absolute inset-x-4 top-[6.75rem] z-[1000] flex max-h-[calc(100dvh-15rem)] flex-col gap-3 md:top-4 md:left-auto md:max-h-[calc(100dvh-10rem)] md:w-80">
-        <Compte />
-        <FicheCommune />
-      </div>
-
-      <div className="pointer-events-none absolute inset-x-4 bottom-7 z-[1000] flex flex-col items-start gap-2">
-        <Tutoriel />
-        <BarreEtat />
-        <div className="repli max-md:hidden">
-          <Legende />
+        <div className="contents md:absolute md:top-4 md:right-4 md:flex md:max-h-[calc(100dvh-10rem)] md:w-80 md:flex-col md:gap-3">
+          <Compte />
+          {/* Téléphone : pousse la fiche et la suite en bas de l'écran. */}
+          <div className="flex-1 md:hidden" />
+          <FicheCommune />
         </div>
-        <div className="w-full md:hidden">
-          <SelecteurZones />
+
+        <div className="contents md:absolute md:inset-x-4 md:bottom-7 md:flex md:flex-col md:items-start md:gap-2">
+          <Tutoriel />
+          {/* Fiche ouverte sur téléphone : la barre d'état lui laisse la place. */}
+          <div className="self-start max-md:group-has-[.fiche]:hidden">
+            <BarreEtat />
+          </div>
+          <div className="repli max-md:hidden">
+            <Legende />
+          </div>
+          <div className="md:hidden">
+            <SelecteurZones />
+          </div>
         </div>
       </div>
 

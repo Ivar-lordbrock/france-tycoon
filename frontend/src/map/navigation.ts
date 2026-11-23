@@ -21,6 +21,12 @@ export function verrouiller(carte: L.Map, vue: Vue) {
   carte.setMinZoom(Math.max(2, carte.getBoundsZoom(limites) - 1));
 }
 
+/** Sur téléphone, la fiche couvre le bas de l'écran : on vise plus bas pour garder la commune visible au-dessus. */
+function viser(carte: L.Map, centre: L.LatLngExpression, zoom: number) {
+  if (!window.matchMedia('(width < 48rem)').matches) return centre;
+  return carte.unproject(carte.project(centre, zoom).add([0, carte.getSize().y / 4]), zoom);
+}
+
 export function allerVersVue(carte: L.Map, vue: Vue) {
   liberer(carte);
   carte.once('moveend', () => verrouiller(carte, vue));
@@ -36,7 +42,7 @@ export function allerVersCommune(carte: L.Map, commune: ResultatRecherche) {
   );
   liberer(carte);
   carte.once('moveend', () => verrouiller(carte, vueDeZone(commune.zone)));
-  carte.flyTo(limites.getCenter(), zoom, { duration: DUREE_VOL });
+  carte.flyTo(viser(carte, limites.getCenter(), zoom), zoom, { duration: DUREE_VOL });
 }
 
 /** Vole vers le centre d'une commune (liste « Mes territoires ») ; on garde le zoom s'il est déjà proche. */
@@ -44,5 +50,5 @@ export function allerVersCentre(carte: L.Map, centre: { lat: number; lng: number
   const zoom = Math.min(ZOOM_MAX_COMMUNE, Math.max(ZOOM_MIN_COMMUNES + 2, carte.getZoom()));
   liberer(carte);
   carte.once('moveend', () => verrouiller(carte, vueDeZone(zone)));
-  carte.flyTo([centre.lat, centre.lng], zoom, { duration: DUREE_VOL });
+  carte.flyTo(viser(carte, [centre.lat, centre.lng], zoom), zoom, { duration: DUREE_VOL });
 }

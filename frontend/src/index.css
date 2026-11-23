@@ -23,6 +23,18 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Au doigt : cibles d'au moins 44 px (boutons à icône seule : en largeur aussi). */
+@media (pointer: coarse) {
+  button,
+  select,
+  input:not([type="checkbox"], [type="radio"]) {
+    min-height: 2.75rem;
+  }
+  button[aria-label] {
+    min-width: 2.75rem;
+  }
+}
+
 @layer components {
   /* Panneau posé sur la carte : blanc net, filet d'encre, ombre courte. */
   .panneau {
