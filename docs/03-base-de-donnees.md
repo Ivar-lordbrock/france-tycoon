@@ -192,6 +192,8 @@ LIMIT 3000;
 
 **`job_runs`** — journal des tâches planifiées + verrou (une seule exécution `running` par tâche).
 
+**`roadmap_features`** (migration 009) — la feuille de route publique (page `/roadmap`, `GET /roadmap`). `code` unique (`intercommunalite`, `jumelage`, `saisons`, `gemmes`, `aleas`), `position` = ordre d’affichage, `category` (`social`, `gameplay`, `economy`), `status` (`planned` Prévu, `in_progress` En cours, `released` Déployé), `details` = tableau JSON de textes. Remplie par la migration elle-même, rejouable sans doublon (`ON CONFLICT (code) DO NOTHING`). Changer un statut ou un texte : nouvelle migration avec un `UPDATE`. Table seule, sans lien avec les autres.
+
 ## 3.4 Ce que la base garantit, ce que le code garantit
 
 | Garanti par SQLite (testé) | Garanti par le code (à tester aux étapes 3–4) |
