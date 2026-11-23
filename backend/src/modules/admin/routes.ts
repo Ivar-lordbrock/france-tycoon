@@ -16,6 +16,7 @@ import { exigerJoueur } from '../auth/requete.ts';
 import { creerLecteurRevenus, revenuDuJoueur } from '../income/revenus.ts';
 import { routesAdminJoueurs } from './joueurs.ts';
 import { routesAdminLive } from './live.ts';
+import { routesAdminReglages } from './reglages.ts';
 import { routesAdminSauvegardes } from './sauvegardes.ts';
 import { routesAdminTerritoires } from './territoires.ts';
 
@@ -102,6 +103,7 @@ export const routesAdmin: FastifyPluginAsyncZod<OptionsAdmin> = async (
     equipe.register(routesAdminJoueurs, { adminEmails });
     equipe.register(routesAdminTerritoires);
     equipe.register(routesAdminLive);
+    equipe.register(routesAdminReglages);
     equipe.register(routesAdminSauvegardes, { dossier: dossierSauvegardes });
 
     const joueurs = app.db.prepare<[number, number, number], VueEnsembleReponse['players']>(`

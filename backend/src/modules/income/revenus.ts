@@ -1,4 +1,5 @@
 import {
+  ajuster,
   apportBatiment,
   type ChantierFini,
   facteurTaille,
@@ -11,6 +12,7 @@ import {
 import type { Base } from '../../db/connexion.ts';
 import { creerRecalculLimite } from '../buildings/limites.ts';
 import { emettre } from '../evenements/bus.ts';
+import { type Calendrier, creerLecteurCalendrier } from '../reglages/calendrier.ts';
 import { creerIssuesOpa } from '../takeovers/issues.ts';
 import { wallet } from '../wallet/wallet.ts';
 
@@ -65,14 +67,22 @@ export interface TerritoireRevenu {
   batiments: BatimentRevenu[];
 }
 
-/** R_J à l'instant `instant` (pas encore de boost : boutique et quêtes arrivent plus tard). */
-export function revenuDuJoueur(territoires: readonly TerritoireRevenu[], instant: number): number {
-  return revenuJoueur(territoires.map((t) => revenuDuTerritoire(t.baseValue, t.batiments, instant)));
+/** R_J à l'instant `instant`, multiplié par le réglage des revenus en % (dashboard /admin ; 100 = normal). */
+export function revenuDuJoueur(territoires: readonly TerritoireRevenu[], instant: number, pct = 100): number {
+  return ajuster(revenuJoueur(territoires.map((t) => revenuDuTerritoire(t.baseValue, t.batiments, instant))), pct);
 }
 
-/** Σ R_J × Δt depuis le dernier encaissement, par morceaux : le revenu change à chaque chantier fini. */
-export function cumulDepuis(territoires: readonly TerritoireRevenu[], depuis: number, maintenant: number): number {
-  const fins = new Set<number>();
+/**
+ * Σ R_J × Δt depuis le dernier encaissement, par morceaux : le revenu change à chaque chantier fini
+ * et à chaque changement de réglage (un événement ne compte que pendant ses dates).
+ */
+export function cumulDepuis(
+  territoires: readonly TerritoireRevenu[],
+  depuis: number,
+  maintenant: number,
+  reglages?: Calendrier,
+): number {
+  const fins = new Set<number>(reglages?.ruptures);
   for (const { batiments } of territoires) {
     for (const b of batiments) {
       if (b.targetLevel !== null && b.worksEndsAt !== null && b.worksEndsAt > depuis && b.worksEndsAt <= maintenant) {
@@ -80,8 +90,9 @@ export function cumulDepuis(territoires: readonly TerritoireRevenu[], depuis: nu
       }
     }
   }
-  const changements = [...fins].map((a) => ({ a, revenuParHeure: revenuDuJoueur(territoires, a) }));
-  return revenuCumule(depuis, maintenant, revenuDuJoueur(territoires, depuis), changements);
+  const revenuA = (a: number) => revenuDuJoueur(territoires, a, reglages?.a(a).income);
+  const changements = [...fins].map((a) => ({ a, revenuParHeure: revenuA(a) }));
+  return revenuCumule(depuis, maintenant, revenuA(depuis), changements);
 }
 
 interface LigneTerritoire {
@@ -169,6 +180,7 @@ export function creerEncaisseurSimple(db: Base) {
     'UPDATE users SET income_collected_at = ?, income_remainder = ? WHERE id = ?',
   );
   const recalculerLimite = creerRecalculLimite(db);
+  const lireReglages = creerLecteurCalendrier(db);
 
   return function encaisser(moi: number, maintenant: number): Encaissement {
     if (!db.inTransaction) throw new Error('encaisser doit être appelé dans une transaction');
@@ -176,7 +188,8 @@ export function creerEncaisseurSimple(db: Base) {
     if (!j) throw new Error(`Joueur inconnu : ${moi}`);
 
     const territoires = [...lireTerritoires(moi).values()];
-    const { gain, reste } = partagerCumul(cumulDepuis(territoires, j.depuis, maintenant), j.reste);
+    const reglages = lireReglages(j.depuis, maintenant);
+    const { gain, reste } = partagerCumul(cumulDepuis(territoires, j.depuis, maintenant, reglages), j.reste);
 
     // Chantiers finis : le niveau visé devient le niveau actif ; un message pour le résumé au retour.
     const finis = territoires
@@ -218,6 +231,7 @@ export function creerEncaisseurSimple(db: Base) {
     const nouveauDepuis = Math.max(j.depuis, maintenant);
     if (nouveauDepuis !== j.depuis || reste !== j.reste) noter.run(nouveauDepuis, reste, moi);
 
-    return { collected: gain, cash, incomePerHour: revenuDuJoueur(territoires, maintenant), finished };
+    const incomePerHour = revenuDuJoueur(territoires, maintenant, reglages.a(maintenant).income);
+    return { collected: gain, cash, incomePerHour, finished };
   };
 }

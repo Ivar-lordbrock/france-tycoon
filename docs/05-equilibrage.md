@@ -109,7 +109,7 @@ gain   = ⌊ cumul / 3 600 ⌋
 reste  = cumul mod 3 600               (gardé dans users.income_remainder)
 ```
 
-Le calcul se fait **par morceaux** : si un chantier s'est terminé pendant l'absence, on calcule jusqu'à sa date de fin avec l'ancien revenu, on applique le nouveau niveau, puis on continue. Le plafond de **48 h** (décidé à l'étape 3, au lieu de 24 h) ne punit pas un week-end d'absence et va avec les chantiers les plus longs ; au-delà, les revenus s'arrêtent jusqu'au retour du joueur.
+Le calcul se fait **par morceaux** : si un chantier s'est terminé pendant l'absence, on calcule jusqu'à sa date de fin avec l'ancien revenu, on applique le nouveau niveau, puis on continue. Même chose à chaque changement du réglage des revenus (§ 5.10) : un événement ne compte que pendant ses dates. Le plafond de **48 h** (décidé à l'étape 3, au lieu de 24 h) ne punit pas un week-end d'absence et va avec les chantiers les plus longs ; au-delà, les revenus s'arrêtent jusqu'au retour du joueur.
 
 Le **reste** évite de perdre les fractions : un joueur qui gagne 50 ₮/h et agit toutes les 30 s gagne 0,4 ₮ à chaque fois ; sans reste il ne toucherait jamais rien, avec le reste il touche bien 50 ₮ par heure (migration 004). Formules : `revenuCumule`, `partagerCumul`, `apportBatiment` (balance.ts) ; moteur : `backend/src/modules/income/revenus.ts`, vérifié en temps simulé par `revenus.spec.ts` (« on construit, on revient 2 h plus tard : 976 ₮ exactement »). Pas encore de boost : il arrive avec les quêtes et la boutique.
 
@@ -201,3 +201,21 @@ En patrimoine, une OPA réussie coûte `0,5 × V_T` à l'attaquant et rapporte `
 | Revenu : 218 + 3 × 295 = **1 103 ₮/h** (≈ 26 500 ₮/jour) | |
 
 Avec les 7 emplacements remplis : ≈ 2 280 ₮/h, soit une 2ᵉ commune de village en moins d'une journée et une ville comme Pointe-à-Pitre en une à deux semaines avec 3 territoires. À ajuster après la bêta (étape 6), en changeant seulement `shared/src/balance.ts` et `building_types`.
+
+## 5.10 Réglages à chaud (dashboard /admin)
+
+Un admin change trois réglages sans redéployer, dans « Contrôle live » : **prix d'achat** d'une commune libre, **revenus** passifs, **coût des bâtiments**. Chacun est un % (100 = normal), entre 25 et 400 (÷ 4 à × 4).
+
+- **Permanents** (`live_config`) : s'appliquent tout de suite, jusqu'au prochain changement.
+- **Événements** (`game_events`) : un titre, trois %, un début (maintenant ou plus tard, au plus dans 90 jours) et une durée (1 h à 30 jours). Fin automatique, arrêt possible avant. Les joueurs les voient en haut de la carte.
+- **Réglage effectif** = permanent × chaque événement en cours, arrondi au %, borné entre 10 et 1 000 % (`combinerPct`).
+
+| Réglage | Où il joue | Formule |
+|---|---|---|
+| Prix | achat d'une commune libre (`POST /territories/:insee/buy`, `buyPrice` de la fiche) | `arrondi_100( V0 × prix / 100 )` (`prixAchat`) ; un prix forcé par un admin passe avant |
+| Revenus | `R_J` (encaissement, `incomePerHour` de `/me`) | `arrondi( R_J × revenus / 100 )` ; les revenus d'un territoire (fiche) restent sans réglage |
+| Bâtiments | construction et amélioration | `arrondi_10( C(L) × bâtiments / 100 )`, figé dans `works_cost` : l'annulation rend ce qui a été payé, la démolition 30 % de ce qui a été payé |
+
+Pas touchés : la valeur d'un territoire (V_T), les OPA, la vente à l'État, les quêtes, la durée des chantiers.
+
+**Jamais dans le passé** : un changement part de maintenant, un événement aussi. Les revenus non encaissés se calculent par morceaux, à chaque changement de réglage (§ 5.3) : un week-end « revenus × 2 » ne double que les heures du week-end, même si le joueur encaisse lundi. Formules : `combinerPct`, `ajuster`, `prixAchat` (balance.ts) ; calendrier : `backend/src/modules/reglages/calendrier.ts`.

@@ -157,6 +157,8 @@ describe('aperçus des chantiers (mêmes formules que le serveur)', () => {
     });
     expect(net(apercuConstruction(residence, contexte({ cash: 1_000 })).raison)).toBe('Il te manque 3 430 ₮.');
     expect(apercuConstruction(residence, contexte({ premierChantier: true })).duree).toBe(10);
+    // Réglage à chaud du coût des bâtiments (GET /status) : 4 430 × 150 % = 6 645 → 6 650 (arrondi à 10).
+    expect(apercuConstruction(residence, contexte({ pctBatiment: 150 })).cout).toBe(6_650);
   });
 
   it('le bonus d’un équipement public s’applique à toute la commune', () => {

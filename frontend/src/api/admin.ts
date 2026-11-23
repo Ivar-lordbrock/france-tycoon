@@ -9,6 +9,7 @@ import type {
   ListeOpaAdminReponse,
   ListeSauvegardesReponse,
   ListeSignalementsReponse,
+  ReglagesAdminReponse,
   SauvegardeReponse,
   StatutOpa,
   StatutSignalement,
@@ -104,6 +105,14 @@ export function useSiteAdmin() {
   return useQuery({
     queryKey: ['admin', 'site'],
     queryFn: ({ signal }) => lireJson<EtatSite>('/api/v1/status', signal),
+  });
+}
+
+/** Réglages à chaud, leur historique et les événements (GET /admin/live-config). */
+export function useReglagesAdmin() {
+  return useQuery({
+    queryKey: ['admin', 'reglages'],
+    queryFn: ({ signal }) => lireJson<ReglagesAdminReponse>('/api/v1/admin/live-config', signal),
   });
 }
 

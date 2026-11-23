@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { EVENEMENT_DUREE_MAX_H, REGLAGE_PCT_MAX, REGLAGE_PCT_MIN } from '../balance.ts';
 import { STATUTS_OPA } from './opa.ts';
-import { STATUTS_SIGNALEMENT } from './site.ts';
+import { reglagesSchema, STATUTS_SIGNALEMENT } from './site.ts';
 
 // GET /api/v1/admin/health — supervision, sans donnée sensible.
 
@@ -293,3 +294,49 @@ export type ListeSauvegardesReponse = z.infer<typeof listeSauvegardesReponseSche
 // POST /admin/backups — `deleted` : anciennes copies effacées pour n'en garder que 20.
 export const sauvegardeReponseSchema = z.object({ backup: ligneSauvegardeSchema, deleted: nombre });
 export type SauvegardeReponse = z.infer<typeof sauvegardeReponseSchema>;
+
+// Réglages à chaud et événements (étape 6) : admins pour changer, toute l'équipe pour lire. 100 % = normal.
+const pct = z.number().int().min(REGLAGE_PCT_MIN).max(REGLAGE_PCT_MAX);
+
+// PUT /admin/live-config — nouveaux réglages permanents, dès maintenant.
+export const reglagesCorpsSchema = z.object({ price: pct, income: pct, building: pct, reason: motif });
+export type ReglagesCorps = z.infer<typeof reglagesCorpsSchema>;
+
+// POST /admin/events — `startsAt` absent ou passé : tout de suite. Fin automatique après `hours` heures.
+export const evenementCorpsSchema = z.object({
+  title: z.string().trim().min(3, 'Titre trop court (3 caractères au moins)').max(80),
+  price: pct,
+  income: pct,
+  building: pct,
+  startsAt: z.number().int().positive().optional(),
+  hours: z.number().int().min(1).max(EVENEMENT_DUREE_MAX_H),
+});
+export type EvenementCorps = z.infer<typeof evenementCorpsSchema>;
+
+export const STATUTS_EVENEMENT = ['upcoming', 'active', 'ended', 'cancelled'] as const;
+const parQui = z.string().nullable();
+const ligneVersionSchema = reglagesSchema.extend({
+  id: z.number().int(),
+  reason: z.string(),
+  startsAt: z.number().int(),
+  by: parQui,
+});
+const ligneEvenementSchema = reglagesSchema.extend({
+  id: z.number().int(),
+  title: z.string(),
+  startsAt: z.number().int(),
+  endsAt: z.number().int(),
+  cancelledAt: z.number().int().nullable(),
+  status: z.enum(STATUTS_EVENEMENT),
+  by: parQui,
+});
+export type LigneEvenement = z.infer<typeof ligneEvenementSchema>;
+
+// GET /admin/live-config — base permanente, réglages du moment, 20 derniers changements, 30 derniers événements.
+export const reglagesAdminReponseSchema = z.object({
+  base: reglagesSchema,
+  effective: reglagesSchema,
+  versions: z.array(ligneVersionSchema),
+  events: z.array(ligneEvenementSchema),
+});
+export type ReglagesAdminReponse = z.infer<typeof reglagesAdminReponseSchema>;

@@ -1,4 +1,5 @@
 import {
+  ajuster,
   apportBatiment,
   bonusNiveau,
   type ChantierFini,
@@ -71,6 +72,8 @@ export interface Contexte {
   aUnSiege: boolean;
   /** Tout premier chantier, pendant le tutoriel : il dure 10 s (le serveur décide, l'écran l'annonce). */
   premierChantier?: boolean;
+  /** Réglage du coût des bâtiments en % (GET /status ; 100 = normal). */
+  pctBatiment?: number;
 }
 
 type Niveaux = { id: number | null; typeCode: string; niveau: number }[];
@@ -102,7 +105,7 @@ export interface ApercuChantier {
 /** Construire un bâtiment de ce type sur la commune (niveau 0 → 1). */
 export function apercuConstruction(type: TypeBatiment, ctx: Contexte): ApercuChantier {
   const { fiche } = ctx;
-  const cout = coutNiveau(type, 1, facteurTaille(fiche.baseValue));
+  const cout = ajuster(coutNiveau(type, 1, facteurTaille(fiche.baseValue)), ctx.pctBatiment ?? 100, 10);
   const actuels = niveauxActuels(ctx);
   const libres = fiche.buildingSlots.total - fiche.buildingSlots.used;
   const ici = fiche.buildings.filter((b) => b.typeCode === type.code).length;
@@ -136,7 +139,7 @@ export function apercuAmelioration(type: TypeBatiment, batiment: BatimentFiche, 
     return { cout: 0, resteCash: ctx.cash, duree: 0, revenu: { avant, apres: avant }, raison: 'Niveau maximum.' };
   }
   const cible = batiment.level + 1;
-  const cout = coutNiveau(type, cible, facteurTaille(ctx.fiche.baseValue));
+  const cout = ajuster(coutNiveau(type, cible, facteurTaille(ctx.fiche.baseValue)), ctx.pctBatiment ?? 100, 10);
   return {
     cout,
     resteCash: ctx.cash - cout,

@@ -139,3 +139,30 @@ test('un admin sauvegarde la base et voit la copie dans la liste', async ({ page
   // Le dossier des copies survit aux essais sur le PC : on vérifie seulement qu'il y en a au moins une.
   await expect(page.getByRole('cell', { name: /^kadastr-\d{8}-\d{6}-\d{3}\.sqlite$/ }).first()).toBeVisible();
 });
+
+test('un admin prévoit un événement pour demain, le voit « À venir », puis l’arrête', async ({ page }) => {
+  // Événement à venir seulement : un événement en cours changerait les prix des essais lancés en même temps.
+  await entrer(page, 'Chef');
+  await page.goto('/admin');
+  await page
+    .getByRole('navigation', { name: 'Vues du dashboard' })
+    .getByRole('button', { name: 'Live config & events' })
+    .click();
+  const bloc = page.locator('section', { has: page.getByRole('heading', { name: 'Événements' }) });
+  const demain = new Date(Date.now() + 86_400_000);
+  const local = (n: number) => String(n).padStart(2, '0');
+  const debut = `${demain.getFullYear()}-${local(demain.getMonth() + 1)}-${local(demain.getDate())}T10:00`;
+
+  await bloc.getByLabel('Titre (vu par les joueurs)').fill('Essai e2e doré');
+  await bloc.getByLabel('Revenus (%)').fill('200');
+  await bloc.getByLabel('Début (vide : tout de suite)').fill(debut);
+  await bloc.getByRole('button', { name: 'Voir avant de lancer' }).click();
+  await expect(bloc.getByText('Revenus × 2')).toBeVisible();
+  await bloc.getByRole('button', { name: 'Lancer' }).click();
+
+  const ligne = bloc.getByRole('row').filter({ hasText: 'Essai e2e doré' }).first();
+  await expect(ligne.getByText('À venir')).toBeVisible();
+  await ligne.getByRole('button', { name: 'Arrêter' }).click();
+  await ligne.getByRole('button', { name: 'Confirmer l’arrêt' }).click();
+  await expect(ligne.getByText('Annulé')).toBeVisible();
+});
