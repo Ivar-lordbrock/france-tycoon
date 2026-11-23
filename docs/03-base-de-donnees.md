@@ -194,7 +194,7 @@ LIMIT 3000;
 
 **`roadmap_features`** (migration 009) — la feuille de route publique (page `/roadmap`, `GET /roadmap`). `code` unique (`intercommunalite`, `jumelage`, `saisons`, `gemmes`, `aleas`), `position` = ordre d’affichage, `category` (`social`, `gameplay`, `economy`), `status` (`planned` Prévu, `in_progress` En cours, `released` Déployé), `details` = tableau JSON de textes. Remplie par la migration elle-même, rejouable sans doublon (`ON CONFLICT (code) DO NOTHING`). Changer un statut ou un texte : nouvelle migration avec un `UPDATE`. Table seule, sans lien avec les autres.
 
-### Dashboard /admin (migrations 010 à 012)
+### Dashboard /admin (migrations 010 à 013)
 
 **`staff_roles`** (010) — grade de l'équipe : `role` `moderator` ou `admin`, `granted_by`, `granted_at`. Un joueur sans ligne n'a pas de grade. Les e-mails de `ADMIN_EMAILS` (`.env`) sont admin d'office, sans ligne ici. `users.role` (ancien) n'est pas lu.
 
@@ -205,6 +205,10 @@ LIMIT 3000;
 **`login_events`** (011) — une ligne par connexion : `ip_hash` et `ua_hash` = sha256(`IP_SALT` + valeur), 16 caractères. Jamais d'IP en clair ; rien n'est noté si `IP_SALT` est vide. Lignes de plus de 90 jours effacées à chaque connexion.
 
 **`territories.forced_price`** (012) — prix d'achat forcé par un admin (> 0) ; `NULL` = calcul auto (V0). Le motif est dans `admin_audit` (`territory.price`).
+
+**`site_status`** (013) — une seule ligne (`id = 1`) : `maintenance_message` (3 à 300 caractères ; `NULL` = pas de maintenance), `banner_text` et `banner_until` (bannière d'annonce ; `until NULL` = sans fin). Lue par `GET /status` et le crochet de `auth/requete.ts`.
+
+**`player_reports`** (013) — « Signaler un bug » : `body` (10 à 2 000), `page` (chemin de la page, 200 max), `status` `open` → `in_progress` → `resolved` ou `rejected`, `staff_note` (vue de l'équipe seulement). `user_id` passe à `NULL` si le compte est supprimé.
 
 **`admin_audit`** (011) — journal des actions de l'équipe : qui (`actor_*`, recopiés), quoi (`action`, `target_type`, `target_id`), `before_json` / `after_json`, `reason`. **En ajout seul** : des déclencheurs refusent `UPDATE` et `DELETE`. Pas de clé étrangère, pour qu'une ligne ne bouge jamais.
 

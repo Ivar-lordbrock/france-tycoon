@@ -90,3 +90,39 @@ test('un admin force le prix d’une commune libre, et le joueur paie ce prix', 
   const bouton = joueur.getByRole('button', { name: /^Acheter pour / });
   await expect.poll(async () => Number(((await bouton.textContent()) ?? '').replace(/\D/g, ''))).toBe(12345);
 });
+
+test('un joueur signale un bug, l’équipe le règle, et une bannière s’affiche puis se retire', async ({ browser }) => {
+  // Pas de maintenance ici : elle bloquerait les essais lancés en même temps (vitest la couvre).
+  const joueur = await browser.newPage();
+  await joueur.route(/^https?:\/\/(?!localhost|127\.0\.0\.1)/, (route) => route.abort());
+  await entrer(joueur, 'Rapporteur');
+  await joueur.getByRole('button', { name: 'Mon profil (Rapporteur)' }).click();
+  await joueur.getByRole('button', { name: 'Signaler un bug…' }).click();
+  await joueur.getByLabel('Qu’est-ce qui ne marche pas ?').fill('Le bouton Encaisser clignote en essai.');
+  await joueur.getByRole('button', { name: 'Envoyer' }).click();
+  await expect(joueur.getByText('Merci ! L’équipe va lire ton message.', { exact: false })).toBeVisible();
+
+  const page = await browser.newPage();
+  await page.route(/^https?:\/\/(?!localhost|127\.0\.0\.1)/, (route) => route.abort());
+  await entrer(page, 'Chef');
+  await page.goto('/admin');
+  const menu = page.getByRole('navigation', { name: 'Vues du dashboard' });
+  await menu.getByRole('button', { name: /Sauvegardes & signalements/ }).click();
+  const carte = page.getByRole('listitem').filter({ hasText: 'Le bouton Encaisser clignote' });
+  await carte.getByRole('combobox', { name: 'Nouveau statut' }).selectOption('resolved');
+  await carte.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.getByText('Le bouton Encaisser clignote')).toBeHidden();
+
+  await menu.getByRole('button', { name: 'Live config & events' }).click();
+  await page.getByLabel('Texte').fill('Annonce de l’essai e2e');
+  await page.getByRole('button', { name: 'Afficher', exact: true }).click();
+  await expect(page.getByText(/Affichée jusqu’au/)).toBeVisible();
+
+  await joueur.reload();
+  await expect(joueur.getByRole('status').filter({ hasText: 'Annonce de l’essai e2e' })).toBeVisible();
+  await joueur.getByRole('button', { name: /^Messages/ }).click();
+  await expect(joueur.getByText(/Ton signalement « Le bouton Encaisser.* est réglé/)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Retirer la bannière' }).click();
+  await expect(page.getByText('Aucune bannière.')).toBeVisible();
+});

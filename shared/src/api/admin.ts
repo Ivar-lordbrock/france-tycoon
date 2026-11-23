@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { STATUTS_OPA } from './opa.ts';
+import { STATUTS_SIGNALEMENT } from './site.ts';
 
 // GET /api/v1/admin/health — supervision, sans donnée sensible.
 
@@ -45,6 +46,8 @@ export const vueEnsembleReponseSchema = z.object({
   /** Soldes des joueurs (₮ et gemmes) et revenu passif total par heure. */
   economy: z.object({ cash: nombre, gems: nombre, incomePerHour: nombre }),
   takeovers: z.object({ active: nombre, finished: nombre }),
+  /** Signalements de bugs pas encore traités (`open`). */
+  reports: z.object({ open: nombre }),
   system: z.object({
     jobs: santeReponseSchema.shape.jobs,
     databaseBytes: nombre,
@@ -229,3 +232,48 @@ export type LigneOpaAdmin = z.infer<typeof ligneOpaAdminSchema>;
 
 export const listeOpaAdminReponseSchema = z.object({ takeovers: z.array(ligneOpaAdminSchema) });
 export type ListeOpaAdminReponse = z.infer<typeof listeOpaAdminReponseSchema>;
+
+// Contrôle live et signalements (étape 4).
+
+// PUT /admin/site/maintenance — `message: null` coupe la maintenance.
+export const maintenanceCorpsSchema = z.object({ message: z.string().trim().min(3).max(300).nullable() });
+// PUT /admin/site/banner — `text: null` retire la bannière ; `hours: null` = sans fin.
+export const banniereCorpsSchema = z.object({
+  text: z.string().trim().min(3).max(300).nullable(),
+  hours: z.number().int().min(1).max(720).nullable(),
+});
+
+// POST /admin/gifts — sans `playerId` : tous les joueurs actifs (sauf soi). Le motif est montré aux joueurs.
+export const cadeauCorpsSchema = z.object({
+  playerId: z.number().int().positive().optional(),
+  currency: z.enum(['cash', 'gems']),
+  amount: z.number().int().min(1).max(1_000_000_000),
+  reason: motif,
+});
+export const cadeauReponseSchema = z.object({ count: nombre });
+export type CadeauCorps = z.infer<typeof cadeauCorpsSchema>;
+export type CadeauReponse = z.infer<typeof cadeauReponseSchema>;
+
+// GET /admin/reports?status
+export const rechercheSignalementsQuerySchema = z.object({ status: z.enum(STATUTS_SIGNALEMENT).default('open') });
+
+const ligneSignalementSchema = z.object({
+  id: z.number().int(),
+  player: z.object({ id: z.number().int(), pseudo: z.string() }).nullable(),
+  body: z.string(),
+  page: z.string().nullable(),
+  status: z.enum(STATUTS_SIGNALEMENT),
+  staffNote: z.string().nullable(),
+  createdAt: z.number().int(),
+  updatedAt: z.number().int(),
+});
+export type LigneSignalement = z.infer<typeof ligneSignalementSchema>;
+
+export const listeSignalementsReponseSchema = z.object({ reports: z.array(ligneSignalementSchema) });
+export type ListeSignalementsReponse = z.infer<typeof listeSignalementsReponseSchema>;
+
+// PATCH /admin/reports/:id — toute l'équipe. Réglé ou sans suite : le joueur reçoit un message.
+export const majSignalementCorpsSchema = z.object({
+  status: z.enum(STATUTS_SIGNALEMENT),
+  note: z.string().trim().max(2000).nullable(),
+});

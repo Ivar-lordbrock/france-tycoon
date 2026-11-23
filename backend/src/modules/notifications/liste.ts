@@ -17,6 +17,8 @@ const TYPES_CONNUS = {
   inactivity_released: true,
   quest_completed: true,
   rank_up: true,
+  gift_received: true,
+  report_closed: true,
 } satisfies Record<TypeNotification, true>;
 export const TYPES_NOTIFICATION = JSON.stringify(Object.keys(TYPES_CONNUS));
 
