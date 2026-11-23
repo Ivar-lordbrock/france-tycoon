@@ -120,6 +120,8 @@ Désormais, à chaque fusion dans `main`, la CI tourne, puis le déploiement : n
 
 La clé ne peut **que** lancer la mise à jour : même volée, elle ne donne pas accès au serveur. Si elle est perdue, refais-en une : sur le serveur, `sudo nano /srv/france-tycoon/.ssh/authorized_keys`, supprime la ligne `cle-deploiement-github`, relance `installer-serveur.sh` et remplace le secret.
 
+**Alerte de panne** : le workflow **Veille du site** (`.github/workflows/veille.yml`) vérifie toutes les 15 minutes que la page et l'API répondent. En cas de panne, GitHub envoie un e-mail à la personne qui a modifié ce fichier en dernier (réglage GitHub : **Settings** de ton compte → **Notifications** → **Actions**, laisser les e-mails des échecs). Après 60 jours sans activité sur le dépôt, GitHub met le planning en pause : onglet **Actions** → **Veille du site** → **Enable workflow**.
+
 ## 8. Vérifier la sauvegarde
 
 ```bash
