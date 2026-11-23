@@ -16,6 +16,7 @@ import { exigerJoueur } from '../auth/requete.ts';
 import { creerLecteurRevenus, revenuDuJoueur } from '../income/revenus.ts';
 import { routesAdminJoueurs } from './joueurs.ts';
 import { routesAdminLive } from './live.ts';
+import { routesAdminSauvegardes } from './sauvegardes.ts';
 import { routesAdminTerritoires } from './territoires.ts';
 
 const VERSION = process.env.npm_package_version ?? '0.1.0';
@@ -31,13 +32,17 @@ interface LigneTache {
 export interface OptionsAdmin {
   /** E-mails admin d'office (`ADMIN_EMAILS`), en minuscules. */
   adminEmails?: readonly string[];
+  dossierSauvegardes?: string;
 }
 
 /**
  * GET /admin/health : état du serveur, de la base et des tâches planifiées (public, sans donnée sensible).
  * Le reste (/admin/me, /admin/overview…) : 🛡️ équipe seulement.
  */
-export const routesAdmin: FastifyPluginAsyncZod<OptionsAdmin> = async (app, { adminEmails = [] }) => {
+export const routesAdmin: FastifyPluginAsyncZod<OptionsAdmin> = async (
+  app,
+  { adminEmails = [], dossierSauvegardes },
+) => {
   const derniereExecution = app.db.prepare<[], LigneTache>(`
     SELECT job_name AS name, status, started_at AS startedAt, finished_at AS finishedAt
     FROM job_runs AS j
@@ -97,6 +102,7 @@ export const routesAdmin: FastifyPluginAsyncZod<OptionsAdmin> = async (app, { ad
     equipe.register(routesAdminJoueurs, { adminEmails });
     equipe.register(routesAdminTerritoires);
     equipe.register(routesAdminLive);
+    equipe.register(routesAdminSauvegardes, { dossier: dossierSauvegardes });
 
     const joueurs = app.db.prepare<[number, number, number], VueEnsembleReponse['players']>(`
       SELECT count(*) AS total,

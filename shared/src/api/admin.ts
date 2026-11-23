@@ -277,3 +277,19 @@ export const majSignalementCorpsSchema = z.object({
   status: z.enum(STATUTS_SIGNALEMENT),
   note: z.string().trim().max(2000).nullable(),
 });
+
+// Sauvegardes (étape 5) : copies de la base sur le serveur, les 20 plus récentes. Ni restauration ni téléchargement par le web.
+export const SAUVEGARDES_GARDEES = 20;
+const ligneSauvegardeSchema = z.object({ name: z.string(), bytes: nombre, createdAt: z.number().int() });
+export type LigneSauvegarde = z.infer<typeof ligneSauvegardeSchema>;
+
+// GET /admin/backups — `directory: null` : pas de sauvegarde possible (base en mémoire).
+export const listeSauvegardesReponseSchema = z.object({
+  backups: z.array(ligneSauvegardeSchema),
+  directory: z.string().nullable(),
+});
+export type ListeSauvegardesReponse = z.infer<typeof listeSauvegardesReponseSchema>;
+
+// POST /admin/backups — `deleted` : anciennes copies effacées pour n'en garder que 20.
+export const sauvegardeReponseSchema = z.object({ backup: ligneSauvegardeSchema, deleted: nombre });
+export type SauvegardeReponse = z.infer<typeof sauvegardeReponseSchema>;

@@ -45,6 +45,7 @@
 | `FEATURE_DISABLED` | 404 | Boutique en V1, connexion Google pas configurée |
 | `ACCOUNT_SUSPENDED` | 403 | Écriture d'un compte suspendu (le message donne la fin et le motif) |
 | `MAINTENANCE` | 503 | Écriture d'un joueur pendant une maintenance (le message de l'équipe suit) |
+| `DISK_FULL` | 507 | Sauvegarde du dashboard refusée : pas assez de place sur le disque |
 
 ## 4.2 Points d'entrée
 
@@ -158,6 +159,8 @@ Le flux relit la table `notifications` : tant qu'un joueur écoute, un passage c
 | PUT | `/admin/site/maintenance` | 🛡️ admin | `{ message \| null }` (3 à 300 caractères) : maintenance ; toute écriture d'un joueur → 503 `MAINTENANCE` avec le message. L'équipe passe ; lire, se connecter, ses messages et `/reports` restent ouverts. `null` = coupée |
 | PUT | `/admin/site/banner` | 🛡️ admin | `{ text \| null, hours: 1..720 \| null }` : bannière d'annonce pour tous ; `hours: null` = sans fin, `text: null` = retirée |
 | POST | `/admin/gifts` | 🛡️ admin | `{ playerId?, currency, amount: 1..10⁹, reason }` → `{ count }` : cadeau à un joueur, ou sans `playerId` à tous les joueurs actifs (sauf soi), par `wallet.apply` (`admin_adjustment`) ; chacun reçoit le message `gift_received` avec le motif. Jamais à soi (403) |
+| GET | `/admin/backups` | 🛡️ équipe | → `{ backups[], directory }` : copies de la base sur le serveur, les plus récentes d'abord (`{ name, bytes, createdAt }`) ; `directory: null` pour une base en mémoire |
+| POST | `/admin/backups` | 🛡️ admin | → `{ backup, deleted }` : copie à chaud de la base, puis on ne garde que les 20 dernières. 429 si une copie est déjà en cours, 507 `DISK_FULL` si le disque est trop plein. Ni restauration ni téléchargement par le web (docs/03 § 3.5) |
 | GET | `/admin/reports?status` | 🛡️ équipe | signalements d'un statut (`open` par défaut, `in_progress`, `resolved`, `rejected`), 100 plus récents |
 | PATCH | `/admin/reports/:id` | 🛡️ équipe | `{ status, note \| null }` : la note reste dans l'équipe. Passer à `resolved` ou `rejected` (la première fois) envoie au joueur le message `report_closed` |
 
