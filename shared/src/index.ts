@@ -4,6 +4,7 @@ export * from './api/carte.ts';
 export * from './api/classement.ts';
 export * from './api/economie.ts';
 export * from './api/erreurs.ts';
+export * from './api/feuille-de-route.ts';
 export * from './api/notifications.ts';
 export * from './api/opa.ts';
 export * from './api/quetes.ts';

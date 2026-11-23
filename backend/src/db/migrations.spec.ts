@@ -34,8 +34,9 @@ describe('exécuteur de migrations', () => {
       '006_quetes.sql',
       '007_tutoriel_ordre.sql',
       '008_couleurs_joueurs.sql',
+      '009_feuille_de_route.sql',
     ]);
-    expect(versionDuSchema(db)).toBe('008');
+    expect(versionDuSchema(db)).toBe('009');
     expect(db.prepare('SELECT count(*) FROM building_types').pluck().get()).toBe(7);
     const traces = db.prepare('SELECT version, name, length(checksum) AS l FROM schema_migrations').all();
     expect(traces).toEqual([
@@ -47,6 +48,7 @@ describe('exécuteur de migrations', () => {
       { version: '006', name: '006_quetes.sql', l: 64 },
       { version: '007', name: '007_tutoriel_ordre.sql', l: 64 },
       { version: '008', name: '008_couleurs_joueurs.sql', l: 64 },
+      { version: '009', name: '009_feuille_de_route.sql', l: 64 },
     ]);
   });
 
