@@ -9,13 +9,12 @@ import { creerIssuesOpa } from '../takeovers/issues.ts';
 // annulées (l'offre revient à l'attaquant, comme pour un joueur inactif), ses sessions et ses messages
 // sont effacés. Une nouvelle connexion avec le même compte Google crée un compte neuf.
 
-export function creerSuppressionCompte(db: Base) {
-  const emailDe = db.prepare<[number], string>("SELECT email FROM users WHERE id = ? AND status <> 'deleted'").pluck();
-  // Le « # » est interdit dans les pseudos choisis : « Joueur supprimé #12 » ne peut pas être pris.
-  const anonymiser = db.prepare<{ id: number; email: string; maintenant: number }>(`
-    UPDATE users SET status = 'deleted', google_id = 'deleted:' || id, email = @email,
-      pseudo = 'Joueur supprimé #' || id, avatar_url = NULL, updated_at = @maintenant
-    WHERE id = @id`);
+/**
+ * Libère tout ce que possède un joueur : OPA en cours annulées, bâtiments détruits, communes rendues libres.
+ * Son argent ne bouge pas. Sert à la suppression du compte et au reset partiel du dashboard /admin.
+ * À appeler dans une transaction. Renvoie le nombre de communes libérées.
+ */
+export function creerLiberationBiens(db: Base) {
   const opaEnCours = db
     .prepare<[number, number], number>(
       "SELECT id FROM takeovers WHERE status = 'pending' AND (attacker_id = ? OR defender_id = ?) ORDER BY id",
@@ -31,9 +30,33 @@ export function creerSuppressionCompte(db: Base) {
   const noterHistorique = db.prepare<[number, number, number]>(`
     INSERT INTO territory_ownership_history (territory_id, from_user_id, to_user_id, reason, price, created_at)
     VALUES (?, ?, NULL, 'admin', NULL, ?)`);
+  const issues = creerIssuesOpa(db, creerEncaisseurSimple(db));
+
+  return function libererBiens(userId: number, maintenant: number): number {
+    for (const id of opaEnCours.all(userId, userId)) {
+      const o = issues.lire(id);
+      if (o) issues.annuler(o, maintenant);
+    }
+    const ids = territoires.all(userId);
+    for (const id of ids) {
+      detruireBatiments.run(id);
+      if (liberer.run(id, userId).changes !== 1) throw new Error(`Libération du territoire ${id} impossible`);
+      noterHistorique.run(id, userId, maintenant);
+    }
+    return ids.length;
+  };
+}
+
+export function creerSuppressionCompte(db: Base) {
+  const emailDe = db.prepare<[number], string>("SELECT email FROM users WHERE id = ? AND status <> 'deleted'").pluck();
+  // Le « # » est interdit dans les pseudos choisis : « Joueur supprimé #12 » ne peut pas être pris.
+  const anonymiser = db.prepare<{ id: number; email: string; maintenant: number }>(`
+    UPDATE users SET status = 'deleted', google_id = 'deleted:' || id, email = @email,
+      pseudo = 'Joueur supprimé #' || id, avatar_url = NULL, updated_at = @maintenant
+    WHERE id = @id`);
+  const libererBiens = creerLiberationBiens(db);
   const effacerSessions = db.prepare<[number]>('DELETE FROM sessions WHERE user_id = ?');
   const effacerMessages = db.prepare<[number]>('DELETE FROM notifications WHERE user_id = ?');
-  const issues = creerIssuesOpa(db, creerEncaisseurSimple(db));
 
   /** Supprime (anonymise) le compte, en une transaction. `false` s'il l'était déjà. */
   return function supprimerCompte(userId: number, maintenant: number): boolean {
@@ -45,15 +68,7 @@ export function creerSuppressionCompte(db: Base) {
         // Anonymisé d'abord : les messages de fin d'OPA envoyés à l'autre joueur n'ont plus son pseudo.
         const hachage = createHash('sha256').update(email.toLowerCase()).digest('hex');
         anonymiser.run({ id: userId, email: `deleted:${hachage}`, maintenant });
-        for (const id of opaEnCours.all(userId, userId)) {
-          const o = issues.lire(id);
-          if (o) issues.annuler(o, maintenant);
-        }
-        for (const id of territoires.all(userId)) {
-          detruireBatiments.run(id);
-          if (liberer.run(id, userId).changes !== 1) throw new Error(`Libération du territoire ${id} impossible`);
-          noterHistorique.run(id, userId, maintenant);
-        }
+        libererBiens(userId, maintenant);
         effacerSessions.run(userId);
         effacerMessages.run(userId);
         return true;

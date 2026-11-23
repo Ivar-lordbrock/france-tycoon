@@ -3,6 +3,7 @@ import { type ReactNode, useEffect, useState } from 'react';
 import { useAdminMoi } from '../api/admin.ts';
 import { ErreurApi, messageErreur } from '../api/client.ts';
 import { Icone } from '../hud/Icone.tsx';
+import { Joueurs } from './Joueurs.tsx';
 import { VueEnsemble } from './VueEnsemble.tsx';
 
 type IdVue = 'ensemble' | 'joueurs' | 'territoires' | 'triche' | 'config' | 'sauvegardes';
@@ -12,7 +13,7 @@ type Vue = { id: IdVue; libelle: string; admin?: boolean; etape?: number };
 const ENSEMBLE: Vue = { id: 'ensemble', libelle: 'Vue d’ensemble' };
 const VUES: Vue[] = [
   ENSEMBLE,
-  { id: 'joueurs', libelle: 'Joueurs', etape: 2 },
+  { id: 'joueurs', libelle: 'Joueurs' },
   { id: 'territoires', libelle: 'Territoires & OPA', etape: 3 },
   { id: 'triche', libelle: 'Anti-triche & logs', etape: 7 },
   { id: 'config', libelle: 'Live config & events', admin: true, etape: 6 },
@@ -151,6 +152,8 @@ function Tableau({ pseudo, grade }: { pseudo: string; grade: Grade }) {
         </h1>
         {vue.id === 'ensemble' ? (
           <VueEnsemble />
+        ) : vue.id === 'joueurs' ? (
+          <Joueurs moi={pseudo} grade={grade} />
         ) : (
           <p className="mt-3 text-ardoise">Cette vue arrive à l’étape {vue.etape} du dashboard.</p>
         )}

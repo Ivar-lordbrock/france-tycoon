@@ -134,7 +134,7 @@ export function VueEnsemble() {
   );
 }
 
-function Section({ titre, children }: { titre: string; children: ReactNode }) {
+export function Section({ titre, children }: { titre: string; children: ReactNode }) {
   return (
     <section>
       <h2 className="mb-2.5 text-lg font-bold">{titre}</h2>
@@ -143,7 +143,7 @@ function Section({ titre, children }: { titre: string; children: ReactNode }) {
   );
 }
 
-function Chiffre({ libelle, children }: { libelle: string; children: ReactNode }) {
+export function Chiffre({ libelle, children }: { libelle: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1 px-4 py-3">
       <dt className="text-sm text-ardoise">{libelle}</dt>

@@ -32,3 +32,31 @@ test('un admin (ADMIN_EMAILS) voit les 6 vues et la vue d’ensemble', async ({ 
   await page.getByRole('button', { name: 'Joueurs' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Joueurs' })).toBeVisible();
 });
+
+test('un admin trouve un joueur, le suspend, et le joueur voit le motif', async ({ browser }) => {
+  // Le joueur s'inscrit dans son propre navigateur.
+  const cible = await browser.newPage();
+  await cible.route(/^https?:\/\/(?!localhost|127\.0\.0\.1)/, (route) => route.abort());
+  await entrer(cible, 'Cible Suspendue');
+
+  const page = await browser.newPage();
+  await page.route(/^https?:\/\/(?!localhost|127\.0\.0\.1)/, (route) => route.abort());
+  await entrer(page, 'Chef');
+  await page.goto('/admin');
+  await page.getByRole('navigation', { name: 'Vues du dashboard' }).getByRole('button', { name: 'Joueurs' }).click();
+  await page.getByRole('searchbox', { name: 'Chercher un joueur' }).fill('Cible');
+  await page.getByRole('button', { name: 'Chercher' }).click();
+  await page.getByRole('button', { name: 'Cible Suspendue' }).click();
+
+  await page.getByRole('button', { name: 'Suspendre' }).click();
+  await page.getByPlaceholder('Pourquoi ?').fill('Essai e2e');
+  await page.getByRole('button', { name: 'Suspendre' }).last().click();
+  await expect(page.getByText('Motif : Essai e2e')).toBeVisible();
+  await page.getByText('Journal d’audit').click();
+  await expect(page.getByRole('cell', { name: 'Suspension' })).toBeVisible();
+
+  // Côté joueur : il regarde, mais encaisser est refusé avec le motif.
+  await cible.reload();
+  await cible.getByRole('button', { name: /^Encaisser/ }).click();
+  await expect(cible.getByText(/Ton compte est suspendu.*Motif : Essai e2e/)).toBeVisible();
+});

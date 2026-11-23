@@ -139,6 +139,16 @@ Le flux relit la table `notifications` : tant qu'un joueur écoute, un passage c
 | GET | `/admin/health` | | état du serveur, de la base, dernière exécution des tâches (sans 🛡️ pour la supervision, sans données sensibles) |
 | GET | `/admin/me` | 🛡️ équipe | grade du compte connecté (`moderator` ou `admin`) ; 401 sans session, 403 pour un joueur |
 | GET | `/admin/overview` | 🛡️ équipe | dashboard : joueurs actifs 24 h / 7 j / 14 j, communes possédées par zone, soldes et revenu par heure, OPA, tâches, taille de la base, disque libre |
+| GET | `/admin/players?q&role&status` | 🛡️ équipe | recherche (pseudo ou e-mail en morceau, id Google ou n° exact), filtres grade et statut (`suspended` compris), 50 max |
+| GET | `/admin/players/:id` | 🛡️ équipe | fiche : soldes, revenu, communes, 50 transactions, 30 OPA, 20 connexions (empreintes hachées), notes, journal d'audit |
+| POST | `/admin/players/:id/notes` · PATCH/DELETE `/admin/notes/:id` | 🛡️ équipe | notes de l'équipe (`{ body }`) |
+| POST | `/admin/players/:id/suspend` · `/unsuspend` | 🛡️ équipe | `{ hours: 1..720, reason }` : lecture seule, toute écriture → 403 `ACCOUNT_SUSPENDED` avec le motif |
+| POST | `/admin/players/:id/ban` · `/unban` | 🛡️ admin | `{ reason }` ; bannir efface les sessions |
+| PUT | `/admin/players/:id/role` | 🛡️ admin | `{ role: player\|moderator\|admin, reason }` |
+| POST | `/admin/players/:id/reset` | 🛡️ admin | `{ reason }` : communes, bâtiments et OPA en cours libérés, argent gardé |
+| POST | `/admin/players/:id/adjust` | 🛡️ admin | `{ currency, amount ≠ 0, reason }` par `wallet.apply` (`admin_adjustment`) |
+
+Actions du dashboard : 204, motif obligatoire, une ligne dans `admin_audit` (en ajout seul). Jamais sur soi, seulement sur un grade plus petit ; un admin d'office (`ADMIN_EMAILS`) est intouchable.
 | POST | `/admin/jobs/:name/run` | 🛡️ | lance une tâche à la main |
 | POST | `/admin/wallet-adjustments` | 🛡️ | correction tracée (`admin_adjustment`) |
 

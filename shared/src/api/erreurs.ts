@@ -5,6 +5,7 @@ import { z } from 'zod';
 export const CODES_ERREUR = [
   'UNAUTHENTICATED',
   'FORBIDDEN',
+  'ACCOUNT_SUSPENDED',
   'NOT_FOUND',
   'TERRITORY_NOT_FOUND',
   'TERRITORY_NOT_FREE',
