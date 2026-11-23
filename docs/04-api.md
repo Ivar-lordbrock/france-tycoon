@@ -147,6 +147,10 @@ Le flux relit la table `notifications` : tant qu'un joueur écoute, un passage c
 | PUT | `/admin/players/:id/role` | 🛡️ admin | `{ role: player\|moderator\|admin, reason }` |
 | POST | `/admin/players/:id/reset` | 🛡️ admin | `{ reason }` : communes, bâtiments et OPA en cours libérés, argent gardé |
 | POST | `/admin/players/:id/adjust` | 🛡️ admin | `{ currency, amount ≠ 0, reason }` par `wallet.apply` (`admin_adjustment`) |
+| GET | `/admin/territories?q&filter` | 🛡️ équipe | communes : nom (même recherche que la carte) ou code INSEE, filtre `owned`, `free`, `forced`, `takeover` ; 50 max, plus peuplées d'abord |
+| PUT | `/admin/territories/:insee/price` | 🛡️ admin | `{ price, reason }` : prix d'achat forcé ; `price: null` = retour au calcul auto (V0) |
+| GET | `/admin/takeovers?status` | 🛡️ équipe | OPA d'un statut (`pending` par défaut ; les échues sont d'abord résolues), 50 plus récentes |
+| POST | `/admin/takeovers/:id/force` · `/cancel` | 🛡️ admin | `{ reason }` : forcer = la commune passe tout de suite à l'attaquant (comme au bout des 24 h) ; annuler = l'attaquant récupère toute son offre (`voided`). 409 `TAKEOVER_NOT_PENDING` si elle est finie |
 
 Actions du dashboard : 204, motif obligatoire, une ligne dans `admin_audit` (en ajout seul). Jamais sur soi, seulement sur un grade plus petit ; un admin d'office (`ADMIN_EMAILS`) est intouchable.
 | POST | `/admin/jobs/:name/run` | 🛡️ | lance une tâche à la main |

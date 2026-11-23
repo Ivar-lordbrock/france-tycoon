@@ -120,7 +120,7 @@ Le **reste** évite de perdre les fractions : un joueur qui gagne 50 ₮/h et ag
 
 - **Valeur d'un territoire** : `V_T = V0 + B + F` (`valeurTerritoire`) — `B` = somme des `invested_cash` de ses bâtiments, `F` = fortifications (défenses d'OPA)
 - **Patrimoine** (classement, anti-acharnement des OPA) : `NW = cash + Σ V_T + séquestres d'OPA en cours` (`patrimoine` ; les gemmes ne comptent pas)
-- **Achat** d'une commune libre : `V0`
+- **Achat** d'une commune libre : `V0`, sauf si un admin a forcé un prix (`territories.forced_price`, dashboard /admin) : on paie alors ce prix, jusqu'au retour au calcul auto
 - **Vente à l'État** : `arrondi_100_inférieur( 70 % × V_T )` ; ses bâtiments sont **détruits** (chantier en cours compris) et la commune redevient libre au prix `V0` (même règle que l'inactivité, 5.6)
 - **Limite de territoires** : `max_territories = min( 12 ; 4 + niveau du siège + bonus de rang + emplacement acheté )` ; une OPA sortante en cours compte comme un territoire réservé. On démarre avec **4 territoires** (au lieu de 3, depuis que le siège s'arrête au niveau 5) : 4 + 5 + 2 + 1 = 12, le maximum reste atteignable
 
