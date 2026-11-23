@@ -78,6 +78,23 @@ export const contenuNouveauRangSchema = z.object({
 });
 export type ContenuNouveauRang = z.infer<typeof contenuNouveauRangSchema>;
 
+/** Cadeau de l'équipe Kadastr (dashboard /admin), avec son message. */
+export const contenuCadeauSchema = z.object({
+  currency: z.enum(['cash', 'gems']),
+  amount: entier.positive(),
+  message: z.string(),
+});
+export type ContenuCadeau = z.infer<typeof contenuCadeauSchema>;
+
+/** Un signalement de bug du joueur est clos par l'équipe. */
+export const contenuSignalementClosSchema = z.object({
+  reportId: entier.positive(),
+  status: z.enum(['resolved', 'rejected']),
+  /** Début du texte du joueur, pour qu'il s'y retrouve. */
+  excerpt: z.string(),
+});
+export type ContenuSignalementClos = z.infer<typeof contenuSignalementClosSchema>;
+
 const message = { id: entier.positive(), createdAt: entier, readAt: entier.nullable() };
 
 const messageChantierFini = z.object({ ...message, kind: z.literal('building_done'), payload: chantierFiniSchema });
@@ -102,6 +119,8 @@ export const notificationSchema = z.discriminatedUnion('kind', [
   z.object({ ...message, kind: z.literal('inactivity_released'), payload: contenuLiberationInactiviteSchema }),
   messageQueteTerminee,
   messageNouveauRang,
+  z.object({ ...message, kind: z.literal('gift_received'), payload: contenuCadeauSchema }),
+  z.object({ ...message, kind: z.literal('report_closed'), payload: contenuSignalementClosSchema }),
 ]);
 /** Un message du jeu (à ne pas confondre avec `Notification` du navigateur). */
 export type NotificationJeu = z.infer<typeof notificationSchema>;

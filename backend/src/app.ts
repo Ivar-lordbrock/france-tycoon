@@ -13,6 +13,7 @@ import { routesMoi } from './modules/me/routes.ts';
 import { type OptionsDirect, routesDirect } from './modules/notifications/routes.ts';
 import { routesQuetes } from './modules/quests/routes.ts';
 import { routesFeuilleDeRoute } from './modules/roadmap/routes.ts';
+import { routesSite } from './modules/site/routes.ts';
 import { routesOpa } from './modules/takeovers/routes.ts';
 import { routesTerritoires } from './modules/territories/routes.ts';
 import { routesTutoriel } from './modules/tutorial/routes.ts';
@@ -46,7 +47,7 @@ export function construireApp({ db, logger = false, auth = {}, direct = {}, secu
   app.setSerializerCompiler(serializerCompiler);
   app.decorate('db', db);
   brancherGestionErreurs(app);
-  brancherSessions(app, { cookieSecure: optionsAuth.cookieSecure });
+  brancherSessions(app, { cookieSecure: optionsAuth.cookieSecure, adminEmails });
   if (securite) brancherSecurite(app, securite);
 
   app.register(routesAdmin, { prefix: '/api/v1/admin', adminEmails });
@@ -61,6 +62,7 @@ export function construireApp({ db, logger = false, auth = {}, direct = {}, secu
   app.register(routesCarte, { prefix: '/api/v1/map' });
   app.register(routesJoueurs, { prefix: '/api/v1/players' });
   app.register(routesFeuilleDeRoute, { prefix: '/api/v1/roadmap' });
+  app.register(routesSite, { prefix: '/api/v1' });
   app.register(routesTerritoires, { prefix: '/api/v1/territories' });
   app.register(routesOpa, { prefix: '/api/v1/takeovers' });
   app.register(routesTutoriel, { prefix: '/api/v1/tutorial' });

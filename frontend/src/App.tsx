@@ -1,5 +1,6 @@
 import { useMoi } from './api/compte.ts';
 import { Alertes, BoutonProfil, Compte } from './compte/Compte.tsx';
+import { BandeauSite } from './hud/BandeauSite.tsx';
 import { BarreEtat } from './hud/BarreEtat.tsx';
 import { Dock } from './hud/Dock.tsx';
 import { Legende } from './hud/Legende.tsx';
@@ -36,6 +37,7 @@ export function App() {
         </div>
 
         <div className="contents md:pointer-events-none md:absolute md:top-4 md:right-4 md:bottom-28 md:flex md:w-[376px] md:flex-col md:items-end md:gap-4">
+          <BandeauSite />
           <Compte />
           <Alertes />
           {/* Téléphone : pousse la fiche et la suite en bas de l'écran. */}
