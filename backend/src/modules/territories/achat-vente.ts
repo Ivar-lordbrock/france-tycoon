@@ -4,6 +4,7 @@ import {
   type CodeErreur,
   type FicheCommune,
   type Portefeuille,
+  prixAchat,
   prixVenteEtat,
   type VenteReponse,
   valeurTerritoire,
@@ -12,6 +13,7 @@ import type { Base } from '../../db/connexion.ts';
 import { ErreurMetier } from '../../erreurs.ts';
 import { emettre } from '../evenements/bus.ts';
 import { creerEncaisseur } from '../income/revenus.ts';
+import { creerLecteurReglages } from '../reglages/calendrier.ts';
 import { mouvementDejaFait } from '../wallet/idempotence.ts';
 import { wallet } from '../wallet/wallet.ts';
 
@@ -69,8 +71,8 @@ export function raisonsVente(
 interface LigneCommune {
   id: number;
   baseValue: number;
-  /** Prix d'achat : forcé par un admin, sinon V0. */
-  prix: number;
+  /** Prix forcé par un admin ; `null` : V0 × réglage des prix. */
+  forcedPrice: number | null;
   ownerId: number | null;
   isCapital: number;
   fortification: number;
@@ -81,7 +83,7 @@ type LireFiche = (insee: string, moi: number | null, maintenant: number) => Fich
 /** Les deux actions, avec leurs requêtes préparées une fois. */
 export function creerAchatVente(db: Base, lireFiche: LireFiche) {
   const commune = db.prepare<[string], LigneCommune>(`
-    SELECT id, base_value AS baseValue, coalesce(forced_price, base_value) AS prix, owner_id AS ownerId, is_capital AS isCapital,
+    SELECT id, base_value AS baseValue, forced_price AS forcedPrice, owner_id AS ownerId, is_capital AS isCapital,
       fortification_value AS fortification
     FROM territories WHERE insee_code = ?`);
   const lireJoueur = creerLecteurJoueurAchat(db);
@@ -107,6 +109,7 @@ export function creerAchatVente(db: Base, lireFiche: LireFiche) {
     'SELECT cash, premium_currency AS gems FROM users WHERE id = ?',
   );
   const encaisser = creerEncaisseur(db);
+  const reglages = creerLecteurReglages(db);
 
   function trouver(insee: string): LigneCommune {
     const c = commune.get(insee);
@@ -129,15 +132,16 @@ export function creerAchatVente(db: Base, lireFiche: LireFiche) {
     return p;
   }
 
-  /** POST /territories/:insee/buy : prix = V0 (ou prix forcé par un admin), bouclier de 12 h. */
+  /** POST /territories/:insee/buy : prix = V0 × réglage (ou prix forcé par un admin), bouclier de 12 h. */
   function acheter(moi: number, insee: string, maintenant: number, cle?: string): AchatReponse {
     db.transaction(() => {
       encaisser(moi, maintenant); // encaisse d'abord : les revenus en attente comptent pour payer
       const c = trouver(insee);
       if (rejeu(cle, c.id)) return; // déjà acheté avec cette clé : on renvoie l'état actuel
+      const prix = prixAchat(c.baseValue, reglages(maintenant).price, c.forcedPrice);
       const joueur = lireJoueur.get(moi);
       // Le manque d'argent est signalé par wallet.apply, avec la somme qui manque.
-      const [raison] = raisonsAchat(c.ownerId, moi, joueur, c.prix).filter((r) => r !== 'INSUFFICIENT_FUNDS');
+      const [raison] = raisonsAchat(c.ownerId, moi, joueur, prix).filter((r) => r !== 'INSUFFICIENT_FUNDS');
       if (raison === 'TERRITORY_NOT_FREE') {
         const message =
           c.ownerId === moi ? 'Cette commune est déjà à toi.' : 'Cette commune appartient déjà à un joueur.';
@@ -149,7 +153,7 @@ export function creerAchatVente(db: Base, lireFiche: LireFiche) {
       wallet.apply(db, {
         userId: moi,
         currency: 'cash',
-        amount: -c.prix,
+        amount: -prix,
         reason: 'territory_purchase',
         ref: { type: 'territory', id: c.id },
         idempotencyKey: cle,
@@ -158,11 +162,11 @@ export function creerAchatVente(db: Base, lireFiche: LireFiche) {
         id: c.id,
         moi,
         maintenant,
-        prix: c.prix,
+        prix,
         bouclier: maintenant + BOUCLIER_ACHAT_S,
       });
       if (pris.changes !== 1) throw new Error(`Achat de ${insee} : la commune n'était plus libre`);
-      noterHistorique.run(c.id, null, moi, 'purchase', c.prix, maintenant);
+      noterHistorique.run(c.id, null, moi, 'purchase', prix, maintenant);
       emettre(db, { userId: moi, type: 'territory_bought' }, maintenant);
     }).immediate();
 

@@ -15,6 +15,7 @@ import {
   useFileChantiers,
 } from '../api/batiments.ts';
 import { messageErreur, nouvelleCle } from '../api/client.ts';
+import { useEtatSite } from '../api/site.ts';
 import { useMesTerritoires } from '../api/territoires.ts';
 import { useTutoriel } from '../api/tutoriel.ts';
 import { useMaintenant } from '../etat/horloge.ts';
@@ -52,6 +53,7 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
   const { data: file } = useFileChantiers(true);
   const { data: mesTerritoires } = useMesTerritoires(true);
   const { data: tuto } = useTutoriel(true);
+  const { data: site } = useEtatSite();
   const cash = useCashEnDirect() ?? moi.wallet.cash;
   const maintenant = useMaintenant(1_000);
   const action = useActionBatiment();
@@ -79,6 +81,7 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
       tuto.completedAt === null &&
       !tuto.skipped &&
       !tuto.steps.some((e) => e.key === 'premiere_construction' && e.completedAt !== null),
+    pctBatiment: site?.settings.building,
   };
   const fT = facteurTaille(fiche.baseValue);
   const typeDe = (code: string) => catalogue.find((t) => t.code === code);

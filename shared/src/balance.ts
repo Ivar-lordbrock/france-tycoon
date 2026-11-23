@@ -299,6 +299,11 @@ export const BOUCLIER_ACHAT_S = 12 * 3_600;
 /** Part de V_T versée par l'État quand on lui revend une commune (ses bâtiments sont détruits). */
 export const TAUX_VENTE_ETAT = 0.7;
 
+/** Prix d'achat d'une commune libre : arrondi_100( V0 × réglage des prix en % ) ; un prix forcé par un admin passe avant. */
+export function prixAchat(v0: number, pctPrix: number, prixForce: number | null = null): number {
+  return prixForce ?? ajuster(v0, pctPrix, 100);
+}
+
 /** Vente à l'État : arrondi_100_inférieur( 70 % × V_T ). */
 export function prixVenteEtat(valeurTotale: number): number {
   return Math.floor((TAUX_VENTE_ETAT * valeurTotale) / 100) * 100;
@@ -497,4 +502,38 @@ export function prochainMinuitParis(instant: number): number {
 /** Récompense d'une quête : max( cash_min ; arrondi_100( h × R_J ) ), figée au tirage (h = 1 à 4 heures). */
 export function recompenseQuete(heures: number, revenuHeure: number, cashMin: number): number {
   return Math.max(cashMin, Math.round((heures * revenuHeure) / 100) * 100);
+}
+
+// --- Réglages à chaud (dashboard /admin, étape 6) ---
+
+/** Un réglage en % : 100 = normal. Un admin règle chaque valeur entre ÷ 4 et × 4. */
+export const REGLAGE_PCT_MIN = 25;
+export const REGLAGE_PCT_MAX = 400;
+
+/** Le réglage qui s'applique (base × événements en cours) reste entre ÷ 10 et × 10, même si des événements se cumulent. */
+export const REGLAGE_EFFECTIF_MIN = 10;
+export const REGLAGE_EFFECTIF_MAX = 1_000;
+
+/** Un événement dure au plus 30 jours et commence au plus tard dans 90 jours. */
+export const EVENEMENT_DUREE_MAX_H = 30 * 24;
+export const EVENEMENT_DEBUT_MAX_S = 90 * 24 * 3_600;
+
+/** Les trois réglages, en % : prix d'achat d'une commune libre, revenus passifs, coût des bâtiments. */
+export interface Reglages {
+  price: number;
+  income: number;
+  building: number;
+}
+export const REGLAGES_NORMAUX: Readonly<Reglages> = { price: 100, income: 100, building: 100 };
+
+/** Réglage effectif : base × chaque événement en cours, arrondi au %, borné entre ÷ 10 et × 10. */
+export function combinerPct(base: number, evenements: readonly number[]): number {
+  const pct = evenements.reduce((total, e) => (total * e) / 100, base);
+  return borne(Math.round(pct), REGLAGE_EFFECTIF_MIN, REGLAGE_EFFECTIF_MAX);
+}
+
+/** montant × pct / 100, arrondi au pas, jamais sous le pas : à 100 %, un montant déjà au pas ne change pas. */
+export function ajuster(montant: number, pct: number, pas = 1): number {
+  if (montant <= 0) return montant;
+  return Math.max(pas, arrondi((montant * pct) / 100, pas));
 }

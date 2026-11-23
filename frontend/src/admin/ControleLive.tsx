@@ -5,6 +5,7 @@ import { messageErreur } from '../api/client.ts';
 import { boutonSecondaire, Confirmer } from '../panels/Confirmer.tsx';
 import { entier, tycoons } from '../panels/fiche-texte.ts';
 import { champ, quand } from './Joueurs.tsx';
+import { Evenements, ReglagesPermanents } from './Reglages.tsx';
 import { Section } from './VueEnsemble.tsx';
 
 const DUREES: [string, string][] = [
@@ -19,14 +20,15 @@ const texteOk = (t: string) => t.trim().length >= 3 && t.trim().length <= 300;
 const etiquette = 'flex flex-col gap-1 text-sm font-semibold text-ardoise';
 const don = (c: CadeauCorps) => (c.currency === 'cash' ? tycoons(c.amount) : `${entier(c.amount)} gemmes`);
 
-/** Contrôle live (admins) : maintenance, bannière d'annonce et cadeaux. Chaque action va au journal d'audit. */
+/** Contrôle live (admins) : maintenance, bannière, cadeaux, réglages à chaud et événements. Tout va à l'audit. */
 export function ControleLive() {
   return (
     <div className="mt-4 flex flex-col gap-8">
       <Maintenance />
       <Banniere />
       <Cadeau />
-      <p className="text-sm text-ardoise">Les réglages à chaud (prix, revenus, bâtiments) arrivent à l’étape 6.</p>
+      <ReglagesPermanents />
+      <Evenements />
     </div>
   );
 }
