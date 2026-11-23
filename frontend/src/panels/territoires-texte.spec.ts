@@ -123,10 +123,10 @@ describe('durées et liste « Mes territoires »', () => {
     };
 
     expect(detailsTerritoire(t, maintenant).replace(espace, ' ')).toBe(
-      'Valeur 26 230 ₮ · 2/3 emplacements · Résidence niv. 2 dans 10 min · bouclier 1 h',
+      'Valeur 26 230 ₮ · 2/3 places · Résidence niv. 2 dans 10 min · bouclier 1 h',
     );
     expect(detailsTerritoire({ ...t, works: [], shieldUntil: maintenant - 1 }, maintenant).replace(espace, ' ')).toBe(
-      'Valeur 26 230 ₮ · 2/3 emplacements',
+      'Valeur 26 230 ₮ · 2/3 places',
     );
   });
 });

@@ -76,7 +76,7 @@ export function creerDeplacementCapitale(db: Base) {
           throw new ErreurMetier(
             'NO_FREE_SLOT',
             409,
-            `Le siège social prend ${s.slotSize} emplacements : il en reste ${libres} dans cette commune.`,
+            `Le siège social prend ${s.slotSize} places : il en reste ${libres} dans cette commune.`,
             { needed: s.slotSize, free: libres },
           );
         }

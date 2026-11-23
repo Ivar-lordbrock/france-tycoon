@@ -234,7 +234,7 @@ export function creerChantiers(db: Base) {
           throw new ErreurMetier(
             'NO_FREE_SLOT',
             409,
-            `${type.name} prend ${type.slotSize} emplacement${type.slotSize > 1 ? 's' : ''} : il en reste ${libres} ici.`,
+            `${type.name} prend ${type.slotSize} place${type.slotSize > 1 ? 's' : ''} : il en reste ${libres} ici.`,
             { needed: type.slotSize, free: libres },
           );
         }

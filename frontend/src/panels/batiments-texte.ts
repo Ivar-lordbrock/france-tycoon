@@ -113,8 +113,7 @@ export function apercuConstruction(type: TypeBatiment, ctx: Contexte): ApercuCha
     raison = type.maxPerTerritory === 1 ? 'Déjà construit ici.' : `${type.maxPerTerritory} au plus par commune.`;
   else if (type.category === 'siege' && ctx.aUnSiege) raison = 'Tu as déjà un siège social.';
   else if (type.slotSize > libres)
-    raison =
-      libres === 0 ? 'Plus d’emplacement libre ici.' : `Il faut ${type.slotSize} emplacements, il en reste ${libres}.`;
+    raison = libres === 0 ? 'Plus de place libre ici.' : `Il faut ${type.slotSize} places, il en reste ${libres}.`;
   else if (cout > ctx.cash) raison = `Il te manque ${tycoons(cout - ctx.cash)}.`;
 
   return {

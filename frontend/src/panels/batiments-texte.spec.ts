@@ -170,9 +170,9 @@ describe('aperçus des chantiers (mêmes formules que le serveur)', () => {
     expect(apercuConstruction(equipement, avecEquipement).raison).toBe('Déjà construit ici.');
     expect(apercuConstruction(siege, contexte({ aUnSiege: true })).raison).toBe('Tu as déjà un siège social.');
     const deuxPris = contexte({ batiments: [batiment(1, 'residence', 1), batiment(2, 'residence', 1)] });
-    expect(apercuConstruction(siege, deuxPris).raison).toBe('Il faut 2 emplacements, il en reste 1.');
+    expect(apercuConstruction(siege, deuxPris).raison).toBe('Il faut 2 places, il en reste 1.');
     const plein = contexte({ batiments: [1, 2, 3].map((id) => batiment(id, 'residence', 1)) });
-    expect(apercuConstruction(residence, plein).raison).toBe('Plus d’emplacement libre ici.');
+    expect(apercuConstruction(residence, plein).raison).toBe('Plus de place libre ici.');
   });
 
   it('le siège social ne dépend pas de la taille de la commune', () => {

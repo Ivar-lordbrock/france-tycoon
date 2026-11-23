@@ -217,7 +217,7 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
           ['Tu récupères', `≈ ${tycoons(a.rembourse)}`],
           ['Revenu de la commune', variation(a.revenu)],
         ]}
-        note="Tu ne récupères que 30 % de ce que tu as payé pour ses niveaux. Ses emplacements se libèrent."
+        note="Tu ne récupères que 30 % de ce que tu as payé pour ses niveaux. Ses places se libèrent."
         annuler="Garder"
         valider={action.isPending ? 'Démolition…' : 'Démolir'}
         danger
@@ -238,7 +238,7 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
   return (
     <div ref={zone} tabIndex={-1} className="flex flex-col gap-3 outline-none">
       <p className="text-sm text-ardoise">
-        {libres} emplacement{libres > 1 ? 's' : ''} libre{libres > 1 ? 's' : ''} sur {fiche.buildingSlots.total}
+        {libres} place{libres > 1 ? 's' : ''} libre{libres > 1 ? 's' : ''} sur {fiche.buildingSlots.total}
       </p>
       {!fileLibre && enCours && (
         <p className="rounded-md bg-surligneur/30 px-3 py-2 text-sm">
@@ -305,7 +305,10 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
                 <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold">
-                      {type.name} <span className="text-xs font-normal text-ardoise">· {type.slotSize} empl.</span>
+                      {type.name}{' '}
+                      <span className="text-xs font-normal text-ardoise">
+                        · {type.slotSize} place{type.slotSize > 1 ? 's' : ''}
+                      </span>
                     </p>
                     <p className="text-xs text-ardoise tabular-nums">
                       {tycoons(a.cout)} · {effet(type, 1, fT)} · {duree(a.duree)}
