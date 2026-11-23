@@ -64,9 +64,9 @@ export function issueOpa(p: ContenuOpaTerminee): { texte: string; parMoi: boolea
   }
 }
 
-/** « 1 700 ₮ » ou « 1 700 ₮ et 5 💎 ». */
+/** « 1 700 ₮ » ou « 1 700 ₮ et 5 gemmes ». */
 export function recompenseQuete(p: Pick<ContenuQueteTerminee, 'rewardCash' | 'rewardGems'>): string {
-  const gemmes = p.rewardGems > 0 ? `${p.rewardGems} 💎` : '';
+  const gemmes = p.rewardGems > 0 ? `${p.rewardGems} gemme${p.rewardGems > 1 ? 's' : ''}` : '';
   if (p.rewardCash <= 0) return gemmes;
   return gemmes ? `${tycoons(p.rewardCash)} et ${gemmes}` : tycoons(p.rewardCash);
 }

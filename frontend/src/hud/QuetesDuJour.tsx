@@ -3,7 +3,9 @@ import { messageErreur } from '../api/client.ts';
 import { useQuetes, useReclamer } from '../api/quetes.ts';
 import { useMaintenant } from '../etat/horloge.ts';
 import { minuteur } from '../panels/batiments-texte.ts';
+import { entier } from '../panels/fiche-texte.ts';
 import { recompenseQuete } from '../panels/notifications-texte.ts';
+import { Icone, Piece } from './Icone.tsx';
 
 /** Mes 3 quêtes du jour : avancement, récompense à réclamer, temps avant les suivantes (minuit à Paris). */
 export function QuetesDuJour({ id }: { id: string }) {
@@ -18,57 +20,93 @@ export function QuetesDuJour({ id }: { id: string }) {
   else {
     contenu = (
       <>
-        <ul className="max-h-72 overflow-y-auto">
-          {data.quests.map((q) => (
-            <li key={q.id} className="px-3 py-2">
-              <p className="flex items-baseline justify-between gap-2 text-sm">
-                <span className="font-semibold">{q.title}</span>
-                <span className="shrink-0 tabular-nums text-ardoise">
-                  {q.progress} / {q.target}
-                </span>
-              </p>
-              <p className="text-xs text-ardoise">{q.description}</p>
-              <span className="mt-1 block h-1 overflow-hidden rounded-full bg-brume" aria-hidden="true">
+        <p className="px-3 text-[13px] text-ardoise tabular-nums">
+          De nouvelles quêtes dans {minuteur(data.resetsAt - maintenant)}
+        </p>
+        <ul className="mt-1">
+          {data.quests.map((q) => {
+            const prete = q.completedAt !== null && q.claimedAt === null;
+            const recue = q.claimedAt !== null;
+            return (
+              <li
+                key={q.id}
+                className="grid grid-cols-[44px_1fr_auto] items-center gap-3 border-encre/[0.06] px-3 py-3 [&+&]:border-t"
+              >
                 <span
-                  className="block h-full rounded-full bg-encre"
-                  style={{ width: `${(q.progress / q.target) * 100}%` }}
-                />
-              </span>
-              <p className="mt-1.5 flex items-center justify-between gap-2 text-sm">
-                <span className="tabular-nums">{recompenseQuete(q)}</span>
-                {q.claimedAt !== null ? (
-                  <span className="text-ardoise">Récompense reçue ✓</span>
+                  className={`grid size-11 place-items-center rounded-[14px] ${
+                    prete ? 'bg-surligneur text-fond shadow-[inset_0_-3px_0_#c9a21a]' : 'bg-brume text-encre'
+                  }`}
+                >
+                  <Icone nom={recue ? 'coche' : 'drapeau'} />
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-[15px] font-bold">{q.title}</h3>
+                  <p className="mt-0.5 text-[13px] text-ardoise">{q.description}</p>
+                  <Crans fait={q.progress} but={q.target} />
+                  <span className="sr-only">
+                    {q.progress} sur {q.target}
+                  </span>
+                </div>
+                {prete ? (
+                  <button
+                    type="button"
+                    onClick={() => reclamer.mutate(q.id)}
+                    disabled={reclamer.isPending}
+                    aria-label={`Réclamer +${recompenseQuete(q)}`}
+                    className="relief relief-jaune h-10 rounded-[14px] px-3.5 text-sm whitespace-nowrap tabular-nums"
+                  >
+                    +{recompenseQuete(q)}
+                  </button>
+                ) : recue ? (
+                  <span className="text-sm text-ardoise">Reçue</span>
                 ) : (
-                  q.completedAt !== null && (
-                    <button
-                      type="button"
-                      onClick={() => reclamer.mutate(q.id)}
-                      disabled={reclamer.isPending}
-                      className="h-8 rounded-md bg-surligneur px-3 font-semibold text-encre hover:bg-surligneur/80 disabled:opacity-50"
-                    >
-                      Réclamer
-                    </button>
-                  )
+                  <span className="flex flex-col items-end gap-1 text-sm font-bold tabular-nums">
+                    <span className="sr-only">Récompense : {recompenseQuete(q)}</span>
+                    {q.rewardCash > 0 && (
+                      <span className="flex items-center gap-1.5" aria-hidden="true">
+                        <Piece />
+                        {entier(q.rewardCash)}
+                      </span>
+                    )}
+                    {q.rewardGems > 0 && (
+                      <span className="flex items-center gap-1.5 text-[#c4b5fd]" aria-hidden="true">
+                        <Icone nom="gemme" className="size-4" />
+                        {entier(q.rewardGems)}
+                      </span>
+                    )}
+                  </span>
                 )}
-              </p>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
         {reclamer.isError && (
-          <p role="alert" className="px-3 pb-2 text-sm text-red-700">
+          <p role="alert" className="px-3 pb-2 text-sm text-danger">
             {messageErreur(reclamer.error)}
           </p>
         )}
-        <p className="border-t border-encre/10 px-3 py-2 text-xs text-ardoise tabular-nums">
-          Nouvelles quêtes dans {minuteur(data.resetsAt - maintenant)}
-        </p>
       </>
     );
   }
 
+  return <div id={id}>{contenu}</div>;
+}
+
+/** Avancement en crans (un par action) ; au-delà de 10, une barre continue. */
+function Crans({ fait, but }: { fait: number; but: number }) {
+  if (but > 10) {
+    return (
+      <span className="mt-[7px] block h-1.5 overflow-hidden rounded-[3px] bg-brume" aria-hidden="true">
+        <span className="block h-full rounded-[3px] bg-succes" style={{ width: `${Math.min(1, fait / but) * 100}%` }} />
+      </span>
+    );
+  }
   return (
-    <div id={id} className="border-t border-encre/10">
-      {contenu}
-    </div>
+    <span className="mt-[7px] flex gap-[3px]" aria-hidden="true">
+      {Array.from({ length: but }, (_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: crans identiques, leur nombre ne change pas
+        <span key={i} className={`h-1.5 flex-1 rounded-[3px] ${i < fait ? 'bg-succes' : 'bg-brume'}`} />
+      ))}
+    </span>
   );
 }

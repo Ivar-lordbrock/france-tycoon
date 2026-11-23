@@ -1,10 +1,11 @@
 import { type KeyboardEvent, useEffect, useRef } from 'react';
 
-export const bouton = 'h-10 rounded-md px-3 font-semibold disabled:opacity-50';
-export const boutonPrincipal = `${bouton} bg-encre text-white hover:bg-encre/90`;
+export const bouton = 'h-10 rounded-xl px-3.5 font-semibold disabled:opacity-50';
+/** Bouton en relief (index.css) : il s'enfonce sous le doigt. */
+export const boutonPrincipal = 'relief h-10 px-4';
 export const boutonSecondaire = `${bouton} border border-encre/15 text-encre hover:bg-brume`;
 /** Petit bouton des listes (bâtiments). */
-export const petitBouton = 'h-9 rounded-md px-2.5 text-sm font-semibold disabled:opacity-50';
+export const petitBouton = 'h-9 rounded-xl px-2.5 text-sm font-semibold disabled:opacity-50';
 
 interface PropsConfirmer {
   titre: string;
@@ -39,7 +40,7 @@ export function Confirmer(props: PropsConfirmer) {
   };
 
   return (
-    <fieldset onKeyDown={auClavier} className="m-0 min-w-0 rounded-md border border-encre/15 p-3">
+    <fieldset onKeyDown={auClavier} className="m-0 min-w-0 rounded-2xl border border-encre/15 p-4">
       <legend className="float-left w-full font-semibold">{props.titre}</legend>
       <dl className="clear-both pt-2 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-sm">
         {props.lignes.map(([terme, valeur]) => (
@@ -51,7 +52,7 @@ export function Confirmer(props: PropsConfirmer) {
       </dl>
       <p className="mt-2 text-xs text-ardoise">{props.note}</p>
       {props.erreur && (
-        <p role="alert" className="mt-2 text-sm text-red-700">
+        <p role="alert" className="mt-2 text-sm text-danger">
           {props.erreur}
         </p>
       )}
@@ -64,7 +65,7 @@ export function Confirmer(props: PropsConfirmer) {
           type="button"
           onClick={props.onValider}
           disabled={props.occupe}
-          className={props.danger ? `${bouton} bg-red-700 text-white hover:bg-red-800` : boutonPrincipal}
+          className={props.danger ? `${bouton} bg-danger text-fond hover:bg-danger/90` : boutonPrincipal}
         >
           {props.valider}
         </button>

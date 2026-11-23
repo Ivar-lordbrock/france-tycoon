@@ -81,7 +81,7 @@ export function Tutoriel() {
           <button
             type="button"
             onClick={() => setFini(false)}
-            className="h-9 rounded-md bg-encre px-3 font-semibold text-white"
+            className="h-9 rounded-md bg-encre px-3 font-semibold text-fond"
           >
             C’est parti
           </button>
@@ -113,7 +113,7 @@ export function Tutoriel() {
         <p className="mt-1 text-sm font-semibold tabular-nums">Récompense : {recompenseQuete(etape)}</p>
       )}
       {erreur && (
-        <p role="alert" className="mt-2 text-sm text-red-700">
+        <p role="alert" className="mt-2 text-sm text-danger">
           {messageErreur(erreur)}
         </p>
       )}
@@ -131,7 +131,7 @@ export function Tutoriel() {
             type="button"
             onClick={() => passer.mutate()}
             disabled={passer.isPending}
-            className="h-9 rounded-md bg-encre px-3 font-semibold text-white disabled:opacity-50"
+            className="h-9 rounded-md bg-encre px-3 font-semibold text-fond disabled:opacity-50"
           >
             Oui, passer
           </button>
@@ -150,7 +150,7 @@ export function Tutoriel() {
               type="button"
               onClick={() => faire.mutate(etape.key)}
               disabled={faire.isPending}
-              className="h-9 rounded-md bg-encre px-3 font-semibold text-white disabled:opacity-50"
+              className="h-9 rounded-md bg-encre px-3 font-semibold text-fond disabled:opacity-50"
             >
               {etape.position === 1 ? 'C’est parti' : 'Suivant'}
             </button>

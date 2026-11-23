@@ -13,7 +13,7 @@ export function Masque() {
     <Polygon
       positions={anneaux}
       interactive={false}
-      pathOptions={{ stroke: false, fillColor: COULEURS.masque, fillOpacity: 0.42, fillRule: 'evenodd' }}
+      pathOptions={{ stroke: false, fillColor: COULEURS.masque, fillOpacity: 0.45, fillRule: 'evenodd' }}
     />
   );
 }

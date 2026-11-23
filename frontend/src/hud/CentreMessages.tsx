@@ -36,16 +36,16 @@ export function CentreMessages({ id, nonLus, onChoisi }: { id: string; nonLus: n
           Aucun message pour l’instant. Les OPA et les chantiers finis s’afficheront ici.
         </p>
       ) : (
-        <ul className="max-h-80 overflow-y-auto py-1">
+        <ul className="py-1">
           {messages.map((n) => (
             <li key={n.id}>
               <button
                 type="button"
                 onClick={() => choisir(n)}
-                className={`flex w-full gap-2 px-3 py-2 text-left text-sm hover:bg-brume/60 ${n.readAt === null ? '' : 'text-ardoise'}`}
+                className={`flex w-full gap-2 rounded-2xl px-3 py-2 text-left text-sm hover:bg-brume/60 ${n.readAt === null ? '' : 'text-ardoise'}`}
               >
                 <span
-                  className={`mt-1.5 size-2 shrink-0 rounded-full ${n.readAt === null ? 'bg-orange-500' : ''}`}
+                  className={`mt-1.5 size-2 shrink-0 rounded-full ${n.readAt === null ? 'bg-alerte' : ''}`}
                   aria-hidden="true"
                 />
                 <span className="min-w-0 flex-1">
@@ -73,7 +73,7 @@ export function CentreMessages({ id, nonLus, onChoisi }: { id: string; nonLus: n
   }
 
   return (
-    <div id={id} className="border-t border-encre/10">
+    <div id={id}>
       {nonLus > 0 && (
         <div className="flex justify-end border-b border-encre/10 px-3 py-1.5">
           <button
