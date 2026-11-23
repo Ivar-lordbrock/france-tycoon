@@ -1,7 +1,8 @@
 import type { FicheCommune, MoiReponse } from '@france-tycoon/shared';
-import { type ReactNode, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { messageErreur, nouvelleCle } from '../api/client.ts';
 import { useAcheter, useVendre } from '../api/territoires.ts';
+import { useCarte } from '../etat/carte.ts';
 import { boutonPrincipal, boutonSecondaire, Confirmer } from './Confirmer.tsx';
 import { tycoons } from './fiche-texte.ts';
 import { apercuAchat, apercuVente, duree, estAMoi, pertesVente, raisonVente } from './territoires-texte.ts';
@@ -23,9 +24,15 @@ export function ActionsFiche({
 }) {
   const acheter = useAcheter();
   const vendre = useVendre();
+  const definirOnglet = useCarte((etat) => etat.definirOnglet);
   const [confirmation, setConfirmation] = useState<Confirmation>(null);
   const [fait, setFait] = useState<string | null>(null);
   const declencheur = useRef<HTMLButtonElement>(null);
+  const message = useRef<HTMLParagraphElement>(null);
+  // La confirmation a pu faire défiler la fiche : le message de victoire (ou de vente) revient à l'écran.
+  useEffect(() => {
+    if (fait) message.current?.scrollIntoView({ block: 'nearest' });
+  }, [fait]);
   const apercu = apercuAchat(fiche, moi ?? MOI_VIDE);
   const erreur = acheter.error ?? vendre.error;
 
@@ -46,7 +53,8 @@ export function ActionsFiche({
       { insee: fiche.insee, cle },
       {
         onSuccess: () => {
-          fermer();
+          // Pas de retour du focus : il tomberait sur « Vendre » et ferait défiler la fiche sous le message de victoire.
+          setConfirmation(null);
           setFait(`${fiche.name} est à toi ! Personne ne peut te la prendre pendant ${duree(apercu.bouclier)}.`);
         },
       },
@@ -106,9 +114,7 @@ export function ActionsFiche({
   } else if (estAMoi(fiche)) {
     const vente = apercuVente(fiche);
     const raisons = fiche.actions.sellReasons.map(raisonVente).filter((t): t is string => t !== null);
-    if (!fiche.actions.canSell) {
-      contenu = raisons.length > 0 && <p className="text-sm text-ardoise">{raisons.join(' ')}</p>;
-    } else if (confirmation?.action === 'vente') {
+    if (fiche.actions.canSell && confirmation?.action === 'vente') {
       const { cle } = confirmation;
       contenu = (
         <Confirmer
@@ -130,15 +136,25 @@ export function ActionsFiche({
         />
       );
     } else {
+      // La suite logique d'un achat est de construire : en principal ; vendre reste possible, en second.
       contenu = (
-        <button
-          ref={declencheur}
-          type="button"
-          onClick={() => ouvrir('vente')}
-          className={`${boutonSecondaire} w-full`}
-        >
-          Vendre à l’État · {tycoons(vente.montant)}
-        </button>
+        <>
+          <button type="button" onClick={() => definirOnglet('batiments')} className={`${boutonPrincipal} w-full`}>
+            Construire ici
+          </button>
+          {fiche.actions.canSell ? (
+            <button
+              ref={declencheur}
+              type="button"
+              onClick={() => ouvrir('vente')}
+              className={`${boutonSecondaire} w-full`}
+            >
+              Vendre à l’État · {tycoons(vente.montant)}
+            </button>
+          ) : (
+            raisons.length > 0 && <p className="text-sm text-ardoise">{raisons.join(' ')}</p>
+          )}
+        </>
       );
     }
   }
@@ -151,7 +167,11 @@ export function ActionsFiche({
   return (
     <div className="mt-3 flex flex-col gap-2">
       {fait && (
-        <p role="status" className="rounded-md bg-brume px-3 py-2 text-sm font-semibold">
+        <p
+          ref={message}
+          role="status"
+          className="entree-toast rounded-md bg-surligneur/50 px-3 py-2 text-sm font-semibold"
+        >
           {fait}
         </p>
       )}
