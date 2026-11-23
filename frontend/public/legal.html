@@ -24,9 +24,11 @@
         font: 16px/1.6 "Archivo", system-ui, sans-serif;
       }
       a { color: var(--encre); }
-      header, main { max-width: 46rem; margin: 0 auto; padding: 0 16px; }
+      /* 36rem : environ 75 caractères par ligne, la longueur qui se lit sans fatigue. */
+      header, main { max-width: 36rem; margin: 0 auto; padding: 0 16px; }
       header { padding-top: 24px; }
       header a { color: var(--ardoise); font-size: 14px; }
+      p, li { text-wrap: pretty; }
       h1 { margin: 8px 0 4px; font-size: 28px; line-height: 1.2; }
       nav { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 12px 0 0; font-size: 15px; }
       nav a { color: var(--encre); font-weight: 600; }
@@ -43,7 +45,7 @@
       ul { padding-left: 20px; }
       mark { background: var(--surligneur); padding: 0 3px; border-radius: 3px; }
       .petit { color: var(--ardoise); font-size: 14px; }
-      footer { max-width: 46rem; margin: 0 auto; padding: 0 16px 32px; color: var(--ardoise); font-size: 14px; }
+      footer { max-width: 36rem; margin: 0 auto; padding: 0 16px 32px; color: var(--ardoise); font-size: 14px; }
     </style>
   </head>
   <body>
