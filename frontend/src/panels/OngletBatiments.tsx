@@ -39,7 +39,7 @@ type Cible = { action: 'construire'; typeCode: string } | { action: 'ameliorer' 
 const repere = (cible: Cible) =>
   cible.action === 'construire' ? `construire:${cible.typeCode}` : `${cible.action}:${cible.id}`;
 
-const petitPrincipal = `${petitBouton} bg-encre text-white hover:bg-encre/90`;
+const petitPrincipal = 'relief h-9 rounded-xl px-3 text-sm';
 const petitSecondaire = `${petitBouton} border border-encre/15 text-encre hover:bg-brume`;
 const petitDiscret = `${petitBouton} text-ardoise hover:bg-brume hover:text-encre`;
 
@@ -247,7 +247,7 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
         {libres} place{libres > 1 ? 's' : ''} libre{libres > 1 ? 's' : ''} sur {fiche.buildingSlots.total}
       </p>
       {!fileLibre && enCours && (
-        <p className="rounded-md bg-surligneur/30 px-3 py-2 text-sm">
+        <p className="rounded-md bg-brume px-3 py-2 text-sm">
           {enCours.territoryInsee === fiche.insee
             ? 'Un chantier est en cours ici'
             : `Un chantier est en cours à ${enCours.territoryName}`}{' '}
@@ -265,7 +265,7 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
         </p>
       )}
       {action.isError && !confirmation && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger">
           {messageErreur(action.error)}
         </p>
       )}

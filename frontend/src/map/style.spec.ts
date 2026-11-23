@@ -1,6 +1,6 @@
 import type { ProprietesCommuneCarte } from '@france-tycoon/shared';
 import { describe, expect, it } from 'vitest';
-import { bulleCommune, COULEURS, styleCommune } from './style.ts';
+import { bulleCommune, COULEURS, clair, styleCommune } from './style.ts';
 
 const proprietes = (p: Partial<ProprietesCommuneCarte> = {}): ProprietesCommuneCarte => ({
   insee: '42218',
@@ -16,17 +16,22 @@ describe('style des communes', () => {
     expect(styleCommune(proprietes())).toMatchObject({ color: COULEURS.encre, weight: 0.8, fillOpacity: 0 });
   });
 
+  it('éclaircit la couleur du joueur pour le fond sombre', () => {
+    expect(clair('#dc2626')).toBe('#e87272');
+    expect(clair('#000000')).toBe('#595959');
+  });
+
   it('colore une commune possédée avec la couleur du joueur', () => {
     expect(styleCommune(proprietes({ state: 'rival', ownerColor: '#dc2626' }))).toMatchObject({
-      color: '#dc2626',
-      fillColor: '#dc2626',
+      color: '#e87272',
+      fillColor: '#e87272',
       fillOpacity: 0.3,
     });
   });
 
   it('trace mes communes d’un contour épais, pour les distinguer d’un rival de couleur proche', () => {
     expect(styleCommune(proprietes({ state: 'mine', ownerColor: '#dc2626' }))).toMatchObject({
-      color: '#dc2626',
+      color: '#e87272',
       weight: 3,
     });
   });
@@ -39,16 +44,16 @@ describe('style des communes', () => {
     expect(styleCommune(proprietes({ state: 'takeover' }))).toMatchObject({ color: COULEURS.opa, dashArray: '6 4' });
   });
 
-  it('surligne la commune survolée puis la commune choisie', () => {
+  it('éclaire la commune survolée et cerne de jaune la commune choisie, sans cacher la couleur du joueur', () => {
     expect(styleCommune(proprietes(), { survolee: true })).toMatchObject({
-      fillColor: COULEURS.surligneur,
-      fillOpacity: 0.3,
+      fillColor: COULEURS.encre,
+      fillOpacity: 0.15,
     });
-    expect(styleCommune(proprietes({ state: 'takeover' }), { selectionnee: true })).toMatchObject({
-      color: COULEURS.encre,
+    expect(styleCommune(proprietes({ state: 'rival', ownerColor: '#dc2626' }), { selectionnee: true })).toMatchObject({
+      color: COULEURS.surligneur,
       weight: 3,
       dashArray: undefined,
-      fillColor: COULEURS.surligneur,
+      fillColor: '#e87272',
     });
   });
 });

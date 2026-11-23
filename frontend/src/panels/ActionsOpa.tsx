@@ -126,7 +126,7 @@ function LancerOpa({
       : raisons(devis.data.reasons, devis.data.offerAmount).join(' ') || 'OPA impossible pour le moment.';
     return (
       <div className="flex items-start justify-between gap-2 text-sm">
-        <p role="alert" className="text-red-700">
+        <p role="alert" className="text-danger">
           {texte}
         </p>
         <button type="button" onClick={fermer} className={boutonSecondaire}>
@@ -196,9 +196,9 @@ function OpaEnCours({
   }, [echue, client, fiche.insee, takeover.id]);
 
   return (
-    <section aria-label="OPA en cours" className="rounded-md border border-orange-300 bg-orange-50 p-3">
+    <section aria-label="OPA en cours" className="rounded-md border border-alerte/40 bg-alerte/10 p-3">
       <p className="flex items-baseline justify-between gap-2 text-sm">
-        <span className="font-semibold text-orange-800">OPA en cours</span>
+        <span className="font-semibold text-alerte">OPA en cours</span>
         <span className="tabular-nums text-ardoise">
           {echue ? 'Temps écoulé…' : `fin dans ${tempsRestant(takeover.endsAt, maintenant)}`}
         </span>
@@ -315,7 +315,7 @@ function Reponses({
           ref={declencheur}
           type="button"
           onClick={() => ouvrir('cancel')}
-          className={`${boutonSecondaire} mt-2 w-full bg-white`}
+          className={`${boutonSecondaire} mt-2 w-full`}
         >
           Retirer mon offre
         </button>
@@ -340,11 +340,11 @@ function Reponses({
         >
           Défendre · {tycoons(opa.defenseCost)}
         </button>
-        <button type="button" onClick={() => ouvrir('accept')} className={`${boutonSecondaire} bg-white`}>
+        <button type="button" onClick={() => ouvrir('accept')} className={`${boutonSecondaire}`}>
           Accepter
         </button>
       </div>
-      {manque > 0 && <p className="mt-1 text-sm text-red-700">Il te manque {tycoons(manque)} pour défendre.</p>}
+      {manque > 0 && <p className="mt-1 text-sm text-danger">Il te manque {tycoons(manque)} pour défendre.</p>}
     </>
   );
 }

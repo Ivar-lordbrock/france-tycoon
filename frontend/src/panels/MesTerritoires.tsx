@@ -30,18 +30,20 @@ export function MesTerritoires({ id, onChoisi }: { id: string; onChoisi: () => v
     );
   } else {
     contenu = (
-      <ul className="max-h-72 overflow-y-auto py-1">
+      <ul className="py-1">
         {data.territories.map((t) => (
           <li key={t.insee}>
             <button
               type="button"
               onClick={() => choisir(t)}
-              className="flex w-full flex-col gap-0.5 px-3 py-2 text-left hover:bg-brume/60"
+              className="flex w-full flex-col gap-0.5 rounded-2xl px-3 py-2 text-left hover:bg-brume/60"
             >
               <span className="flex w-full items-center gap-2">
                 <span className="truncate font-semibold">{t.name}</span>
                 {t.isCapital && (
-                  <span className="shrink-0 rounded bg-surligneur px-1.5 py-0.5 text-xs font-semibold">Capitale</span>
+                  <span className="shrink-0 rounded bg-surligneur px-1.5 py-0.5 text-xs font-semibold text-fond">
+                    Capitale
+                  </span>
                 )}
                 <span className="ml-auto shrink-0 text-sm tabular-nums">{tycoons(t.incomePerHour)}/h</span>
               </span>
@@ -53,9 +55,5 @@ export function MesTerritoires({ id, onChoisi }: { id: string; onChoisi: () => v
     );
   }
 
-  return (
-    <div id={id} className="border-t border-encre/10">
-      {contenu}
-    </div>
-  );
+  return <div id={id}>{contenu}</div>;
 }

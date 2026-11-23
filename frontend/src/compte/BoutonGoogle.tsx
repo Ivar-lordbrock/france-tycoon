@@ -44,5 +44,6 @@ export function BoutonGoogle({ clientId, onJeton }: { clientId: string; onJeton:
   }, [clientId]);
 
   if (erreur) return <p className="text-sm text-ardoise">Connexion Google indisponible pour le moment.</p>;
-  return <div ref={conteneur} className="min-h-10" />;
+  // Le cadre de Google est clair : sans ce réglage, le thème sombre de la page lui met un fond blanc.
+  return <div ref={conteneur} className="min-h-10 [color-scheme:light]" />;
 }

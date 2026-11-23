@@ -1,6 +1,6 @@
 import type { FicheCommune, MoiReponse } from '@france-tycoon/shared';
 import { describe, expect, it } from 'vitest';
-import { lieu, proprietaire, raisonAchat, tycoons } from './fiche-texte.ts';
+import { lieu, phraseEquipements, phrasePlaces, proprietaire, raisonAchat, tycoons } from './fiche-texte.ts';
 
 const fiche = {
   insee: '01001',
@@ -19,6 +19,30 @@ const moi = { wallet: { cash: 20_000, gems: 0 }, territories: { owned: 3, max: 3
 describe('textes de la fiche commune', () => {
   it('écrit les montants à la française', () => {
     expect(tycoons(21_800)).toMatch(/^21\s800 ₮$/);
+  });
+
+  it('résume les équipements en une phrase, au singulier comme au pluriel', () => {
+    const espaces = (t: string) => t.replace(/\s/g, ' ');
+    expect(
+      phraseEquipements({
+        equipments: [
+          { category: 'commerce', count: 2, source: 'bpe' },
+          { category: 'service', count: 1_200, source: 'bpe' },
+          { category: 'education', count: 1, source: 'bpe' },
+        ],
+        areaKm2: 43.6,
+      }),
+    ).toSatisfy((t: string) => espaces(t) === '2 commerces, 1 200 services et 1 école sur 44 km².');
+    expect(phraseEquipements({ equipments: [{ category: 'gare', count: 1, source: 'osm' }], areaKm2: null })).toBe(
+      '1 gare.',
+    );
+    expect(phraseEquipements({ equipments: [], areaKm2: 5 })).toBe('Aucun équipement recensé sur 5 km².');
+  });
+
+  it('compte les places de bâtiments libres', () => {
+    expect(phrasePlaces({ used: 0, total: 6 })).toBe('6 places de bâtiments libres');
+    expect(phrasePlaces({ used: 2, total: 3 })).toBe('1 place de bâtiment libre');
+    expect(phrasePlaces({ used: 3, total: 3 })).toBe('Toutes les places de bâtiments sont prises');
   });
 
   it('situe la commune : département en Métropole, zone en outre-mer', () => {

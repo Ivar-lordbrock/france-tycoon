@@ -5,8 +5,8 @@ import { allerALaCommune } from '../panels/aller-a-la-commune.ts';
 
 const FOND: Record<Toast['ton'], string> = {
   info: '',
-  alerte: 'bg-orange-50 text-orange-950',
-  erreur: 'bg-red-50 text-red-950',
+  alerte: 'bg-[color-mix(in_srgb,var(--color-alerte)_14%,var(--color-surface))]',
+  erreur: 'bg-[color-mix(in_srgb,var(--color-danger)_14%,var(--color-surface))]',
 };
 
 /**

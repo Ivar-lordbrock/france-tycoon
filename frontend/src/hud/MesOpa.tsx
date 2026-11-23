@@ -6,7 +6,7 @@ import { allerALaCommune } from '../panels/aller-a-la-commune.ts';
 import { phraseOpaEnCours } from '../panels/opa-texte.ts';
 
 /**
- * Mes OPA en cours, sous la barre du haut : celles qui me visent d'abord (24 h pour réagir),
+ * Mes OPA en cours, sous mes ressources : celles qui me visent d'abord (24 h pour réagir),
  * puis celles que j'ai lancées. Un clic ouvre la fiche, où l'on répond.
  */
 export function MesOpa() {
@@ -32,7 +32,10 @@ export function MesOpa() {
   );
 
   return (
-    <section aria-labelledby={`${id}-titre`} className="panneau pointer-events-auto shrink-0 overflow-hidden">
+    <section
+      aria-labelledby={`${id}-titre`}
+      className="panneau pointer-events-auto w-full shrink-0 overflow-hidden rounded-[22px]"
+    >
       <h2 id={`${id}-titre`} className="sr-only">
         Mes OPA en cours
       </h2>
@@ -43,10 +46,10 @@ export function MesOpa() {
               type="button"
               onClick={() => void allerALaCommune(client, opa.territory.insee, { zone: opa.territory.zone })}
               className={`flex w-full flex-col gap-0.5 px-3 py-2.5 text-left text-sm ${
-                opa.role === 'defender' ? 'bg-orange-50 hover:bg-orange-100' : 'hover:bg-brume/60'
+                opa.role === 'defender' ? 'bg-alerte/10 hover:bg-alerte/15' : 'hover:bg-brume/60'
               }`}
             >
-              <span className={`font-semibold ${opa.role === 'defender' ? 'text-orange-800' : ''}`}>
+              <span className={`font-semibold ${opa.role === 'defender' ? 'text-alerte' : ''}`}>
                 {opa.role === 'defender' ? `OPA reçue sur ${opa.territory.name}` : `Ton OPA sur ${opa.territory.name}`}
               </span>
               <span className="tabular-nums">{phraseOpaEnCours(opa, maintenant)}</span>

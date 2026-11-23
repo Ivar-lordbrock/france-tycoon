@@ -14,7 +14,10 @@ function useAntiRebond<T>(valeur: T, delaiMs: number): T {
   return stable;
 }
 
-/** Recherche de commune avec autocomplétion (motif « combobox » de WAI-ARIA). Raccourci : « / ». */
+/**
+ * Recherche de commune avec autocomplétion (motif « combobox » de WAI-ARIA). Raccourci : « / ».
+ * Posée dans la barre de recherche (App.tsx) : la liste des résultats prend toute la largeur de la barre.
+ */
 export function Recherche() {
   const idListe = useId();
   const champ = useRef<HTMLInputElement>(null);
@@ -77,50 +80,36 @@ export function Recherche() {
   }
 
   return (
-    <div className="relative">
+    <div className="min-w-0 flex-1">
       <label htmlFor={`${idListe}-champ`} className="sr-only">
         Rechercher une commune
       </label>
-      <div className="flex items-center gap-2 rounded-md border border-encre/15 bg-white px-2.5 focus-within:border-encre focus-within:ring-2 focus-within:ring-surligneur">
-        <svg viewBox="0 0 20 20" className="size-4 shrink-0 fill-none stroke-ardoise stroke-2" aria-hidden="true">
-          <circle cx="8.5" cy="8.5" r="5.5" />
-          <path d="m13 13 4.5 4.5" strokeLinecap="round" />
-        </svg>
-        <input
-          ref={champ}
-          id={`${idListe}-champ`}
-          type="search"
-          role="combobox"
-          aria-expanded={montrerListe && resultats.length > 0}
-          aria-controls={idListe}
-          aria-autocomplete="list"
-          aria-activedescendant={
-            montrerListe && resultats[active] ? `${idListe}-${resultats[active].insee}` : undefined
-          }
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="Rechercher une commune"
-          value={saisie}
-          onChange={(e) => {
-            setSaisie(e.target.value);
-            setActive(0);
-            setOuverte(true);
-          }}
-          onFocus={() => setOuverte(true)}
-          onBlur={() => setOuverte(false)}
-          onKeyDown={auClavier}
-          className="h-10 w-full min-w-0 bg-transparent text-base text-encre outline-none placeholder:text-ardoise"
-        />
-        <span
-          className="hidden rounded border border-encre/20 px-1.5 font-mono text-xs text-ardoise md:block"
-          aria-hidden="true"
-        >
-          /
-        </span>
-      </div>
+      <input
+        ref={champ}
+        id={`${idListe}-champ`}
+        type="search"
+        role="combobox"
+        aria-expanded={montrerListe && resultats.length > 0}
+        aria-controls={idListe}
+        aria-autocomplete="list"
+        aria-activedescendant={montrerListe && resultats[active] ? `${idListe}-${resultats[active].insee}` : undefined}
+        autoComplete="off"
+        spellCheck={false}
+        placeholder="Rechercher une commune"
+        value={saisie}
+        onChange={(e) => {
+          setSaisie(e.target.value);
+          setActive(0);
+          setOuverte(true);
+        }}
+        onFocus={() => setOuverte(true)}
+        onBlur={() => setOuverte(false)}
+        onKeyDown={auClavier}
+        className="h-10 w-full min-w-0 bg-transparent text-base text-encre outline-none placeholder:text-ardoise [&::-webkit-search-cancel-button]:hidden"
+      />
 
       {montrerListe && (
-        <div className="panneau absolute inset-x-0 top-full z-10 mt-1.5 overflow-hidden">
+        <div className="panneau entree-toast absolute inset-x-0 top-full z-10 mt-2 overflow-hidden rounded-[22px]">
           {resultats.length > 0 && (
             <div id={idListe} role="listbox" aria-label="Communes trouvées" className="max-h-80 overflow-y-auto py-1">
               {resultats.map((r, i) => (
@@ -134,7 +123,7 @@ export function Recherche() {
                   onMouseDown={(e) => e.preventDefault()}
                   onMouseEnter={() => setActive(i)}
                   onClick={() => choisir(r)}
-                  className={`cursor-pointer px-3 py-2 ${i === active ? 'bg-brume' : ''}`}
+                  className={`cursor-pointer px-4 py-2 ${i === active ? 'bg-brume' : ''}`}
                 >
                   <div className="font-semibold text-encre">{r.name}</div>
                   <div className="text-sm text-ardoise">{descriptionResultat(r)}</div>
@@ -143,7 +132,7 @@ export function Recherche() {
             </div>
           )}
           {message && (
-            <p role="status" className="px-3 py-2.5 text-sm text-ardoise">
+            <p role="status" className="px-4 py-3 text-sm text-ardoise">
               {message}
             </p>
           )}

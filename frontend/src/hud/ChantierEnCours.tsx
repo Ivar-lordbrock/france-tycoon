@@ -24,17 +24,23 @@ function useSuiviChantiers(file: FileConstruction | undefined) {
   }, [file, client]);
 }
 
-/** Barre du haut : chantier en cours et temps restant ; un clic ouvre la commune sur ses bâtiments. */
-export function ChantierEnCours({ possede }: { possede: number }) {
+/** Toujours monté une fois connecté (même fenêtre fermée) : relit profil et fiches quand un chantier finit. */
+export function SuiviChantiers() {
+  const { data: file } = useFileChantiers(true);
+  useSuiviChantiers(file);
+  return null;
+}
+
+/** Fenêtre « Mes communes » : chantier en cours et temps restant ; un clic ouvre la commune sur ses bâtiments. */
+export function ChantierEnCours({ possede, onChoisi }: { possede: number; onChoisi: () => void }) {
   const { data: file } = useFileChantiers(true);
   const maintenant = useMaintenant(1_000);
   const client = useQueryClient();
-  useSuiviChantiers(file);
 
   if (!file || possede === 0) return null;
   if (file.works.length === 0) {
     return (
-      <p className="border-t border-encre/10 px-3 py-2 text-sm text-ardoise">
+      <p className="px-3 py-2 text-sm text-ardoise">
         Aucun chantier en cours. Construis depuis l’onglet Bâtiments d’une de tes communes.
       </p>
     );
@@ -48,8 +54,11 @@ export function ChantierEnCours({ possede }: { possede: number }) {
           <li key={w.buildingId}>
             <button
               type="button"
-              onClick={() => void allerALaCommune(client, w.territoryInsee, { onglet: 'batiments' })}
-              className="block w-full border-t border-encre/10 px-3 py-2 text-left hover:bg-brume/60"
+              onClick={() => {
+                onChoisi();
+                void allerALaCommune(client, w.territoryInsee, { onglet: 'batiments' });
+              }}
+              className="block w-full rounded-2xl px-3 py-2 text-left hover:bg-brume/60"
             >
               <span className="flex items-baseline justify-between gap-2 text-sm">
                 <span className="truncate">
@@ -64,7 +73,7 @@ export function ChantierEnCours({ possede }: { possede: number }) {
               </span>
               <span className="mt-1 block h-1 overflow-hidden rounded-full bg-brume" aria-hidden="true">
                 <span
-                  className="block h-full rounded-full bg-encre"
+                  className="block h-full rounded-full bg-surligneur"
                   style={{ width: `${avancement(w.startedAt, w.endsAt, maintenant) * 100}%` }}
                 />
               </span>
