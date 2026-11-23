@@ -143,7 +143,7 @@ Le flux relit la table `notifications` : tant qu'un joueur écoute, un passage c
 |---|---|---|---|
 | GET | `/admin/health` | | état du serveur, de la base, dernière exécution des tâches (sans 🛡️ pour la supervision, sans données sensibles) |
 | GET | `/admin/me` | 🛡️ équipe | grade du compte connecté (`moderator` ou `admin`) ; 401 sans session, 403 pour un joueur |
-| GET | `/admin/overview` | 🛡️ équipe | dashboard : joueurs actifs 24 h / 7 j / 14 j, communes possédées par zone, soldes et revenu par heure, OPA, tâches, taille de la base, disque libre |
+| GET | `/admin/overview` | 🛡️ équipe | dashboard : joueurs actifs 24 h / 7 j / 14 j, communes possédées par zone, soldes et revenu par heure, OPA, signalements et alertes à traiter, tâches, taille de la base, disque libre, `daily[]` : 14 derniers jours (UTC) `{ day, signups, active }` (active = joueurs avec un mouvement d'argent) |
 | GET | `/admin/players?q&role&status` | 🛡️ équipe | recherche (pseudo ou e-mail en morceau, id Google ou n° exact), filtres grade et statut (`suspended` compris), 50 max |
 | GET | `/admin/players/:id` | 🛡️ équipe | fiche : soldes, revenu, communes, 50 transactions, 30 OPA, 20 connexions (empreintes hachées), notes, journal d'audit |
 | POST | `/admin/players/:id/notes` · PATCH/DELETE `/admin/notes/:id` | 🛡️ équipe | notes de l'équipe (`{ body }`) |
@@ -167,6 +167,12 @@ Le flux relit la table `notifications` : tant qu'un joueur écoute, un passage c
 | PUT | `/admin/live-config` | 🛡️ admin | `{ price, income, building: 25..400, reason }` : nouveaux réglages permanents en %, dès maintenant (docs/05 § 5.10). Audit `config.update` |
 | POST | `/admin/events` | 🛡️ admin | `{ title (3 à 80), price, income, building: 25..400, startsAt?, hours: 1..720 }` : événement daté ; un début absent ou passé part de maintenant, au plus tard dans 90 jours (sinon 400). Fin automatique. Audit `event.create` |
 | POST | `/admin/events/:id/cancel` | 🛡️ admin | arrête un événement à venir ou en cours (`cancelled_at` = maintenant) ; 409 s'il est déjà fini ou annulé. Audit `event.cancel` |
+| GET | `/admin/cheat-alerts` | 🛡️ équipe | → `{ alerts[] }` recalculées à chaque lecture, non classées d'abord : `{ key, rule, players[], count, currency, at, review }`. Règles : `shared_ip` (même IP hachée pour 2 comptes ou plus, 30 j), `balance_jump` (argent apparu hors du registre : solde avant un mouvement ≠ solde laissé par le précédent, ou solde du compte ≠ dernier mouvement, 7 j), `repeat_takeovers` (3 OPA ou plus entre les deux mêmes joueurs, dans un sens ou l'autre, 7 j) |
+| POST | `/admin/cheat-alerts/review` | 🛡️ équipe | `{ key, note (3 à 500) }` : classe une alerte du moment ; 404 si elle n'existe plus, 409 si déjà classée. Un fait nouveau change la clé : l'alerte revient. Audit `alert.review` |
+| GET | `/admin/logs/activity?q` | 🛡️ équipe | → `{ rows[] }` : 100 derniers mouvements d'argent (`wallet_transactions`) ; `q` = pseudo (morceau) ou n° du joueur |
+| GET | `/admin/logs/audit?q` | 🛡️ équipe | → `{ rows[] }` : 100 dernières lignes de `admin_audit` ; `q` = début d'action, auteur (morceau) ou n° de la cible |
+| GET | `/admin/logs/errors` | 🛡️ équipe | → `{ rows[] }` : 100 dernières erreurs, `{ source: api \| job, place, message, at }` (erreurs 500 notées par l'API, tâches planifiées en erreur) |
+| GET | `/admin/export/:quoi` | 🛡️ admin | fichier CSV (« ; », BOM, heure de Paris, formules neutralisées) : `players` (e-mails compris), `audit` (tout), `activity` (30 j). 400 pour un autre nom. Audit `export.csv` |
 
 Actions du dashboard : 204 (sauf `/admin/gifts`), motif obligatoire sur les joueurs, les communes et les OPA, une ligne dans `admin_audit` (en ajout seul). Jamais sur soi, seulement sur un grade plus petit ; un admin d'office (`ADMIN_EMAILS`) est intouchable.
 | POST | `/admin/jobs/:name/run` | 🛡️ | lance une tâche à la main |

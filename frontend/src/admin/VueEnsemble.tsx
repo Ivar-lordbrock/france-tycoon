@@ -1,5 +1,5 @@
 import type { VueEnsembleReponse } from '@france-tycoon/shared';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useVueEnsemble } from '../api/admin.ts';
 import { messageErreur } from '../api/client.ts';
 import { entier, tycoons } from '../panels/fiche-texte.ts';
@@ -40,7 +40,7 @@ export function VueEnsemble() {
       </p>
     );
 
-  const { players, territories, economy, takeovers, system, now } = data;
+  const { players, territories, economy, takeovers, system, daily, now } = data;
   return (
     <div className="mt-2 flex flex-col gap-8 [font-variant-numeric:tabular-nums]">
       <div className="flex items-center gap-3 text-sm text-ardoise">
@@ -62,6 +62,21 @@ export function VueEnsemble() {
           <Chiffre libelle="Actifs 7 j">{entier(players.active7d)}</Chiffre>
           <Chiffre libelle="Actifs 14 j">{entier(players.active14d)}</Chiffre>
         </dl>
+      </Section>
+
+      <Section titre="14 derniers jours">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Barres
+            titre="Inscriptions"
+            points={daily.map((d) => ({ day: d.day, n: d.signups }))}
+            aide="Nouveaux comptes par jour."
+          />
+          <Barres
+            titre="Joueurs actifs"
+            points={daily.map((d) => ({ day: d.day, n: d.active }))}
+            aide="Joueurs avec au moins un mouvement d’argent (achat, revenus, chantier…) dans la journée."
+          />
+        </div>
       </Section>
 
       <Section titre="Communes possédées">
@@ -173,5 +188,60 @@ function Zone({ nom, communes }: { nom: string; communes: VueEnsembleReponse['te
         />
       </div>
     </div>
+  );
+}
+
+// Jours UTC, comme le serveur les compte.
+const formatJour = new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', day: 'numeric', month: 'short' });
+const jour = (d: string) => formatJour.format(new Date(`${d}T00:00:00Z`));
+
+/** Petit graphique en barres, une série (le titre la nomme). Survol ou toucher : la valeur du jour en haut. */
+function Barres({ titre, points, aide }: { titre: string; points: { day: string; n: number }[]; aide: string }) {
+  const [survol, setSurvol] = useState<number | null>(null);
+  const max = Math.max(1, ...points.map((p) => p.n));
+  const total = points.reduce((t, p) => t + p.n, 0);
+  const vu = survol === null ? null : points[survol];
+  return (
+    <figure className="panneau p-4">
+      <figcaption className="flex items-baseline justify-between gap-3">
+        <span className="font-semibold">{titre}</span>
+        <span className="text-sm text-ardoise" aria-live="polite">
+          {vu ? `${jour(vu.day)} : ${entier(vu.n)}` : `${entier(total)} en 14 jours · max ${entier(max)}`}
+        </span>
+      </figcaption>
+      <ol className="mt-3 flex h-24 items-end border-b border-encre/20" aria-hidden="true">
+        {points.map((p, i) => (
+          <li
+            key={p.day}
+            onPointerEnter={() => setSurvol(i)}
+            onPointerLeave={() => setSurvol(null)}
+            className="flex h-full flex-1 items-end px-px"
+          >
+            <span
+              className={`w-full rounded-t-[4px] bg-surligneur transition-opacity duration-150 ${
+                survol !== null && survol !== i ? 'opacity-50' : ''
+              }`}
+              style={{ height: `${(p.n / max) * 100}%` }}
+            />
+          </li>
+        ))}
+      </ol>
+      <div className="mt-1.5 flex justify-between text-xs text-ardoise" aria-hidden="true">
+        <span>{points[0] ? jour(points[0].day) : ''}</span>
+        <span>Aujourd’hui</span>
+      </div>
+      <table className="sr-only">
+        <caption>{titre}, 14 derniers jours</caption>
+        <tbody>
+          {points.map((p) => (
+            <tr key={p.day}>
+              <th scope="row">{jour(p.day)}</th>
+              <td>{p.n}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="mt-2 text-xs text-ardoise">{aide}</p>
+    </figure>
   );
 }
