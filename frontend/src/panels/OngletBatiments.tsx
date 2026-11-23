@@ -5,7 +5,7 @@ import {
   type MoiReponse,
   type TypeBatiment,
 } from '@france-tycoon/shared';
-import { type ReactNode, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import {
   type ActionBatiment,
   type ReponseBatiment,
@@ -59,6 +59,11 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
   const [fait, setFait] = useState<string | null>(null);
   const declencheur = useRef<string | null>(null);
   const zone = useRef<HTMLDivElement>(null);
+  const messageFait = useRef<HTMLParagraphElement>(null);
+  // La confirmation a pu faire défiler la liste : le message (en haut de l'onglet) prend le focus et revient à l'écran.
+  useEffect(() => {
+    if (fait) messageFait.current?.focus();
+  }, [fait]);
 
   if (isPending) return <p className="text-sm text-ardoise">Chargement des bâtiments…</p>;
   if (isError) return <p className="text-sm text-ardoise">Bâtiments indisponibles : le serveur ne répond pas.</p>;
@@ -99,7 +104,8 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
   const lancer = (demande: ActionBatiment, message: (reponse: ReponseBatiment) => string) =>
     action.mutate(demande, {
       onSuccess: (reponse) => {
-        fermer();
+        // Pas de retour au bouton : c'est le message qui prend le focus (voir plus haut).
+        setConfirmation(null);
         setFait(message(reponse));
       },
     });
@@ -249,7 +255,12 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
         </p>
       )}
       {fait && (
-        <p role="status" className="rounded-md bg-brume px-3 py-2 text-sm font-semibold">
+        <p
+          ref={messageFait}
+          tabIndex={-1}
+          role="status"
+          className="rounded-md bg-brume px-3 py-2 text-sm font-semibold"
+        >
           {fait}
         </p>
       )}
