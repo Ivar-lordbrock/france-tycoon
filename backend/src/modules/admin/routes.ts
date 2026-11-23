@@ -15,6 +15,7 @@ import { ErreurMetier } from '../../erreurs.ts';
 import { exigerJoueur } from '../auth/requete.ts';
 import { creerLecteurRevenus, revenuDuJoueur } from '../income/revenus.ts';
 import { routesAdminJoueurs } from './joueurs.ts';
+import { routesAdminTerritoires } from './territoires.ts';
 
 const VERSION = process.env.npm_package_version ?? '0.1.0';
 const JOUR_S = 86_400;
@@ -93,6 +94,7 @@ export const routesAdmin: FastifyPluginAsyncZod<OptionsAdmin> = async (app, { ad
     });
 
     equipe.register(routesAdminJoueurs, { adminEmails });
+    equipe.register(routesAdminTerritoires);
 
     const joueurs = app.db.prepare<[number, number, number], VueEnsembleReponse['players']>(`
       SELECT count(*) AS total,

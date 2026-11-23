@@ -60,3 +60,33 @@ test('un admin trouve un joueur, le suspend, et le joueur voit le motif', async 
   await cible.getByRole('button', { name: /^Encaisser/ }).click();
   await expect(cible.getByText(/Ton compte est suspendu.*Motif : Essai e2e/)).toBeVisible();
 });
+
+test('un admin force le prix d’une commune libre, et le joueur paie ce prix', async ({ browser }) => {
+  const page = await browser.newPage();
+  await page.route(/^https?:\/\/(?!localhost|127\.0\.0\.1)/, (route) => route.abort());
+  await entrer(page, 'Chef');
+  await page.goto('/admin');
+  await page
+    .getByRole('navigation', { name: 'Vues du dashboard' })
+    .getByRole('button', { name: 'Territoires & OPA' })
+    .click();
+  await page.getByRole('combobox', { name: 'Filtre' }).selectOption('free');
+  await page.getByRole('searchbox', { name: 'Chercher une commune' }).fill('Essaibourg');
+  await page.getByRole('button', { name: 'Chercher' }).click();
+  await page
+    .getByRole('row', { name: /Essaibourg/ })
+    .getByRole('button', { name: 'Prix' })
+    .click();
+  await page.getByLabel('Prix forcé (₮)').fill('12345');
+  await page.getByPlaceholder('Pourquoi ?').fill('Essai e2e');
+  await page.getByRole('button', { name: 'Forcer le prix' }).click();
+  await expect(page.getByRole('row', { name: /Essaibourg/ }).getByText('forcé')).toBeVisible();
+
+  const joueur = await browser.newPage();
+  await joueur.route(/^https?:\/\/(?!localhost|127\.0\.0\.1)/, (route) => route.abort());
+  await entrer(joueur, 'Acheteur Curieux');
+  await joueur.getByRole('combobox', { name: 'Rechercher une commune' }).fill('Essaibourg');
+  await joueur.getByRole('option', { name: /Essaibourg/ }).click();
+  const bouton = joueur.getByRole('button', { name: /^Acheter pour / });
+  await expect.poll(async () => Number(((await bouton.textContent()) ?? '').replace(/\D/g, ''))).toBe(12345);
+});

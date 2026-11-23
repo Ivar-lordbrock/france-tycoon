@@ -129,7 +129,7 @@ export function FicheCommune() {
             <div className="flex flex-col">
               <dt className="order-last mt-0.5 text-[13px] text-ardoise">{libre ? 'prix d’achat' : 'valeur'}</dt>
               <dd className="text-[34px] leading-[34px] font-extrabold tracking-[-0.02em] max-md:text-[30px]">
-                {tycoons(libre ? fiche.baseValue : fiche.totalValue)}
+                {tycoons(libre ? (fiche.actions.buyPrice ?? fiche.baseValue) : fiche.totalValue)}
               </dd>
             </div>
             <div className="flex flex-col">

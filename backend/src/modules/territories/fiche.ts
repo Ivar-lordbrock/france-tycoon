@@ -33,6 +33,8 @@ interface LigneTerritoire {
   lng: number;
   infraScore: number;
   baseValue: number;
+  /** Prix d'achat : forcé par un admin, sinon V0. */
+  prix: number;
   slots: number;
   ownerId: number | null;
   fortification: number;
@@ -56,7 +58,7 @@ export function creerLecteurFiche(db: Base) {
   const territoire = db.prepare<[string], LigneTerritoire>(`
     SELECT t.id, t.insee_code AS insee, t.name, t.department_code AS department, t.zone_code AS zone,
       t.region_type AS regionType, t.population, t.area_km2 AS areaKm2, t.center_lat AS lat, t.center_lng AS lng,
-      t.infra_score AS infraScore, t.base_value AS baseValue, t.building_slots AS slots, t.owner_id AS ownerId,
+      t.infra_score AS infraScore, t.base_value AS baseValue, coalesce(t.forced_price, t.base_value) AS prix, t.building_slots AS slots, t.owner_id AS ownerId,
       t.fortification_value AS fortification, t.shield_until AS shieldUntil, t.is_capital AS isCapital,
       u.pseudo AS ownerPseudo, u.marker_color AS ownerColor, u.avatar_url AS ownerAvatar
     FROM territories AS t LEFT JOIN users AS u ON u.id = t.owner_id
@@ -97,12 +99,12 @@ export function creerLecteurFiche(db: Base) {
     else if (bouclier) state = 'shield';
     else state = 'rival';
 
-    // Achat d'une commune libre (prix = V0) et vente à l'État : mêmes règles que les routes.
+    // Achat d'une commune libre (prix = V0, ou forcé par un admin) et vente à l'État : mêmes règles que les routes.
     const buyReasons: CodeErreur[] = raisonsAchat(
       t.ownerId,
       moi,
       moi !== null && t.ownerId === null ? joueur.get(moi) : undefined,
-      t.baseValue,
+      t.prix,
     );
     const sellReasons = raisonsVente(t.ownerId, moi, t.isCapital === 1, opa !== null);
     const totalValue = valeurTerritoire(t.baseValue, investi, t.fortification);
@@ -160,7 +162,7 @@ export function creerLecteurFiche(db: Base) {
       ),
       actions: {
         canBuy: buyReasons.length === 0,
-        buyPrice: t.ownerId === null ? t.baseValue : null,
+        buyPrice: t.ownerId === null ? t.prix : null,
         buyReasons,
         canSell: sellReasons.length === 0,
         sellPrice: moi !== null && t.ownerId === moi ? prixVenteEtat(totalValue) : null,

@@ -1,10 +1,24 @@
 import type { Grade } from '@france-tycoon/shared';
+import type { FastifyRequest } from 'fastify';
 import type { Base } from '../../db/connexion.ts';
+import { ErreurMetier } from '../../erreurs.ts';
 
 export interface Acteur {
   id: number;
   pseudo: string;
   grade: Grade;
+}
+
+/** Le crochet du dashboard a rempli `req.equipe`. */
+export function acteurDe(req: FastifyRequest): Acteur & { fixe: boolean } {
+  if (!req.equipe) throw new ErreurMetier('FORBIDDEN', 403, 'Réservé à l’équipe Kadastr (modérateurs et admins).');
+  return req.equipe;
+}
+
+export function exigerAdmin(req: FastifyRequest): Acteur & { fixe: boolean } {
+  const acteur = acteurDe(req);
+  if (acteur.grade !== 'admin') throw new ErreurMetier('FORBIDDEN', 403, 'Réservé aux admins.');
+  return acteur;
 }
 
 export interface Trace {

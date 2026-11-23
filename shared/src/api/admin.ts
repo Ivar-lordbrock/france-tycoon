@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { STATUTS_OPA } from './opa.ts';
 
 // GET /api/v1/admin/health — supervision, sans donnée sensible.
 
@@ -173,3 +174,58 @@ export const ajusterCorpsSchema = z.object({
     .refine((n) => n !== 0, 'Montant nul'),
   reason: motif,
 });
+
+// Vue Territoires et OPA (étape 3).
+
+// GET /admin/territories?q&filter
+export const rechercheCommunesQuerySchema = z.object({
+  /** Nom (sans souci d'accents) ou code INSEE. Vide = les 50 plus peuplées du filtre. */
+  q: z.string().trim().max(100).default(''),
+  filter: z.enum(['owned', 'free', 'forced', 'takeover']).optional(),
+});
+
+const ligneCommuneAdminSchema = z.object({
+  insee: z.string(),
+  name: z.string(),
+  department: z.string(),
+  population: nombre,
+  /** Prix calculé (V0). */
+  baseValue: nombre,
+  /** Prix d'achat forcé par un admin, sinon `null` : on paie alors `baseValue`. */
+  forcedPrice: nombre.nullable(),
+  forcedReason: z.string().nullable(),
+  owner: z.object({ id: z.number().int(), pseudo: z.string() }).nullable(),
+  isCapital: z.boolean(),
+  takeoverPending: z.boolean(),
+});
+export type LigneCommuneAdmin = z.infer<typeof ligneCommuneAdminSchema>;
+
+export const listeCommunesAdminReponseSchema = z.object({ territories: z.array(ligneCommuneAdminSchema) });
+export type ListeCommunesAdminReponse = z.infer<typeof listeCommunesAdminReponseSchema>;
+
+// PUT /admin/territories/:insee/price — `price: null` = retour au calcul auto.
+export const prixForceCorpsSchema = z.object({
+  price: z.number().int().positive().max(1_000_000_000_000).nullable(),
+  reason: motif,
+});
+
+// GET /admin/takeovers?status
+export const rechercheOpaQuerySchema = z.object({ status: z.enum(STATUTS_OPA).default('pending') });
+
+const ligneOpaAdminSchema = z.object({
+  id: z.number().int(),
+  insee: z.string(),
+  territory: z.string(),
+  attacker: z.string(),
+  defender: z.string(),
+  offerAmount: nombre,
+  defenseCost: nombre,
+  status: z.enum(STATUTS_OPA),
+  createdAt: z.number().int(),
+  expiresAt: z.number().int(),
+  resolvedAt: z.number().int().nullable(),
+});
+export type LigneOpaAdmin = z.infer<typeof ligneOpaAdminSchema>;
+
+export const listeOpaAdminReponseSchema = z.object({ takeovers: z.array(ligneOpaAdminSchema) });
+export type ListeOpaAdminReponse = z.infer<typeof listeOpaAdminReponseSchema>;
