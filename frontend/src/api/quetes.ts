@@ -35,7 +35,7 @@ export function apresEncaissement(client: QueryClient, { cash, incomePerHour }: 
   ]);
 }
 
-/** Seul ce clic compte pour le tutoriel (étape 7) et la quête « Trésorier ». */
+/** Seul ce clic compte pour le tutoriel (« Encaisse ») et la quête « Trésorier ». */
 export function useEncaisser() {
   const client = useQueryClient();
   return useMutation({

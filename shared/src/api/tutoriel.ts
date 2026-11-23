@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { portefeuilleSchema } from './economie.ts';
 
 // Routes /tutorial de l'étape 5 (docs/04-api.md, « Quêtes et tutoriel »), règles dans docs/05 (5.7).
-// 10 étapes (table `tutorials`), 10 000 ₮ et 5 💎 au total, versés aux étapes 5, 7 et 10.
+// 10 étapes (table `tutorials`), 10 000 ₮ et 5 💎 au total, versés à l'achat, à l'encaissement et au classement.
 
 const entier = z.number().int();
 

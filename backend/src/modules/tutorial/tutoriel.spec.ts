@@ -11,7 +11,8 @@ import { insererCommunes } from '../../outils-test/communes.ts';
 // Tutoriel en temps simulé (docs/05-equilibrage.md, 5.7 ; docs/04, « Quêtes et tutoriel »).
 // 10 étapes ; récompenses : 5 000 ₮ (5, premier achat), 2 000 ₮ (7, encaisser), 3 000 ₮ et 5 💎 (10, classement).
 
-const ETAPES_CLIENT = ['bienvenue', 'explorer_carte', 'selecteur_zones', 'fiche_commune', 'quetes', 'opa'];
+// Ordre de la migration 007 : la boucle de jeu d'abord, l'Outre-mer après les quêtes.
+const ETAPES_CLIENT = ['bienvenue', 'explorer_carte', 'fiche_commune', 'quetes', 'selecteur_zones', 'opa'];
 
 afterEach(() => {
   vi.useRealTimers();
@@ -64,7 +65,7 @@ describe('GET /tutorial', () => {
     expect(t.steps.filter((s) => s.validatedBy === 'client').map((s) => s.key)).toEqual(ETAPES_CLIENT);
     expect(t.steps.reduce((somme, s) => somme + s.rewardCash, 0)).toBe(10_000);
     expect(t.steps.reduce((somme, s) => somme + s.rewardGems, 0)).toBe(5);
-    expect(t.steps[4]).toMatchObject({
+    expect(t.steps[3]).toMatchObject({
       key: 'premier_achat',
       anchor: 'buy-button',
       validatedBy: 'server',
