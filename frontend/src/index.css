@@ -170,13 +170,14 @@ body {
 
 /* Leaflet */
 /*
- * Fond de carte sombre sans autre fournisseur : les tuiles OpenStreetMap sont inversées (la mer
- * redevient bleue grâce à la rotation de teinte) puis éteintes, pour que les couleurs des joueurs
- * ressortent. Les communes sont dessinées dans d'autres calques : le filtre ne les touche pas.
+ * Fond de carte sombre sans autre fournisseur : les tuiles OpenStreetMap sont inversées et passées
+ * en gris. Contraste poussé : les noms des communes (dans les tuiles) sortent en blanc sur un fond
+ * presque noir ; plus doux, ils finissaient gris sur gris. Les communes sont dessinées dans d'autres
+ * calques : le filtre ne les touche pas.
  */
 .leaflet-tile-pane {
-  filter: invert(1) hue-rotate(180deg) grayscale(1) brightness(0.78) contrast(0.88);
-  opacity: 0.85;
+  filter: invert(1) hue-rotate(180deg) grayscale(1) brightness(1.1) contrast(1.35);
+  opacity: 0.9;
 }
 
 /* Gris bleuté sous les tuiles à 85 % : la carte reste froide, les couleurs des joueurs ressortent. */

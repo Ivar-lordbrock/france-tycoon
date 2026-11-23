@@ -53,15 +53,16 @@ export function styleCommune(
   const parEtat: Record<ProprietesCommuneCarte['state'], PathOptions> = {
     free: {},
     // Contour épais : on reconnaît ses communes même quand un rival a une couleur proche.
-    mine: { color: couleurJoueur, opacity: 1, weight: 3, fillColor: couleurJoueur, fillOpacity: 0.5 },
-    rival: { color: couleurJoueur, opacity: 0.8, weight: 1, fillColor: couleurJoueur, fillOpacity: 0.3 },
+    // Fonds légers : les noms des communes, dessinés dans les tuiles en dessous, restent lisibles.
+    mine: { color: couleurJoueur, opacity: 1, weight: 3, fillColor: couleurJoueur, fillOpacity: 0.35 },
+    rival: { color: couleurJoueur, opacity: 0.8, weight: 1, fillColor: couleurJoueur, fillOpacity: 0.22 },
     shield: {
       color: COULEURS.bouclier,
       opacity: 0.9,
       weight: 1.4,
       dashArray: '4 3',
       fillColor: couleurJoueur,
-      fillOpacity: 0.3,
+      fillOpacity: 0.22,
     },
     takeover: {
       color: COULEURS.opa,
