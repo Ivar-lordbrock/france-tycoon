@@ -7,7 +7,9 @@ import type {
   ListeCommunesAdminReponse,
   ListeJoueursReponse,
   ListeOpaAdminReponse,
+  ListeSauvegardesReponse,
   ListeSignalementsReponse,
+  SauvegardeReponse,
   StatutOpa,
   StatutSignalement,
   VueEnsembleReponse,
@@ -118,5 +120,22 @@ export function useSignalementsAdmin(status: StatutSignalement) {
 export function useCadeau() {
   return useMutation({
     mutationFn: (corps: CadeauCorps) => envoyerJson<CadeauReponse>('/api/v1/admin/gifts', 'POST', corps),
+  });
+}
+
+/** Copies de la base sur le serveur (GET /admin/backups), les plus récentes d'abord. */
+export function useSauvegardes() {
+  return useQuery({
+    queryKey: ['admin', 'sauvegardes'],
+    queryFn: ({ signal }) => lireJson<ListeSauvegardesReponse>('/api/v1/admin/backups', signal),
+  });
+}
+
+/** « Sauvegarder maintenant » (POST /admin/backups, admins). */
+export function useSauvegarder() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => envoyerJson<SauvegardeReponse>('/api/v1/admin/backups', 'POST'),
+    onSettled: () => client.invalidateQueries({ queryKey: ['admin', 'sauvegardes'] }),
   });
 }

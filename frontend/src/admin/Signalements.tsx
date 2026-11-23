@@ -19,7 +19,7 @@ export function Signalements() {
   const { data, error, isPending, isFetching } = useSignalementsAdmin(status);
 
   return (
-    <div className="mt-4 flex flex-col gap-8">
+    <div className="mt-8">
       <Section titre="Signalements des joueurs">
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -60,7 +60,6 @@ export function Signalements() {
           </p>
         </div>
       </Section>
-      <p className="text-sm text-ardoise">Les sauvegardes arrivent à l’étape 5.</p>
     </div>
   );
 }

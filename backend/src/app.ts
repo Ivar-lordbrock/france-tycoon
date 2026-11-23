@@ -36,10 +36,20 @@ export interface OptionsApp {
   securite?: OptionsSecurite;
   /** E-mails admin d'office du dashboard /admin (`ADMIN_EMAILS`), en minuscules ; aucun par défaut. */
   adminEmails?: readonly string[];
+  /** Dossier des sauvegardes du dashboard ; par défaut `sauvegardes-admin/` à côté de la base. */
+  dossierSauvegardes?: string;
 }
 
 /** Construit l'application sans l'écouter : utilisée par `server.ts` et par les tests (`app.inject`). */
-export function construireApp({ db, logger = false, auth = {}, direct = {}, securite, adminEmails }: OptionsApp) {
+export function construireApp({
+  db,
+  logger = false,
+  auth = {},
+  direct = {},
+  securite,
+  adminEmails,
+  dossierSauvegardes,
+}: OptionsApp) {
   const app = Fastify({ logger, trustProxy: true }).withTypeProvider<ZodTypeProvider>();
   const optionsAuth: OptionsAuth = { googleClientId: null, devLogin: false, cookieSecure: false, ...auth };
 
@@ -50,7 +60,7 @@ export function construireApp({ db, logger = false, auth = {}, direct = {}, secu
   brancherSessions(app, { cookieSecure: optionsAuth.cookieSecure, adminEmails });
   if (securite) brancherSecurite(app, securite);
 
-  app.register(routesAdmin, { prefix: '/api/v1/admin', adminEmails });
+  app.register(routesAdmin, { prefix: '/api/v1/admin', adminEmails, dossierSauvegardes });
   app.register(routesAuth, { prefix: '/api/v1/auth', ...optionsAuth });
   app.register(routesCatalogueBatiments, { prefix: '/api/v1/building-types' });
   app.register(routesBatiments, { prefix: '/api/v1/buildings' });

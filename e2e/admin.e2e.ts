@@ -126,3 +126,16 @@ test('un joueur signale un bug, l’équipe le règle, et une bannière s’affi
   await page.getByRole('button', { name: 'Retirer la bannière' }).click();
   await expect(page.getByText('Aucune bannière.')).toBeVisible();
 });
+
+test('un admin sauvegarde la base et voit la copie dans la liste', async ({ page }) => {
+  await entrer(page, 'Chef');
+  await page.goto('/admin');
+  await page
+    .getByRole('navigation', { name: 'Vues du dashboard' })
+    .getByRole('button', { name: /Sauvegardes & signalements/ })
+    .click();
+  await page.getByRole('button', { name: 'Sauvegarder maintenant' }).click();
+  await expect(page.getByText(/^Copie faite/)).toBeVisible();
+  // Le dossier des copies survit aux essais sur le PC : on vérifie seulement qu'il y en a au moins une.
+  await expect(page.getByRole('cell', { name: /^kadastr-\d{8}-\d{6}-\d{3}\.sqlite$/ }).first()).toBeVisible();
+});
