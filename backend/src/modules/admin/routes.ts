@@ -15,6 +15,7 @@ import { ErreurMetier } from '../../erreurs.ts';
 import { exigerJoueur } from '../auth/requete.ts';
 import { creerLecteurRevenus, revenuDuJoueur } from '../income/revenus.ts';
 import { routesAdminJoueurs } from './joueurs.ts';
+import { routesAdminLive } from './live.ts';
 import { routesAdminTerritoires } from './territoires.ts';
 
 const VERSION = process.env.npm_package_version ?? '0.1.0';
@@ -95,6 +96,7 @@ export const routesAdmin: FastifyPluginAsyncZod<OptionsAdmin> = async (app, { ad
 
     equipe.register(routesAdminJoueurs, { adminEmails });
     equipe.register(routesAdminTerritoires);
+    equipe.register(routesAdminLive);
 
     const joueurs = app.db.prepare<[number, number, number], VueEnsembleReponse['players']>(`
       SELECT count(*) AS total,
@@ -114,6 +116,9 @@ export const routesAdmin: FastifyPluginAsyncZod<OptionsAdmin> = async (app, { ad
     const opa = app.db.prepare<[], VueEnsembleReponse['takeovers']>(`
       SELECT coalesce(sum(status = 'pending'), 0) AS active, coalesce(sum(status <> 'pending'), 0) AS finished
       FROM takeovers`);
+    const signalementsOuverts = app.db
+      .prepare<[], number>("SELECT count(*) FROM player_reports WHERE status = 'open'")
+      .pluck();
     const tailleBase = app.db
       .prepare<[], number>('SELECT page_count * page_size FROM pragma_page_count(), pragma_page_size()')
       .pluck();
@@ -145,6 +150,7 @@ export const routesAdmin: FastifyPluginAsyncZod<OptionsAdmin> = async (app, { ad
         },
         economy: { ...(soldes.get() ?? { cash: 0, gems: 0 }), incomePerHour },
         takeovers: opa.get() ?? { active: 0, finished: 0 },
+        reports: { open: signalementsOuverts.get() ?? 0 },
         system: { jobs: derniereExecution.all(), databaseBytes: tailleBase.get() ?? 0, diskFreeBytes },
       };
     });

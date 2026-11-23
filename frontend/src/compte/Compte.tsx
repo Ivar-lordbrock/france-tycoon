@@ -1,4 +1,4 @@
-import { type MoiReponse, PSEUDO_MAX, pseudoSchema } from '@france-tycoon/shared';
+import { type MoiReponse, PSEUDO_MAX, pseudoSchema, signalerCorpsSchema } from '@france-tycoon/shared';
 import { type FormEvent, useId, useState } from 'react';
 import { useCashEnDirect } from '../api/batiments.ts';
 import { messageErreur } from '../api/client.ts';
@@ -12,6 +12,7 @@ import {
 } from '../api/compte.ts';
 import { useFluxDirect } from '../api/direct.ts';
 import { useEncaisser } from '../api/quetes.ts';
+import { useSignaler } from '../api/site.ts';
 import { useCarte } from '../etat/carte.ts';
 import { ajouterToast } from '../etat/toasts.ts';
 import { SuiviChantiers } from '../hud/ChantierEnCours.tsx';
@@ -281,9 +282,78 @@ export function Profil({ moi }: { moi: MoiReponse }) {
           </button>
         </div>
       </form>
+      <SignalerBug />
       <SupprimerCompte pseudo={moi.user.pseudo} />
       <LiensInfos className="border-t border-encre/10 px-3 pt-2" />
     </div>
+  );
+}
+
+/** « Signaler un bug » : un petit texte pour l'équipe, avec la page où l'on était. 5 par jour. */
+function SignalerBug() {
+  const signaler = useSignaler();
+  const [ouvert, setOuvert] = useState(false);
+  const [texte, setTexte] = useState('');
+  const verifie = signalerCorpsSchema.safeParse({ body: texte });
+
+  if (!ouvert) {
+    return (
+      <div className="px-3 pb-2">
+        <button
+          type="button"
+          onClick={() => setOuvert(true)}
+          className="text-sm text-ardoise hover:text-encre hover:underline"
+        >
+          {signaler.isSuccess ? 'Merci ! L’équipe va lire ton message. En signaler un autre…' : 'Signaler un bug…'}
+        </button>
+      </div>
+    );
+  }
+  const envoyer = (e: FormEvent) => {
+    e.preventDefault();
+    if (!verifie.success) return;
+    signaler.mutate(
+      { body: verifie.data.body, page: window.location.pathname.slice(0, 200) },
+      {
+        onSuccess: () => {
+          setOuvert(false);
+          setTexte('');
+        },
+      },
+    );
+  };
+  return (
+    <form onSubmit={envoyer} className="flex flex-col gap-2 border-t border-encre/10 p-3 text-sm">
+      <label className="flex flex-col gap-1 text-xs font-semibold text-ardoise">
+        Qu’est-ce qui ne marche pas ?
+        <textarea
+          value={texte}
+          onChange={(e) => setTexte(e.target.value)}
+          maxLength={2000}
+          rows={3}
+          placeholder="Ce que tu faisais, ce que tu as vu…"
+          className="resize-y rounded-xl border border-encre/15 bg-fond px-2.5 py-2 text-base font-normal text-encre outline-none focus:border-encre focus:ring-2 focus:ring-surligneur"
+        />
+      </label>
+      {texte.trim().length > 0 && !verifie.success && <p className="text-xs text-ardoise">Au moins 10 caractères.</p>}
+      {signaler.isError && (
+        <p role="alert" className="text-danger">
+          {messageErreur(signaler.error)}
+        </p>
+      )}
+      <div className="flex justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => setOuvert(false)}
+          className="h-10 rounded-xl px-3 font-semibold text-ardoise hover:bg-brume hover:text-encre"
+        >
+          Annuler
+        </button>
+        <button type="submit" disabled={!verifie.success || signaler.isPending} className="relief h-10 px-4">
+          Envoyer
+        </button>
+      </div>
+    </form>
   );
 }
 

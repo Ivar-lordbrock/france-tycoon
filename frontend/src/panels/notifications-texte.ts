@@ -98,6 +98,15 @@ export function phraseNotification(n: NotificationJeu): string {
       return `Quête « ${n.payload.title} » réussie : ${recompenseQuete(n.payload)} à réclamer.`;
     case 'rank_up':
       return phraseNouveauRang(n.payload);
+    case 'gift_received': {
+      const { currency, amount, message } = n.payload;
+      const don = currency === 'cash' ? tycoons(amount) : `${amount} gemme${amount > 1 ? 's' : ''}`;
+      return `Cadeau de l’équipe Kadastr : ${don}. ${message}`;
+    }
+    case 'report_closed':
+      return n.payload.status === 'resolved'
+        ? `Ton signalement « ${n.payload.excerpt} » est réglé. Merci !`
+        : `Ton signalement « ${n.payload.excerpt} » a été lu, sans suite pour l’instant. Merci !`;
   }
 }
 

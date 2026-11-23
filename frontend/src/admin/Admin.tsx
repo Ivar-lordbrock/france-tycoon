@@ -1,9 +1,11 @@
 import type { Grade } from '@france-tycoon/shared';
 import { type ReactNode, useEffect, useState } from 'react';
-import { useAdminMoi } from '../api/admin.ts';
+import { useAdminMoi, useVueEnsemble } from '../api/admin.ts';
 import { ErreurApi, messageErreur } from '../api/client.ts';
 import { Icone } from '../hud/Icone.tsx';
+import { ControleLive } from './ControleLive.tsx';
 import { Joueurs } from './Joueurs.tsx';
+import { Signalements } from './Signalements.tsx';
 import { Territoires } from './Territoires.tsx';
 import { VueEnsemble } from './VueEnsemble.tsx';
 
@@ -17,8 +19,8 @@ const VUES: Vue[] = [
   { id: 'joueurs', libelle: 'Joueurs' },
   { id: 'territoires', libelle: 'Territoires & OPA' },
   { id: 'triche', libelle: 'Anti-triche & logs', etape: 7 },
-  { id: 'config', libelle: 'Live config & events', admin: true, etape: 6 },
-  { id: 'sauvegardes', libelle: 'Sauvegardes & signalements', etape: 4 },
+  { id: 'config', libelle: 'Live config & events', admin: true },
+  { id: 'sauvegardes', libelle: 'Sauvegardes & signalements' },
 ];
 
 const GRADES: Record<Grade, string> = { admin: 'Admin', moderator: 'Modérateur' };
@@ -75,6 +77,7 @@ function Tableau({ pseudo, grade }: { pseudo: string; grade: Grade }) {
   const [menu, setMenu] = useState(false);
   const vues = VUES.filter((v) => grade === 'admin' || !v.admin);
   const vue = vues.find((v) => v.id === id) ?? ENSEMBLE;
+  const signalements = useVueEnsemble().data?.reports.open ?? 0;
 
   useEffect(() => {
     if (!menu) return;
@@ -130,11 +133,17 @@ function Tableau({ pseudo, grade }: { pseudo: string; grade: Grade }) {
                   setId(v.id);
                   setMenu(false);
                 }}
-                className={`w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition-colors duration-150 ${
+                className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition-colors duration-150 ${
                   v.id === vue.id ? 'bg-brume text-encre' : 'text-ardoise hover:bg-brume/60 hover:text-encre'
                 }`}
               >
                 {v.libelle}
+                {v.id === 'sauvegardes' && signalements > 0 && (
+                  <span className="shrink-0 rounded-full bg-alerte px-1.5 text-xs leading-5 font-bold text-fond tabular-nums">
+                    {signalements}
+                    <span className="sr-only"> signalements nouveaux</span>
+                  </span>
+                )}
               </button>
             </li>
           ))}
@@ -157,6 +166,10 @@ function Tableau({ pseudo, grade }: { pseudo: string; grade: Grade }) {
           <Joueurs moi={pseudo} grade={grade} />
         ) : vue.id === 'territoires' ? (
           <Territoires grade={grade} />
+        ) : vue.id === 'config' ? (
+          <ControleLive />
+        ) : vue.id === 'sauvegardes' ? (
+          <Signalements />
         ) : (
           <p className="mt-3 text-ardoise">Cette vue arrive à l’étape {vue.etape} du dashboard.</p>
         )}

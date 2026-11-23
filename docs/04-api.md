@@ -43,6 +43,8 @@
 | `VALIDATION_ERROR` | 400 | Corps de requête invalide |
 | `RATE_LIMITED` | 429 | Trop de requêtes (300/min par joueur, 10/min sur `POST /auth/…`, 60/min sur `/events/track`) |
 | `FEATURE_DISABLED` | 404 | Boutique en V1, connexion Google pas configurée |
+| `ACCOUNT_SUSPENDED` | 403 | Écriture d'un compte suspendu (le message donne la fin et le motif) |
+| `MAINTENANCE` | 503 | Écriture d'un joueur pendant une maintenance (le message de l'équipe suit) |
 
 ## 4.2 Points d'entrée
 
@@ -109,6 +111,8 @@ Réponses : `FORBIDDEN` si ce n'est pas son rôle (le défenseur défend ou acce
 | POST | `/events/track` | 🔒 | `{ type: 'territory_visited' \| 'zone_visited' \| 'leaderboard_viewed', ref }` → 204 : fait avancer quêtes et tutoriel (60 par minute et par joueur, sinon `RATE_LIMITED`). Une même commune ou zone ne compte qu'une fois par jour. `territory_visited` : code INSEE existant (`NOT_FOUND` sinon) ; `zone_visited` : code de zone (`VALIDATION_ERROR` sinon), `MET` accepté mais ne compte pas. Code : `backend/src/modules/evenements/suivi.ts` |
 | GET | `/leaderboard?scope=national\|metropole\|outre_mer\|region:84&cursor=` | | → `{ scope, players[], nextCursor, me, updatedAt }` ; chaque ligne : `{ rank, pseudo, avatar, markerColor, netWorth, territories, rankLevel }`, 50 par page ; `me` = ma ligne si je suis connecté et dans la portée ; `updatedAt` = dernier passage de la tâche `leaderboard`. Hors national : les joueurs qui possèdent au moins une commune dans la portée, classés par patrimoine total. Seuls les comptes actifs sont classés (ni bannis ni endormis) ; à patrimoine égal, le compte le plus ancien passe devant. Simple lecture : « classement vu » passe par `/events/track`. Code : `backend/src/modules/leaderboard/` |
 | GET | `/players/:pseudo` | | → `{ pseudo, avatar, markerColor, rankLevel, netWorth, nationalRank, createdAt, territories[] }` : profil public (ni cash, ni gemmes). `NOT_FOUND` si le pseudo est inconnu ou le compte banni (un compte endormi reste visible). Pseudo sans tenir compte des majuscules ; communes : la capitale d'abord |
+| GET | `/status` | | → `{ maintenance: string \| null, banner: { text, until \| null } \| null }` : messages de l'équipe, relus chaque minute par le front ; une bannière échue n'est plus renvoyée. Code : `backend/src/modules/site/routes.ts` |
+| POST | `/reports` | 🔒 | `{ body: 10..2000, page? }` → 204 : « Signaler un bug » (5 par 24 h et par joueur, sinon `RATE_LIMITED` ; le corps `page` est le chemin de la page, sans paramètres). Marche aussi en maintenance ou suspendu |
 | GET | `/roadmap` | | → `{ features[] }` : la feuille de route publique, dans l’ordre ; chaque ligne : `{ code, category, status, title, summary, details[] }` (`category` : `social` | `gameplay` | `economy` ; `status` : `planned` | `in_progress` | `released`). Cache 5 min. Code : `backend/src/modules/roadmap/` |
 
 Contrat : `shared/src/api/quetes.ts`, `tutoriel.ts`, `classement.ts` ; règles dans [05-equilibrage.md](05-equilibrage.md#57-quêtes-et-tutoriel) (5.4 et 5.7).
@@ -117,7 +121,7 @@ Contrat : `shared/src/api/quetes.ts`, `tutoriel.ts`, `classement.ts` ; règles d
 
 | Méthode | Route | | Corps → Réponse |
 |---|---|---|---|
-| GET | `/me/notifications?before=<id>&limit=20` | 🔒 | → `{ notifications, nextCursor, unreadNotifications }`, les plus récents d'abord (50 au plus par page). Types (`kind`) : `building_done`, `takeover_received`, `takeover_resolved`, `inactivity_warning`, `inactivity_released`, `quest_completed`, `rank_up` ; contenu de chacun dans `shared/src/api/notifications.ts`. `nextCursor` = `before` de la page suivante. Encaisse d'abord (les chantiers finis ont leur message) ; un type inconnu du contrat n'est pas listé. Code : `backend/src/modules/notifications/liste.ts` |
+| GET | `/me/notifications?before=<id>&limit=20` | 🔒 | → `{ notifications, nextCursor, unreadNotifications }`, les plus récents d'abord (50 au plus par page). Types (`kind`) : `building_done`, `takeover_received`, `takeover_resolved`, `inactivity_warning`, `inactivity_released`, `quest_completed`, `rank_up`, `gift_received`, `report_closed` ; contenu de chacun dans `shared/src/api/notifications.ts`. `nextCursor` = `before` de la page suivante. Encaisse d'abord (les chantiers finis ont leur message) ; un type inconnu du contrat n'est pas listé. Code : `backend/src/modules/notifications/liste.ts` |
 | POST | `/me/notifications/read` | 🔒 | `{ ids[] }` (1 à 100) ou `{ all: true }` → `{ unreadNotifications }` ; seulement ses propres messages |
 | GET | `/events` | 🔒 | Flux SSE (`event: <type>` puis `data: <JSON>`) : `takeover.received`, `takeover.resolved`, `building.done` (le message du centre de notifications), `wallet.changed` (`{ cash, gems, incomePerHour }`, après une issue d'OPA ou un rachat pour inactivité), `quest.completed` (le message `quest_completed` : `{ questId, code, title, rewardCash, rewardGems }`), `rank.up` (le message `rank_up` : `{ rankLevel, previousLevel, maxTerritories }`, écrit par la tâche `leaderboard`). Pas d'événement pour l'avertissement d'inactivité. Voir ci-dessous |
 
@@ -151,8 +155,13 @@ Le flux relit la table `notifications` : tant qu'un joueur écoute, un passage c
 | PUT | `/admin/territories/:insee/price` | 🛡️ admin | `{ price, reason }` : prix d'achat forcé ; `price: null` = retour au calcul auto (V0) |
 | GET | `/admin/takeovers?status` | 🛡️ équipe | OPA d'un statut (`pending` par défaut ; les échues sont d'abord résolues), 50 plus récentes |
 | POST | `/admin/takeovers/:id/force` · `/cancel` | 🛡️ admin | `{ reason }` : forcer = la commune passe tout de suite à l'attaquant (comme au bout des 24 h) ; annuler = l'attaquant récupère toute son offre (`voided`). 409 `TAKEOVER_NOT_PENDING` si elle est finie |
+| PUT | `/admin/site/maintenance` | 🛡️ admin | `{ message \| null }` (3 à 300 caractères) : maintenance ; toute écriture d'un joueur → 503 `MAINTENANCE` avec le message. L'équipe passe ; lire, se connecter, ses messages et `/reports` restent ouverts. `null` = coupée |
+| PUT | `/admin/site/banner` | 🛡️ admin | `{ text \| null, hours: 1..720 \| null }` : bannière d'annonce pour tous ; `hours: null` = sans fin, `text: null` = retirée |
+| POST | `/admin/gifts` | 🛡️ admin | `{ playerId?, currency, amount: 1..10⁹, reason }` → `{ count }` : cadeau à un joueur, ou sans `playerId` à tous les joueurs actifs (sauf soi), par `wallet.apply` (`admin_adjustment`) ; chacun reçoit le message `gift_received` avec le motif. Jamais à soi (403) |
+| GET | `/admin/reports?status` | 🛡️ équipe | signalements d'un statut (`open` par défaut, `in_progress`, `resolved`, `rejected`), 100 plus récents |
+| PATCH | `/admin/reports/:id` | 🛡️ équipe | `{ status, note \| null }` : la note reste dans l'équipe. Passer à `resolved` ou `rejected` (la première fois) envoie au joueur le message `report_closed` |
 
-Actions du dashboard : 204, motif obligatoire, une ligne dans `admin_audit` (en ajout seul). Jamais sur soi, seulement sur un grade plus petit ; un admin d'office (`ADMIN_EMAILS`) est intouchable.
+Actions du dashboard : 204 (sauf `/admin/gifts`), motif obligatoire sur les joueurs, les communes et les OPA, une ligne dans `admin_audit` (en ajout seul). Jamais sur soi, seulement sur un grade plus petit ; un admin d'office (`ADMIN_EMAILS`) est intouchable.
 | POST | `/admin/jobs/:name/run` | 🛡️ | lance une tâche à la main |
 | POST | `/admin/wallet-adjustments` | 🛡️ | correction tracée (`admin_adjustment`) |
 

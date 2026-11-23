@@ -60,6 +60,7 @@ const ACTIONS_AUDIT: Record<string, string> = {
   'player.role': 'Grade changé',
   'player.reset': 'Reset partiel',
   'player.adjust': 'Ajustement du solde',
+  'gift.send': 'Cadeau',
 };
 
 const format = new Intl.DateTimeFormat('fr-FR', { timeZone: FUSEAU_JEU, dateStyle: 'medium', timeStyle: 'short' });

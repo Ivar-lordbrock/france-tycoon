@@ -1,10 +1,15 @@
 import type {
   AdminMoiReponse,
+  CadeauCorps,
+  CadeauReponse,
+  EtatSite,
   FicheJoueurReponse,
   ListeCommunesAdminReponse,
   ListeJoueursReponse,
   ListeOpaAdminReponse,
+  ListeSignalementsReponse,
   StatutOpa,
+  StatutSignalement,
   VueEnsembleReponse,
 } from '@france-tycoon/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -89,5 +94,29 @@ export function useActionAdmin() {
   return useMutation({
     mutationFn: ({ methode, url, corps }: ActionAdmin) => envoyerJson<void>(`/api/v1/admin/${url}`, methode, corps),
     onSettled: () => client.invalidateQueries({ queryKey: ['admin'], predicate: (q) => q.queryKey[1] !== 'moi' }),
+  });
+}
+
+/** Maintenance et bannière telles que les joueurs les voient (GET /status), relues après chaque action. */
+export function useSiteAdmin() {
+  return useQuery({
+    queryKey: ['admin', 'site'],
+    queryFn: ({ signal }) => lireJson<EtatSite>('/api/v1/status', signal),
+  });
+}
+
+/** Signalements d'un statut (GET /admin/reports), les plus récents d'abord. */
+export function useSignalementsAdmin(status: StatutSignalement) {
+  return useQuery({
+    queryKey: ['admin', 'signalements', status],
+    queryFn: ({ signal }) => lireJson<ListeSignalementsReponse>(`/api/v1/admin/reports?status=${status}`, signal),
+    placeholderData: keepPreviousData,
+  });
+}
+
+/** Cadeau (POST /admin/gifts) : répond le nombre de joueurs servis. */
+export function useCadeau() {
+  return useMutation({
+    mutationFn: (corps: CadeauCorps) => envoyerJson<CadeauReponse>('/api/v1/admin/gifts', 'POST', corps),
   });
 }
