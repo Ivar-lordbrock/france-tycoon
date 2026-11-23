@@ -6,7 +6,7 @@ import { COULEURS } from '../map/style.ts';
 const ENTREES: { libelle: string; trait: string; fond: string; pointilles?: string }[] = [
   { libelle: 'Rival', trait: COULEURS.joueurParDefaut, fond: COULEURS.joueurParDefaut },
   { libelle: 'OPA en cours', trait: COULEURS.opa, fond: COULEURS.opaFond, pointilles: '3 2' },
-  { libelle: 'Bouclier', trait: COULEURS.bouclier, fond: COULEURS.joueurParDefaut, pointilles: '2 1.5' },
+  { libelle: 'Bouclier (pas d’OPA)', trait: COULEURS.bouclier, fond: COULEURS.joueurParDefaut, pointilles: '2 1.5' },
 ];
 
 /** Petite légende sous la barre d'état, quand les communes sont visibles. */

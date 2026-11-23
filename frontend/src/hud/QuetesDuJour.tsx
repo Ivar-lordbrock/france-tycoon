@@ -37,7 +37,7 @@ export function QuetesDuJour({ id }: { id: string }) {
               <p className="mt-1.5 flex items-center justify-between gap-2 text-sm">
                 <span className="tabular-nums">{recompenseQuete(q)}</span>
                 {q.claimedAt !== null ? (
-                  <span className="text-ardoise">Reçu ✓</span>
+                  <span className="text-ardoise">Récompense reçue ✓</span>
                 ) : (
                   q.completedAt !== null && (
                     <button

@@ -100,17 +100,22 @@ function LancerOpa({
 
   if (cle === null) {
     return (
-      <button
-        ref={declencheur}
-        type="button"
-        onClick={() => {
-          lancer.reset();
-          setCle(nouvelleCle());
-        }}
-        className={`${boutonPrincipal} w-full`}
-      >
-        Lancer une OPA · {tycoons(apercu)}
-      </button>
+      <>
+        <button
+          ref={declencheur}
+          type="button"
+          onClick={() => {
+            lancer.reset();
+            setCle(nouvelleCle());
+          }}
+          className={`${boutonPrincipal} w-full`}
+        >
+          Lancer une OPA · {tycoons(apercu)}
+        </button>
+        <p className="mt-1.5 text-xs text-ardoise">
+          OPA : une offre pour racheter sa commune. {proprietaire} a 24 h pour se défendre.
+        </p>
+      </>
     );
   }
 
