@@ -1,0 +1,12 @@
+# Une copie de la base sur Google Drive chaque heure. Prochaine : systemctl list-timers france-tycoon-sauvegarde-drive
+[Unit]
+Description=Kadastr : copie de la base sur Google Drive chaque heure
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=5min
+# Après un redémarrage du serveur, l'envoi manqué part tout de suite.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

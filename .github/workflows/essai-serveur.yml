@@ -56,6 +56,18 @@ jobs:
           sudo CONFIRMER=OUI bash deploiement/restaurer-sauvegarde.sh
           sudo bash deploiement/verifier-sauvegarde.sh
 
+      - name: La copie Google Drive marche (Drive remplacé par un dossier, même chiffrement)
+        run: |
+          sudo rclone --config /etc/france-tycoon/rclone.conf config create kadastr-drive crypt \
+            remote=/var/lib/essai-drive filename_encryption=off directory_name_encryption=false \
+            password=essai --obscure >/dev/null
+          sudo kadastr-sauvegarde-drive
+          if gzip -t /var/lib/essai-drive/heure-*.bin; then echo "La copie n'est pas chiffrée." >&2; exit 1; fi
+          sudo kadastr-sauvegarde-drive verifier
+          nom=$(sudo kadastr-sauvegarde-drive liste | awk '{print $4}' | head -1)
+          sudo CONFIRMER=OUI kadastr-sauvegarde-drive restaurer "${nom%.sqlite.gz}"
+          curl -fsSk https://localhost/api/v1/admin/health
+
       - name: Une deuxième installation ne casse rien, puis une mise à jour
         run: |
           sudo ESSAI=1 DOMAINE=localhost DEPOT_URL="$DEPOT_URL" BRANCHE="$BRANCHE" \
@@ -66,4 +78,4 @@ jobs:
 
       - name: Journaux du serveur (en cas d'échec)
         if: failure()
-        run: sudo journalctl -u france-tycoon -u france-tycoon-sauvegarde -u caddy --no-pager -n 200
+        run: sudo journalctl -u france-tycoon -u france-tycoon-sauvegarde -u france-tycoon-sauvegarde-drive -u caddy --no-pager -n 200
