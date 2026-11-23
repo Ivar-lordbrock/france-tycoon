@@ -193,6 +193,8 @@ Pour changer le fond de carte (la politique d'OpenStreetMap interdit les sites �
 | Réglages de la sauvegarde | `/etc/litestream.yml` |
 | Réglages de Caddy | `/etc/caddy/Caddyfile` |
 
+La mise à jour automatique ne touche pas `/etc/caddy/Caddyfile` : après un changement de `deploiement/Caddyfile`, le recopier à la main sur le serveur (même remplacement de `DOMAINE_DU_JEU`, garder le bloc `www.`), puis `caddy validate --config /etc/caddy/Caddyfile` et `systemctl reload caddy`.
+
 Les messages du jeu (qui contiennent les adresses IP des joueurs) sont effacés au bout de 30 jours, comme annoncé dans les pages légales.
 
 ## Lexique
