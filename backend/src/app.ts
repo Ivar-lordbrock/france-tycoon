@@ -33,10 +33,12 @@ export interface OptionsApp {
   direct?: OptionsDirect;
   /** Contrôle `Origin` + limite de débit : branchés par `server.ts`, absents des tests (sauf `securite.spec.ts`). */
   securite?: OptionsSecurite;
+  /** E-mails admin d'office du dashboard /admin (`ADMIN_EMAILS`), en minuscules ; aucun par défaut. */
+  adminEmails?: readonly string[];
 }
 
 /** Construit l'application sans l'écouter : utilisée par `server.ts` et par les tests (`app.inject`). */
-export function construireApp({ db, logger = false, auth = {}, direct = {}, securite }: OptionsApp) {
+export function construireApp({ db, logger = false, auth = {}, direct = {}, securite, adminEmails }: OptionsApp) {
   const app = Fastify({ logger, trustProxy: true }).withTypeProvider<ZodTypeProvider>();
   const optionsAuth: OptionsAuth = { googleClientId: null, devLogin: false, cookieSecure: false, ...auth };
 
@@ -47,7 +49,7 @@ export function construireApp({ db, logger = false, auth = {}, direct = {}, secu
   brancherSessions(app, { cookieSecure: optionsAuth.cookieSecure });
   if (securite) brancherSecurite(app, securite);
 
-  app.register(routesAdmin, { prefix: '/api/v1/admin' });
+  app.register(routesAdmin, { prefix: '/api/v1/admin', adminEmails });
   app.register(routesAuth, { prefix: '/api/v1/auth', ...optionsAuth });
   app.register(routesCatalogueBatiments, { prefix: '/api/v1/building-types' });
   app.register(routesBatiments, { prefix: '/api/v1/buildings' });

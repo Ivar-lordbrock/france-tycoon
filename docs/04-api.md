@@ -137,6 +137,8 @@ Le flux relit la table `notifications` : tant qu'un joueur écoute, un passage c
 | Méthode | Route | | |
 |---|---|---|---|
 | GET | `/admin/health` | | état du serveur, de la base, dernière exécution des tâches (sans 🛡️ pour la supervision, sans données sensibles) |
+| GET | `/admin/me` | 🛡️ équipe | grade du compte connecté (`moderator` ou `admin`) ; 401 sans session, 403 pour un joueur |
+| GET | `/admin/overview` | 🛡️ équipe | dashboard : joueurs actifs 24 h / 7 j / 14 j, communes possédées par zone, soldes et revenu par heure, OPA, tâches, taille de la base, disque libre |
 | POST | `/admin/jobs/:name/run` | 🛡️ | lance une tâche à la main |
 | POST | `/admin/wallet-adjustments` | 🛡️ | correction tracée (`admin_adjustment`) |
 

@@ -70,6 +70,7 @@ lire_reglages() {
   demander DOMAINE "Nom de domaine du jeu (ex. jeu.exemple.fr)" obligatoire
   demander GOOGLE_CLIENT_ID "ID client Google de production (Entrée = plus tard)"
   demander AVIS_URL "Lien « Donner mon avis » : formulaire ou e-mail (Entrée = plus tard)"
+  demander ADMIN_EMAILS "E-mails Google admin du dashboard /admin, séparés par des virgules (Entrée = plus tard)"
   demander B2_BUCKET "Sauvegarde : nom du bucket Backblaze B2 (Entrée = plus tard)"
   demander B2_ENDPOINT "Sauvegarde : Endpoint du bucket (ex. s3.eu-central-003.backblazeb2.com)"
   demander B2_KEY_ID "Sauvegarde : keyID de la clé d'application"
@@ -87,7 +88,7 @@ lire_reglages() {
   install -d -m 700 /etc/france-tycoon
   (
     umask 077
-    for cle in DOMAINE GOOGLE_CLIENT_ID AVIS_URL B2_BUCKET B2_ENDPOINT B2_KEY_ID B2_APP_KEY DEPOT_URL BRANCHE SAUVEGARDE_DOSSIER; do
+    for cle in DOMAINE GOOGLE_CLIENT_ID AVIS_URL ADMIN_EMAILS B2_BUCKET B2_ENDPOINT B2_KEY_ID B2_APP_KEY DEPOT_URL BRANCHE SAUVEGARDE_DOSSIER; do
       printf "%s='%s'\n" "$cle" "${!cle//\'/}"
     done >"$REGLAGES"
   )
@@ -225,6 +226,7 @@ LOG_LEVEL=info
 DATABASE_PATH=$BASE
 GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
 AUTH_DEV=false
+ADMIN_EMAILS=$ADMIN_EMAILS
 VITE_TILE_URL=$tuiles
 VITE_TILE_ATTRIBUTION=$attribution
 VITE_AVIS_URL=$AVIS_URL

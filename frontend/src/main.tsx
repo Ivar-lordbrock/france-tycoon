@@ -2,12 +2,15 @@ import '@fontsource-variable/archivo/wdth.css';
 import 'leaflet/dist/leaflet.css';
 import './index.css';
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StrictMode } from 'react';
+import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App.tsx';
 import { messageErreur } from './api/client.ts';
 import { ajouterToast } from './etat/toasts.ts';
 import { FeuilleDeRoute } from './FeuilleDeRoute.tsx';
+
+// Chargé à part : les joueurs ne téléchargent jamais le code du dashboard.
+const Admin = lazy(() => import('./admin/Admin.tsx').then((m) => ({ default: m.Admin })));
 
 const client = new QueryClient({
   defaultOptions: { queries: { retry: 2, refetchOnWindowFocus: false } },
@@ -23,13 +26,16 @@ const client = new QueryClient({
 const racine = document.getElementById('racine');
 if (!racine) throw new Error('Élément #racine absent de index.html');
 
-// shortcut: une seule autre page, choisie par l'adresse (Caddy et Vite servent index.html partout) ; passer à un routeur s'il en vient d'autres.
-const Page = location.pathname.replace(/\/$/, '') === '/roadmap' ? FeuilleDeRoute : App;
+// shortcut: deux autres pages, choisies par l'adresse (Caddy et Vite servent index.html partout) ; passer à un routeur s'il en vient d'autres.
+const chemin = location.pathname.replace(/\/$/, '');
+const Page = chemin === '/roadmap' ? FeuilleDeRoute : chemin === '/admin' ? Admin : App;
 
 createRoot(racine).render(
   <StrictMode>
     <QueryClientProvider client={client}>
-      <Page />
+      <Suspense fallback={null}>
+        <Page />
+      </Suspense>
     </QueryClientProvider>
   </StrictMode>,
 );

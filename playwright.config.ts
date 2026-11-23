@@ -27,6 +27,8 @@ export default defineConfig({
         PORT: String(API),
         DATABASE_PATH: join(tmpdir(), 'france-tycoon-e2e.sqlite'),
         AUTH_DEV: 'true',
+        // Le compte de test « Chef » est admin du dashboard (e2e/admin.e2e.ts).
+        ADMIN_EMAILS: 'chef@dev.invalid',
         GOOGLE_CLIENT_ID: '',
         APP_ORIGIN: `http://localhost:${SITE}`,
         LOG_LEVEL: 'warn',
