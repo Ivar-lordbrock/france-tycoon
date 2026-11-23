@@ -6,6 +6,9 @@ DOMAINE_DU_JEU {
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "strict-origin-when-cross-origin"
+		# Personne ne peut afficher le jeu dans un cadre (iframe) pour piéger un clic.
+		X-Frame-Options "DENY"
+		Content-Security-Policy "frame-ancestors 'none'"
 		-Server
 	}
 
