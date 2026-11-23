@@ -37,10 +37,10 @@ export interface OptionsEnvoi {
   appel?: typeof fetch;
 }
 
-/** POST / PATCH / DELETE JSON ; `undefined` pour une réponse 204. Le cookie de session part tout seul (même origine). */
+/** POST / PUT / PATCH / DELETE JSON ; `undefined` pour une réponse 204. Le cookie de session part tout seul (même origine). */
 export async function envoyerJson<T>(
   url: string,
-  methode: 'POST' | 'PATCH' | 'DELETE',
+  methode: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   corps?: unknown,
   { cle, appel = fetch }: OptionsEnvoi = {},
 ): Promise<T> {

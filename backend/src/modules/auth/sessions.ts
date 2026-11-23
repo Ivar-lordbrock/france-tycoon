@@ -39,11 +39,15 @@ export function lireSession(
   db: Base,
   jeton: string,
   maintenant = maintenantS(),
-): { userId: number; prolongee: boolean } | null {
+): { userId: number; prolongee: boolean; suspension: { until: number; reason: string } | null } | null {
   const id = hacher(jeton);
   const ligne = db
-    .prepare<[string, number], { userId: number; expiresAt: number; lastActiveAt: number }>(`
-      SELECT s.user_id AS userId, s.expires_at AS expiresAt, u.last_active_at AS lastActiveAt
+    .prepare<
+      [string, number],
+      { userId: number; expiresAt: number; lastActiveAt: number; until: number | null; reason: string | null }
+    >(`
+      SELECT s.user_id AS userId, s.expires_at AS expiresAt, u.last_active_at AS lastActiveAt,
+        u.suspended_until AS until, u.suspension_reason AS reason
       FROM sessions AS s JOIN users AS u ON u.id = s.user_id
       WHERE s.id = ? AND s.expires_at > ? AND u.status IN ('active', 'dormant')`)
     .get(id, maintenant);
@@ -68,7 +72,9 @@ export function lireSession(
       }
     }).immediate();
   }
-  return { userId: ligne.userId, prolongee };
+  const suspension =
+    ligne.until !== null && ligne.until > maintenant ? { until: ligne.until, reason: ligne.reason ?? '' } : null;
+  return { userId: ligne.userId, prolongee, suspension };
 }
 
 export function fermerSession(db: Base, jeton: string): void {
