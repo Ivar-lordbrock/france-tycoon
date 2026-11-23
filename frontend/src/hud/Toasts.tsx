@@ -3,22 +3,22 @@ import { useEffect, useState } from 'react';
 import { DUREE_TOAST, type Toast, useToasts } from '../etat/toasts.ts';
 import { allerALaCommune } from '../panels/aller-a-la-commune.ts';
 
-const BORD: Record<Toast['ton'], string> = {
-  info: 'border-l-encre',
-  alerte: 'border-l-orange-500',
-  erreur: 'border-l-red-600',
+const FOND: Record<Toast['ton'], string> = {
+  info: '',
+  alerte: 'bg-orange-50 text-orange-950',
+  erreur: 'bg-red-50 text-red-950',
 };
 
 /**
- * Petits messages par-dessus la carte : en haut au milieu sur grand écran, au-dessus de la barre
- * du bas sur téléphone. La zone existe toujours, pour que les lecteurs d'écran annoncent les nouveaux.
+ * Petits messages par-dessus la carte : en haut (au milieu sur grand écran), loin des boutons de la
+ * fiche. La zone existe toujours, pour que les lecteurs d'écran annoncent les nouveaux.
  */
 export function Toasts() {
   const toasts = useToasts((etat) => etat.toasts);
   return (
     <section
       aria-label="Messages"
-      className="pointer-events-none absolute inset-x-4 bottom-36 z-[1100] md:inset-x-auto md:top-4 md:bottom-auto md:left-1/2 md:w-[min(26rem,calc(100%-44rem))] md:-translate-x-1/2"
+      className="pointer-events-none absolute inset-x-4 top-4 z-[1100] md:inset-x-auto md:left-1/2 md:w-[min(26rem,calc(100%-44rem))] md:-translate-x-1/2"
     >
       <ol aria-live="polite" className="flex flex-col gap-2">
         {toasts.map((toast) => (
@@ -49,7 +49,7 @@ function ElementToast({ toast }: { toast: Toast }) {
       onMouseLeave={() => setEnPause(false)}
       onFocus={() => setEnPause(true)}
       onBlur={() => setEnPause(false)}
-      className={`panneau entree-toast pointer-events-auto flex items-start gap-2 border-l-4 py-2 pr-1.5 pl-3 text-sm ${BORD[toast.ton]}`}
+      className={`panneau entree-toast pointer-events-auto flex items-start gap-2 py-2 pr-1.5 pl-3 text-sm ${FOND[toast.ton]}`}
     >
       <p className="min-w-0 flex-1 py-1">{toast.texte}</p>
       {commune && libelle && (

@@ -35,7 +35,7 @@ export function ChantierEnCours({ possede }: { possede: number }) {
   if (file.works.length === 0) {
     return (
       <p className="border-t border-encre/10 px-3 py-2 text-sm text-ardoise">
-        Aucun chantier en cours : ta file est libre.
+        Aucun chantier en cours. Construis depuis l’onglet Bâtiments d’une de tes communes.
       </p>
     );
   }

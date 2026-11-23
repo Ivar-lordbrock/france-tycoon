@@ -1,5 +1,5 @@
 import { type MoiReponse, PSEUDO_MAX, pseudoSchema } from '@france-tycoon/shared';
-import { type FormEvent, useId, useState } from 'react';
+import { type FormEvent, useEffect, useId, useState } from 'react';
 import { useCashEnDirect } from '../api/batiments.ts';
 import { messageErreur } from '../api/client.ts';
 import {
@@ -11,7 +11,8 @@ import {
   useSupprimerCompte,
 } from '../api/compte.ts';
 import { useFluxDirect } from '../api/direct.ts';
-import { useEncaisser } from '../api/quetes.ts';
+import { useEncaisser, useQuetes } from '../api/quetes.ts';
+import { useCarte } from '../etat/carte.ts';
 import { CentreMessages } from '../hud/CentreMessages.tsx';
 import { ChantierEnCours } from '../hud/ChantierEnCours.tsx';
 import { Classement } from '../hud/Classement.tsx';
@@ -84,7 +85,7 @@ function Connexion() {
                 maxLength={PSEUDO_MAX}
                 placeholder="Ton pseudo"
                 autoComplete="nickname"
-                className="h-10 min-w-0 flex-1 rounded-md border border-encre/15 px-2.5 outline-none focus:border-encre focus:ring-2 focus:ring-surligneur"
+                className="h-10 min-w-0 flex-1 rounded-md border border-encre/15 px-2.5 outline-none placeholder:text-ardoise focus:border-encre focus:ring-2 focus:ring-surligneur"
               />
               <button
                 type="submit"
@@ -153,13 +154,24 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
     setOuvert(null);
     setDeplie(false);
   };
+  // Une fiche s'ouvre : le compte se replie pour lui laisser la place.
+  const selection = useCarte((etat) => etat.selection);
+  useEffect(() => {
+    if (!selection) return;
+    setOuvert(null);
+    setDeplie(false);
+  }, [selection]);
   const nonLus = moi.unreadNotifications;
   // Entre deux lectures de /me, le cash monte de revenu/h ÷ 3 600 chaque seconde (docs/04 § 4.4).
   const cash = useCashEnDirect() ?? moi.wallet.cash;
   const encaisser = useEncaisser();
+  // Lues dès l'arrivée (et pas seulement volet ouvert) pour signaler une récompense à réclamer.
+  const { data: quetes } = useQuetes(true);
+  const aReclamer = quetes?.quests.filter((q) => q.completedAt !== null && q.claimedAt === null).length ?? 0;
 
+  // min-h-14 : quand la fiche prend la place, la première ligne du compte reste visible.
   return (
-    <section aria-label="Mon compte" className="panneau pointer-events-auto min-h-0 overflow-y-auto">
+    <section aria-label="Mon compte" className="panneau pointer-events-auto min-h-14 overflow-y-auto">
       <div className="flex items-center">
         <button
           type="button"
@@ -204,22 +216,24 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
           </div>
           <div className="border-x border-encre/10 p-2">
             <dt className="text-xs text-ardoise">Gemmes</dt>
-            <dd className="font-bold tabular-nums">{entier(moi.wallet.gems)} 💎</dd>
+            <dd className="font-bold text-violet-700 tabular-nums">{entier(moi.wallet.gems)} 💎</dd>
           </div>
           <div className="p-2">
             <dt className="text-xs text-ardoise">Revenu</dt>
-            <dd className="font-bold tabular-nums">{tycoons(moi.incomePerHour)}/h</dd>
+            <dd className="font-bold text-green-700 tabular-nums">+{tycoons(moi.incomePerHour)}/h</dd>
           </div>
         </dl>
         {/* Le cash affiché compte déjà ce montant ; le clic l'enregistre (tutoriel, quête « Trésorier »). */}
         <div className="flex items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm">
-          <span className="text-ardoise tabular-nums">+{tycoons(cash - moi.wallet.cash)} en attente</span>
+          <span className="text-ardoise tabular-nums">
+            {cash > moi.wallet.cash ? `+${tycoons(cash - moi.wallet.cash)} en attente` : 'Rien à encaisser'}
+          </span>
           <button
             type="button"
             onClick={() => encaisser.mutate()}
             disabled={encaisser.isPending}
             data-tuto="collect-button"
-            className="h-8 rounded-md bg-encre px-3 font-semibold text-white disabled:opacity-50"
+            className="h-8 rounded-md bg-surligneur px-3 font-semibold text-encre hover:bg-surligneur/80 disabled:opacity-50"
           >
             Encaisser
           </button>
@@ -240,7 +254,7 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
           Messages
           <span className="flex items-center gap-1.5 font-normal text-ardoise">
             {nonLus > 0 && (
-              <span className="rounded-full bg-orange-500 px-1.5 text-xs font-bold text-white tabular-nums">
+              <span className="rounded-full bg-orange-700 px-1.5 text-xs font-bold text-white tabular-nums">
                 {nonLus > 99 ? '99+' : nonLus}
                 <span className="sr-only"> non lu{nonLus > 1 ? 's' : ''}</span>
               </span>
@@ -258,7 +272,15 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
           className="flex w-full items-center justify-between gap-2 border-t border-encre/10 px-3 py-2 text-sm font-semibold hover:bg-brume/60"
         >
           Quêtes du jour
-          <Chevron ouvert={ouvert === 'quetes'} />
+          <span className="flex items-center gap-1.5 font-normal">
+            {aReclamer > 0 && (
+              <span className="rounded-full bg-surligneur px-1.5 text-xs font-bold text-encre tabular-nums">
+                {aReclamer}
+                <span className="sr-only"> à réclamer</span>
+              </span>
+            )}
+            <Chevron ouvert={ouvert === 'quetes'} />
+          </span>
         </button>
         {ouvert === 'quetes' && <QuetesDuJour id={`${id}-quetes`} />}
         <button

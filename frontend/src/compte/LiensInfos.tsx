@@ -16,14 +16,15 @@ const AVIS = lienAvis(import.meta.env.VITE_AVIS_URL);
 
 /** Petits liens : « Donner mon avis » et les pages légales (`public/legal.html`), ouverts dans un nouvel onglet. */
 export function LiensInfos({ className = '' }: { className?: string }) {
-  const lien = 'hover:text-encre hover:underline';
+  // Au doigt : 44 px de haut.
+  const lien = 'hover:text-encre hover:underline pointer-coarse:py-3.5';
   return (
     <nav
       aria-label="Informations"
       className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ardoise ${className}`}
     >
       {AVIS && (
-        <a href={AVIS} target="_blank" rel="noopener" className="font-semibold text-encre hover:underline">
+        <a href={AVIS} target="_blank" rel="noopener" className={`font-semibold text-encre ${lien}`}>
           Donner mon avis
         </a>
       )}

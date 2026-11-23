@@ -35,7 +35,8 @@ export function styleCommune(
 
   const parEtat: Record<ProprietesCommuneCarte['state'], PathOptions> = {
     free: {},
-    mine: { color: couleurJoueur, opacity: 0.9, weight: 1.6, fillColor: couleurJoueur, fillOpacity: 0.45 },
+    // Contour épais : on reconnaît ses communes même quand un rival a une couleur proche.
+    mine: { color: couleurJoueur, opacity: 1, weight: 3, fillColor: couleurJoueur, fillOpacity: 0.5 },
     rival: { color: couleurJoueur, opacity: 0.8, weight: 1, fillColor: couleurJoueur, fillOpacity: 0.3 },
     shield: {
       color: COULEURS.bouclier,
@@ -70,4 +71,16 @@ export function styleCommune(
     style.fillOpacity = 0.5;
   }
   return style;
+}
+
+/** Bulle au survol : le nom et à qui est la commune (sur la carte, « bouclier » ne vise que les rivaux). */
+export function bulleCommune({ name, state, ownerPseudo }: ProprietesCommuneCarte): string {
+  const etat = {
+    free: 'libre',
+    mine: 'à toi',
+    rival: `à ${ownerPseudo}`,
+    shield: `à ${ownerPseudo}, sous bouclier`,
+    takeover: 'OPA en cours',
+  }[state];
+  return `${name} · ${etat}`;
 }

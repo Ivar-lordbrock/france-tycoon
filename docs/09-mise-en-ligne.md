@@ -33,7 +33,7 @@ Le site de Contabo est en anglais : les mots à choisir sont écrits ci-dessous 
 
 1. Chez OVHcloud, rubrique **Noms de domaine**, achète ton `.fr`.
 2. Dans l'espace client : **Noms de domaine** → ton domaine → onglet **Zone DNS**.
-3. **Modifie** les entrées de type **A** (elles visent une page d'attente d'OVH) : la cible devient l'**adresse IP de ton serveur**. Fais-le pour la ligne sans sous-domaine et pour `www`.
+3. **Modifie** les entrées de type **A** (elles visent une page d'attente d'OVH) : la cible devient l'**adresse IP de ton serveur**. Fais-le pour la ligne sans sous-domaine et pour `www` (le serveur renverra `www.ton-domaine.fr` vers `ton-domaine.fr`).
 4. **Supprime** les entrées de type **AAAA** s'il y en a : sinon le cadenas HTTPS peut échouer.
 5. Attends 10 à 30 minutes. Pour vérifier, dans PowerShell sur ton PC (remplace par ton domaine) :
 
@@ -120,6 +120,8 @@ Désormais, à chaque fusion dans `main`, la CI tourne, puis le déploiement : n
 
 La clé ne peut **que** lancer la mise à jour : même volée, elle ne donne pas accès au serveur. Si elle est perdue, refais-en une : sur le serveur, `sudo nano /srv/france-tycoon/.ssh/authorized_keys`, supprime la ligne `cle-deploiement-github`, relance `installer-serveur.sh` et remplace le secret.
 
+**Alerte de panne** : le workflow **Veille du site** (`.github/workflows/veille.yml`) vérifie toutes les 15 minutes que la page et l'API répondent. En cas de panne, GitHub envoie un e-mail à la personne qui a modifié ce fichier en dernier (réglage GitHub : **Settings** de ton compte → **Notifications** → **Actions**, laisser les e-mails des échecs). Après 60 jours sans activité sur le dépôt, GitHub met le planning en pause : onglet **Actions** → **Veille du site** → **Enable workflow**.
+
 ## 8. Vérifier la sauvegarde
 
 ```bash
@@ -190,6 +192,8 @@ Pour changer le fond de carte (la politique d'OpenStreetMap interdit les sites �
 | Réponses données à l'installation | `/etc/france-tycoon/reglages.conf` |
 | Réglages de la sauvegarde | `/etc/litestream.yml` |
 | Réglages de Caddy | `/etc/caddy/Caddyfile` |
+
+La mise à jour automatique ne touche pas `/etc/caddy/Caddyfile` : après un changement de `deploiement/Caddyfile`, le recopier à la main sur le serveur (même remplacement de `DOMAINE_DU_JEU`, garder le bloc `www.`), puis `caddy validate --config /etc/caddy/Caddyfile` et `systemctl reload caddy`.
 
 Les messages du jeu (qui contiennent les adresses IP des joueurs) sont effacés au bout de 30 jours, comme annoncé dans les pages légales.
 

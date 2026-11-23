@@ -92,7 +92,7 @@ export function pertesVente({ batiments, chantiers }: Pick<ApercuVente, 'batimen
 
 /** Deuxième ligne d'une commune dans « Mes territoires ». */
 export function detailsTerritoire(t: MonTerritoire, maintenant: number): string {
-  const morceaux = [`Valeur ${tycoons(t.totalValue)}`, `${t.buildingSlots.used}/${t.buildingSlots.total} emplacements`];
+  const morceaux = [`Valeur ${tycoons(t.totalValue)}`, `${t.buildingSlots.used}/${t.buildingSlots.total} places`];
   const chantier = t.works[0];
   if (chantier)
     morceaux.push(`${chantier.name} niv. ${chantier.targetLevel} dans ${duree(chantier.endsAt - maintenant)}`);

@@ -9,10 +9,10 @@ export function BarreEtat() {
   const { communes, enCours, tronque, erreur } = useCarte((etat) => etat.chargement);
 
   let texte: string;
-  if (zoom < ZOOM_MIN_COMMUNES) texte = 'Zoomez ou cliquez sur un département pour voir ses communes';
+  if (zoom < ZOOM_MIN_COMMUNES) texte = 'Zoome ou choisis un département pour voir ses communes';
   else if (erreur) texte = 'Communes indisponibles : le serveur ne répond pas. Nouvel essai automatique.';
   else if (enCours && communes === 0) texte = 'Chargement des communes…';
-  else if (tronque) texte = `${nombre.format(communes)} communes affichées. Zoomez pour les voir toutes.`;
+  else if (tronque) texte = `${nombre.format(communes)} communes affichées. Zoome pour les voir toutes.`;
   else texte = `${nombre.format(communes)} commune${communes > 1 ? 's' : ''} à l’écran`;
 
   return (

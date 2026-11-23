@@ -21,6 +21,20 @@ body {
   color: var(--color-encre);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  /* Pas de mot tout seul sur la dernière ligne d'un paragraphe. */
+  text-wrap: pretty;
+}
+
+/* Au doigt : cibles d'au moins 44 px (boutons à icône seule : en largeur aussi). */
+@media (pointer: coarse) {
+  button,
+  select,
+  input:not([type="checkbox"], [type="radio"]) {
+    min-height: 2.75rem;
+  }
+  button[aria-label] {
+    min-width: 2.75rem;
+  }
 }
 
 @layer components {
@@ -73,6 +87,11 @@ body {
 }
 
 /* Leaflet */
+/* Fond de carte moins coloré : les couleurs des joueurs ressortent. */
+.leaflet-tile-pane {
+  filter: saturate(0.55);
+}
+
 .leaflet-container {
   background: #dfe3ea;
   font-family: var(--font-sans);

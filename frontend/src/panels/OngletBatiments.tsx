@@ -16,6 +16,7 @@ import {
 } from '../api/batiments.ts';
 import { messageErreur, nouvelleCle } from '../api/client.ts';
 import { useMesTerritoires } from '../api/territoires.ts';
+import { useTutoriel } from '../api/tutoriel.ts';
 import { useMaintenant } from '../etat/horloge.ts';
 import {
   apercuAmelioration,
@@ -50,6 +51,7 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
   const { data: catalogue, isPending, isError } = useCatalogue();
   const { data: file } = useFileChantiers(true);
   const { data: mesTerritoires } = useMesTerritoires(true);
+  const { data: tuto } = useTutoriel(true);
   const cash = useCashEnDirect() ?? moi.wallet.cash;
   const maintenant = useMaintenant(1_000);
   const action = useActionBatiment();
@@ -66,6 +68,12 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
     catalogue,
     cash,
     aUnSiege: fiche.isCapital || (mesTerritoires?.territories.some((t) => t.isCapital) ?? false),
+    // shortcut: un 2ᵉ chantier lancé pendant les 10 s du premier affiche aussi 10 s (le serveur, lui, compte juste).
+    premierChantier:
+      tuto != null &&
+      tuto.completedAt === null &&
+      !tuto.skipped &&
+      !tuto.steps.some((e) => e.key === 'premiere_construction' && e.completedAt !== null),
   };
   const fT = facteurTaille(fiche.baseValue);
   const typeDe = (code: string) => catalogue.find((t) => t.code === code);
@@ -209,7 +217,7 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
           ['Tu récupères', `≈ ${tycoons(a.rembourse)}`],
           ['Revenu de la commune', variation(a.revenu)],
         ]}
-        note="Tu ne récupères que 30 % de ce que tu as payé pour ses niveaux. Ses emplacements se libèrent."
+        note="Tu ne récupères que 30 % de ce que tu as payé pour ses niveaux. Ses places se libèrent."
         annuler="Garder"
         valider={action.isPending ? 'Démolition…' : 'Démolir'}
         danger
@@ -230,7 +238,7 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
   return (
     <div ref={zone} tabIndex={-1} className="flex flex-col gap-3 outline-none">
       <p className="text-sm text-ardoise">
-        {libres} emplacement{libres > 1 ? 's' : ''} libre{libres > 1 ? 's' : ''} sur {fiche.buildingSlots.total}
+        {libres} place{libres > 1 ? 's' : ''} libre{libres > 1 ? 's' : ''} sur {fiche.buildingSlots.total}
       </p>
       {!fileLibre && enCours && (
         <p className="rounded-md bg-surligneur/30 px-3 py-2 text-sm">
@@ -297,7 +305,10 @@ export function OngletBatiments({ fiche, moi }: { fiche: FicheCommune; moi: MoiR
                 <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold">
-                      {type.name} <span className="text-xs font-normal text-ardoise">· {type.slotSize} empl.</span>
+                      {type.name}{' '}
+                      <span className="text-xs font-normal text-ardoise">
+                        · {type.slotSize} place{type.slotSize > 1 ? 's' : ''}
+                      </span>
                     </p>
                     <p className="text-xs text-ardoise tabular-nums">
                       {tycoons(a.cout)} · {effet(type, 1, fT)} · {duree(a.duree)}

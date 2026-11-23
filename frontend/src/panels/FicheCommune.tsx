@@ -51,7 +51,10 @@ export function FicheCommune() {
 
   if (isPending || isError || !fiche) {
     return (
-      <section className="panneau pointer-events-auto flex items-start justify-between gap-2 p-4" aria-live="polite">
+      <section
+        className="fiche panneau pointer-events-auto flex items-start justify-between gap-2 p-4"
+        aria-live="polite"
+      >
         <p className="text-sm text-ardoise">
           {isError ? 'Fiche indisponible : le serveur ne répond pas.' : 'Chargement de la fiche…'}
         </p>
@@ -71,7 +74,7 @@ export function FicheCommune() {
     <section
       aria-labelledby="fiche-titre"
       data-tuto="territory-panel"
-      className="panneau pointer-events-auto flex max-h-[min(70dvh,40rem)] flex-col overflow-hidden"
+      className="fiche panneau pointer-events-auto flex max-h-[min(70dvh,40rem)] min-h-0 flex-col overflow-hidden"
     >
       <header className="flex items-start justify-between gap-2 border-b border-encre/10 p-4 pb-3">
         <div className="min-w-0">
@@ -122,7 +125,7 @@ export function FicheCommune() {
               <dd className="text-lg font-bold tabular-nums">{tycoons(fiche.incomePerHour)} /h</dd>
             </div>
             <div>
-              <dt className="text-xs text-ardoise">Emplacements</dt>
+              <dt className="text-xs text-ardoise">Places de bâtiments</dt>
               <dd className="tabular-nums">
                 {fiche.buildingSlots.used} / {fiche.buildingSlots.total}
               </dd>

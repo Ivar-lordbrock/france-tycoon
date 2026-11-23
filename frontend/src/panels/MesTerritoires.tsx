@@ -25,7 +25,7 @@ export function MesTerritoires({ id, onChoisi }: { id: string; onChoisi: () => v
   else if (data.territories.length === 0) {
     contenu = (
       <p className="p-3 text-sm text-ardoise">
-        Tu n’as pas encore de commune. Clique sur une commune libre de la carte : sa fiche te dit si tu peux l’acheter.
+        Tu n’as pas encore de commune. Choisis une commune libre sur la carte : sa fiche te dit si tu peux l’acheter.
       </p>
     );
   } else {

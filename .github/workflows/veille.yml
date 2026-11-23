@@ -1,0 +1,24 @@
+name: Veille du site
+
+# Toutes les 15 minutes, vérifie que https://kadastr.fr répond : la page, puis l'API et la base.
+# En cas de panne, l'exécution échoue et GitHub envoie un e-mail à la personne qui a modifié
+# ce fichier en dernier (règle de GitHub pour les exécutions planifiées).
+# shortcut: GitHub met en pause un planning après 60 jours sans activité sur le dépôt ; le relancer alors dans l'onglet Actions.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  veille:
+    name: Le site répond
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # 3 nouveaux essais espacés de 20 s : un redémarrage du serveur (mise à jour) ne déclenche pas d'alerte.
+      - name: Page d'accueil
+        run: curl -fsS --retry 3 --retry-delay 20 --retry-all-errors -o /dev/null https://kadastr.fr/
+      - name: API et base de données
+        run: curl -fsS --retry 3 --retry-delay 20 --retry-all-errors https://kadastr.fr/api/v1/admin/health

@@ -5,6 +5,7 @@ import { useMoi } from '../api/compte.ts';
 import { useQuetes } from '../api/quetes.ts';
 import { etapeEnCours, useFaireEtape, usePasserTutoriel, useTutoriel } from '../api/tutoriel.ts';
 import { useCarte } from '../etat/carte.ts';
+import { useToasts } from '../etat/toasts.ts';
 import { recompenseQuete } from '../panels/notifications-texte.ts';
 
 /**
@@ -17,6 +18,8 @@ export function Tutoriel() {
   const faire = useFaireEtape();
   const passer = usePasserTutoriel();
   const [confirmer, setConfirmer] = useState(false);
+  const [fini, setFini] = useState(false);
+  const ajouterToast = useToasts((e) => e.ajouter);
   const zoom = useCarte((e) => e.vue?.zoom ?? 0);
   const zone = useCarte((e) => e.vueActive);
   const selection = useCarte((e) => e.selection);
@@ -40,6 +43,52 @@ export function Tutoriel() {
     mutate(etape.key);
   }, [etape, fait, mutate]);
 
+  // On passe à l'étape suivante : on fête la récompense de celle qui vient d'être faite ;
+  // le tutoriel vient de finir (pas « Passer ») : carte de fin avec le prochain objectif.
+  const precedente = useRef(etape);
+  useEffect(() => {
+    const avant = precedente.current;
+    precedente.current = etape;
+    if (!avant || avant.key === etape?.key) return;
+    const faite = data?.steps.find((e) => e.key === avant.key);
+    if (faite?.completedAt && (faite.rewardCash > 0 || faite.rewardGems > 0)) {
+      ajouterToast({ ton: 'info', texte: `Bravo ! « ${faite.title} » te rapporte ${recompenseQuete(faite)}.` });
+    }
+    if (!etape && data?.completedAt) setFini(true);
+  }, [etape, data, ajouterToast]);
+
+  // L'élément visé peut être caché dans un panneau qui défile (compte, fiche) et qui rétrécit quand
+  // un autre s'ouvre (téléphone) : on le garde en vue.
+  const ancre = etape?.anchor;
+  useEffect(() => {
+    const cible = ancre ? document.querySelector(`[data-tuto~="${ancre}"]`) : null;
+    const panneau = cible?.closest('.panneau');
+    if (!cible || !panneau) return;
+    const suivi = new ResizeObserver(() => cible.scrollIntoView({ block: 'nearest' }));
+    suivi.observe(panneau);
+    return () => suivi.disconnect();
+  }, [ancre]);
+
+  if (fini) {
+    return (
+      <section aria-label="Tutoriel" className="panneau pointer-events-auto w-full max-w-md self-center p-4">
+        <h2 className="font-bold">Tutoriel terminé, bravo !</h2>
+        <p className="mt-1 text-sm">
+          Prochain objectif : ta deuxième commune. Construis pour faire monter ton revenu, et reviens chaque jour pour
+          les quêtes.
+        </p>
+        <div className="mt-3 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setFini(false)}
+            className="h-9 rounded-md bg-encre px-3 font-semibold text-white"
+          >
+            C’est parti
+          </button>
+        </div>
+      </section>
+    );
+  }
   if (!etape || !data) return null;
   const erreur = faire.error ?? passer.error;
 

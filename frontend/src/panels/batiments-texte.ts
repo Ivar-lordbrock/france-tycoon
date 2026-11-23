@@ -3,6 +3,7 @@ import {
   bonusNiveau,
   type ChantierFini,
   coutNiveau,
+  DUREE_CHANTIER_TUTORIEL_S,
   dureeChantier,
   type FicheCommune,
   type FileConstruction,
@@ -68,6 +69,8 @@ export interface Contexte {
   cash: number;
   /** Le joueur a déjà un siège social (une seule capitale par joueur). */
   aUnSiege: boolean;
+  /** Tout premier chantier, pendant le tutoriel : il dure 10 s (le serveur décide, l'écran l'annonce). */
+  premierChantier?: boolean;
 }
 
 type Niveaux = { id: number | null; typeCode: string; niveau: number }[];
@@ -110,14 +113,13 @@ export function apercuConstruction(type: TypeBatiment, ctx: Contexte): ApercuCha
     raison = type.maxPerTerritory === 1 ? 'Déjà construit ici.' : `${type.maxPerTerritory} au plus par commune.`;
   else if (type.category === 'siege' && ctx.aUnSiege) raison = 'Tu as déjà un siège social.';
   else if (type.slotSize > libres)
-    raison =
-      libres === 0 ? 'Plus d’emplacement libre ici.' : `Il faut ${type.slotSize} emplacements, il en reste ${libres}.`;
+    raison = libres === 0 ? 'Plus de place libre ici.' : `Il faut ${type.slotSize} places, il en reste ${libres}.`;
   else if (cout > ctx.cash) raison = `Il te manque ${tycoons(cout - ctx.cash)}.`;
 
   return {
     cout,
     resteCash: ctx.cash - cout,
-    duree: dureeChantier(type, 1),
+    duree: ctx.premierChantier ? DUREE_CHANTIER_TUTORIEL_S : dureeChantier(type, 1),
     revenu: {
       avant: revenuAvec(ctx, actuels),
       apres: revenuAvec(ctx, [...actuels, { id: null, typeCode: type.code, niveau: 1 }]),
