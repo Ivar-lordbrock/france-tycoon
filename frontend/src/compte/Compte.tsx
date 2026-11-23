@@ -85,7 +85,7 @@ function Connexion() {
                 maxLength={PSEUDO_MAX}
                 placeholder="Ton pseudo"
                 autoComplete="nickname"
-                className="h-10 min-w-0 flex-1 rounded-md border border-encre/15 px-2.5 outline-none focus:border-encre focus:ring-2 focus:ring-surligneur"
+                className="h-10 min-w-0 flex-1 rounded-md border border-encre/15 px-2.5 outline-none placeholder:text-ardoise focus:border-encre focus:ring-2 focus:ring-surligneur"
               />
               <button
                 type="submit"
@@ -216,11 +216,11 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
           </div>
           <div className="border-x border-encre/10 p-2">
             <dt className="text-xs text-ardoise">Gemmes</dt>
-            <dd className="font-bold tabular-nums">{entier(moi.wallet.gems)} 💎</dd>
+            <dd className="font-bold text-violet-700 tabular-nums">{entier(moi.wallet.gems)} 💎</dd>
           </div>
           <div className="p-2">
             <dt className="text-xs text-ardoise">Revenu</dt>
-            <dd className="font-bold tabular-nums">{tycoons(moi.incomePerHour)}/h</dd>
+            <dd className="font-bold text-green-700 tabular-nums">+{tycoons(moi.incomePerHour)}/h</dd>
           </div>
         </dl>
         {/* Le cash affiché compte déjà ce montant ; le clic l'enregistre (tutoriel, quête « Trésorier »). */}
@@ -233,7 +233,7 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
             onClick={() => encaisser.mutate()}
             disabled={encaisser.isPending}
             data-tuto="collect-button"
-            className="h-8 rounded-md bg-encre px-3 font-semibold text-white disabled:opacity-50"
+            className="h-8 rounded-md bg-surligneur px-3 font-semibold text-encre hover:bg-surligneur/80 disabled:opacity-50"
           >
             Encaisser
           </button>
@@ -254,7 +254,7 @@ function BarreJoueur({ moi }: { moi: MoiReponse }) {
           Messages
           <span className="flex items-center gap-1.5 font-normal text-ardoise">
             {nonLus > 0 && (
-              <span className="rounded-full bg-orange-500 px-1.5 text-xs font-bold text-white tabular-nums">
+              <span className="rounded-full bg-orange-700 px-1.5 text-xs font-bold text-white tabular-nums">
                 {nonLus > 99 ? '99+' : nonLus}
                 <span className="sr-only"> non lu{nonLus > 1 ? 's' : ''}</span>
               </span>

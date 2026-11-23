@@ -33,8 +33,9 @@ describe('exécuteur de migrations', () => {
       '005_deplacement_capitale.sql',
       '006_quetes.sql',
       '007_tutoriel_ordre.sql',
+      '008_couleurs_joueurs.sql',
     ]);
-    expect(versionDuSchema(db)).toBe('007');
+    expect(versionDuSchema(db)).toBe('008');
     expect(db.prepare('SELECT count(*) FROM building_types').pluck().get()).toBe(7);
     const traces = db.prepare('SELECT version, name, length(checksum) AS l FROM schema_migrations').all();
     expect(traces).toEqual([
@@ -45,6 +46,24 @@ describe('exécuteur de migrations', () => {
       { version: '005', name: '005_deplacement_capitale.sql', l: 64 },
       { version: '006', name: '006_quetes.sql', l: 64 },
       { version: '007', name: '007_tutoriel_ordre.sql', l: 64 },
+      { version: '008', name: '008_couleurs_joueurs.sql', l: 64 },
+    ]);
+  });
+
+  it('008 donne une couleur de la palette aux joueurs restés au bleu par défaut', () => {
+    const avant008 = lireMigrations().filter((m) => m.name < '008');
+    const db = ouvrirBase(':memory:');
+    appliquerMigrations(db, dossierMigrations(Object.fromEntries(avant008.map((m) => [m.name, m.sql]))));
+    db.exec(`INSERT INTO users (google_id, email, pseudo, marker_color) VALUES
+      ('g1', 'a@exemple.fr', 'Alice', '#2563eb'), ('g2', 'b@exemple.fr', 'Bob', '#2563eb'),
+      ('g3', 'c@exemple.fr', 'Chloé', '#123456')`);
+
+    appliquerMigrations(db);
+
+    expect(db.prepare('SELECT marker_color FROM users ORDER BY id').pluck().all()).toEqual([
+      '#2563eb',
+      '#dc2626',
+      '#123456',
     ]);
   });
 

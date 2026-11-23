@@ -24,6 +24,13 @@ describe('style des communes', () => {
     });
   });
 
+  it('trace mes communes d’un contour épais, pour les distinguer d’un rival de couleur proche', () => {
+    expect(styleCommune(proprietes({ state: 'mine', ownerColor: '#dc2626' }))).toMatchObject({
+      color: '#dc2626',
+      weight: 3,
+    });
+  });
+
   it('distingue bouclier et OPA par un trait en tirets', () => {
     expect(styleCommune(proprietes({ state: 'shield', ownerColor: '#dc2626' }))).toMatchObject({
       color: COULEURS.bouclier,

@@ -10,6 +10,21 @@ import type { Base } from '../../db/connexion.ts';
 import { ErreurMetier } from '../../erreurs.ts';
 import { wallet } from '../wallet/wallet.ts';
 
+/**
+ * Couleurs données à l'inscription, à tour de rôle, pour que les joueurs ne se confondent pas sur la carte.
+ * Ni le vert du bouclier, ni l'orange des OPA, ni le jaune de la sélection. Même liste dans la migration 008.
+ */
+export const COULEURS_JOUEURS = [
+  '#2563eb',
+  '#dc2626',
+  '#16a34a',
+  '#9333ea',
+  '#db2777',
+  '#4d7c0f',
+  '#92400e',
+  '#0369a1',
+];
+
 /** Ce qu'on sait d'un joueur au moment de sa connexion (Google, ou compte de test en local). */
 export interface Identite {
   /** `sub` du jeton Google, ou `dev:<nom>` pour un compte de test. */
@@ -71,6 +86,10 @@ export function connecterJoueur(
         maintenant,
         maintenant,
       ) as number;
+    db.prepare('UPDATE users SET marker_color = ? WHERE id = ?').run(
+      COULEURS_JOUEURS[(userId - 1) % COULEURS_JOUEURS.length],
+      userId,
+    );
 
     wallet.apply(db, {
       userId,

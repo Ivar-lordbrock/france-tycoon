@@ -85,6 +85,11 @@ body {
 }
 
 /* Leaflet */
+/* Fond de carte moins coloré : les couleurs des joueurs ressortent. */
+.leaflet-tile-pane {
+  filter: saturate(0.55);
+}
+
 .leaflet-container {
   background: #dfe3ea;
   font-family: var(--font-sans);

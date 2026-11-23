@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react';
 import { DUREE_TOAST, type Toast, useToasts } from '../etat/toasts.ts';
 import { allerALaCommune } from '../panels/aller-a-la-commune.ts';
 
-const BORD: Record<Toast['ton'], string> = {
-  info: 'border-l-encre',
-  alerte: 'border-l-orange-500',
-  erreur: 'border-l-red-600',
+const FOND: Record<Toast['ton'], string> = {
+  info: '',
+  alerte: 'bg-orange-50 text-orange-950',
+  erreur: 'bg-red-50 text-red-950',
 };
 
 /**
@@ -49,7 +49,7 @@ function ElementToast({ toast }: { toast: Toast }) {
       onMouseLeave={() => setEnPause(false)}
       onFocus={() => setEnPause(true)}
       onBlur={() => setEnPause(false)}
-      className={`panneau entree-toast pointer-events-auto flex items-start gap-2 border-l-4 py-2 pr-1.5 pl-3 text-sm ${BORD[toast.ton]}`}
+      className={`panneau entree-toast pointer-events-auto flex items-start gap-2 py-2 pr-1.5 pl-3 text-sm ${FOND[toast.ton]}`}
     >
       <p className="min-w-0 flex-1 py-1">{toast.texte}</p>
       {commune && libelle && (
