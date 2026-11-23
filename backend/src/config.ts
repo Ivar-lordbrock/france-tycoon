@@ -23,6 +23,16 @@ const schemaConfig = z
     GOOGLE_CLIENT_ID: z.string().trim().default(''),
     /** Connexion de développement sans Google : pour tester en local, refusée en production. */
     AUTH_DEV: booleen,
+    /** E-mails Google admin d'office du dashboard /admin, séparés par des virgules (docs/10-admin.md). */
+    ADMIN_EMAILS: z
+      .string()
+      .default('')
+      .transform((texte) =>
+        texte
+          .split(',')
+          .map((e) => e.trim().toLowerCase())
+          .filter(Boolean),
+      ),
   })
   .refine((config) => !(config.AUTH_DEV && config.NODE_ENV === 'production'), {
     message: 'AUTH_DEV=true est interdit avec NODE_ENV=production (connexion sans Google)',
