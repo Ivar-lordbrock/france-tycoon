@@ -7,7 +7,7 @@ import { entier, tycoons } from '../panels/fiche-texte.ts';
 import { ilYa } from '../panels/notifications-texte.ts';
 import { Chiffre, Section } from './VueEnsemble.tsx';
 
-const champ =
+export const champ =
   'h-10 min-w-0 rounded-xl border border-encre/15 bg-fond px-3 text-encre outline-none placeholder:text-ardoise focus:border-encre focus:ring-2 focus:ring-surligneur';
 
 const ROLES: Record<Role, string> = { player: 'Joueur', moderator: 'Modérateur', admin: 'Admin' };
@@ -41,7 +41,7 @@ const RAISONS: Record<string, string> = {
   gems_refund: 'Remboursement de gemmes',
   admin_adjustment: 'Ajustement admin',
 };
-const ISSUES_OPA: Record<string, string> = {
+export const ISSUES_OPA: Record<string, string> = {
   pending: 'En cours',
   defended: 'Défendue',
   accepted: 'Acceptée',
@@ -63,7 +63,7 @@ const ACTIONS_AUDIT: Record<string, string> = {
 };
 
 const format = new Intl.DateTimeFormat('fr-FR', { timeZone: FUSEAU_JEU, dateStyle: 'medium', timeStyle: 'short' });
-const quand = (s: number) => format.format(s * 1000);
+export const quand = (s: number) => format.format(s * 1000);
 const maintenant = () => Math.floor(Date.now() / 1000);
 const signe = (n: number, texte: string) => `${n > 0 ? '+' : '−'}${texte}`;
 const montant = (n: number, devise: 'cash' | 'gems') =>
@@ -91,7 +91,7 @@ export function Joueurs({ moi, grade }: { moi: string; grade: Grade }) {
   );
 }
 
-function Pastille({ classe, children }: { classe: string; children: ReactNode }) {
+export function Pastille({ classe, children }: { classe: string; children: ReactNode }) {
   return (
     <span className={`rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap ${classe}`}>{children}</span>
   );
@@ -200,7 +200,7 @@ function Liste({
 }
 
 /** Tableau simple ; `true` aligne la colonne à droite (chiffres). */
-function Table({
+export function Table({
   colonnes,
   lignes,
   vide,

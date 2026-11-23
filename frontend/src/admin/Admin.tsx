@@ -4,6 +4,7 @@ import { useAdminMoi } from '../api/admin.ts';
 import { ErreurApi, messageErreur } from '../api/client.ts';
 import { Icone } from '../hud/Icone.tsx';
 import { Joueurs } from './Joueurs.tsx';
+import { Territoires } from './Territoires.tsx';
 import { VueEnsemble } from './VueEnsemble.tsx';
 
 type IdVue = 'ensemble' | 'joueurs' | 'territoires' | 'triche' | 'config' | 'sauvegardes';
@@ -14,7 +15,7 @@ const ENSEMBLE: Vue = { id: 'ensemble', libelle: 'Vue d’ensemble' };
 const VUES: Vue[] = [
   ENSEMBLE,
   { id: 'joueurs', libelle: 'Joueurs' },
-  { id: 'territoires', libelle: 'Territoires & OPA', etape: 3 },
+  { id: 'territoires', libelle: 'Territoires & OPA' },
   { id: 'triche', libelle: 'Anti-triche & logs', etape: 7 },
   { id: 'config', libelle: 'Live config & events', admin: true, etape: 6 },
   { id: 'sauvegardes', libelle: 'Sauvegardes & signalements', etape: 4 },
@@ -154,6 +155,8 @@ function Tableau({ pseudo, grade }: { pseudo: string; grade: Grade }) {
           <VueEnsemble />
         ) : vue.id === 'joueurs' ? (
           <Joueurs moi={pseudo} grade={grade} />
+        ) : vue.id === 'territoires' ? (
+          <Territoires grade={grade} />
         ) : (
           <p className="mt-3 text-ardoise">Cette vue arrive à l’étape {vue.etape} du dashboard.</p>
         )}

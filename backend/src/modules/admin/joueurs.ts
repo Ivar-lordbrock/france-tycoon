@@ -13,13 +13,12 @@ import {
   roleCorpsSchema,
   suspendreCorpsSchema,
 } from '@france-tycoon/shared';
-import type { FastifyRequest } from 'fastify';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ErreurMetier } from '../../erreurs.ts';
 import { creerEncaisseur, creerLecteurRevenus, revenuDuJoueur } from '../income/revenus.ts';
 import { creerLiberationBiens } from '../me/suppression.ts';
 import { wallet } from '../wallet/wallet.ts';
-import { type Acteur, creerAudit } from './audit.ts';
+import { type Acteur, acteurDe, creerAudit, exigerAdmin } from './audit.ts';
 
 // Rang pour la règle « on n'agit que sur plus petit que soi ». Admin d'office (ADMIN_EMAILS) au-dessus de tout.
 const RANG: Record<Role, number> = { player: 0, moderator: 1, admin: 2 };
@@ -41,17 +40,6 @@ export const routesAdminJoueurs: FastifyPluginAsyncZod<{ adminEmails: readonly s
   const db = app.db;
   const admins = JSON.stringify(adminEmails);
   const auditer = creerAudit(db);
-
-  /** Le crochet du dashboard a rempli `req.equipe`. */
-  const acteurDe = (req: FastifyRequest): Acteur & { fixe: boolean } => {
-    if (!req.equipe) throw new ErreurMetier('FORBIDDEN', 403, 'Réservé à l’équipe Kadastr (modérateurs et admins).');
-    return req.equipe;
-  };
-  const exigerAdmin = (req: FastifyRequest) => {
-    const acteur = acteurDe(req);
-    if (acteur.grade !== 'admin') throw new ErreurMetier('FORBIDDEN', 403, 'Réservé aux admins.');
-    return acteur;
-  };
 
   const rechercher = db.prepare<Record<string, unknown>, LigneBrute>(`
     SELECT * FROM (

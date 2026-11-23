@@ -1,7 +1,10 @@
 import type {
   AdminMoiReponse,
   FicheJoueurReponse,
+  ListeCommunesAdminReponse,
   ListeJoueursReponse,
+  ListeOpaAdminReponse,
+  StatutOpa,
   VueEnsembleReponse,
 } from '@france-tycoon/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -46,6 +49,30 @@ export function useFicheJoueur(id: number) {
   return useQuery({
     queryKey: ['admin', 'joueur', id],
     queryFn: ({ signal }) => lireJson<FicheJoueurReponse>(`/api/v1/admin/players/${id}`, signal),
+  });
+}
+
+export interface FiltresCommunes {
+  q: string;
+  filter: '' | 'owned' | 'free' | 'forced' | 'takeover';
+}
+
+/** Recherche de communes (GET /admin/territories). */
+export function useRechercheCommunes(filtres: FiltresCommunes) {
+  const params = new URLSearchParams(Object.entries(filtres).filter(([, v]) => v));
+  return useQuery({
+    queryKey: ['admin', 'communes', filtres],
+    queryFn: ({ signal }) => lireJson<ListeCommunesAdminReponse>(`/api/v1/admin/territories?${params}`, signal),
+    placeholderData: keepPreviousData,
+  });
+}
+
+/** OPA d'un statut (GET /admin/takeovers), les plus récentes d'abord. */
+export function useOpaAdmin(status: StatutOpa) {
+  return useQuery({
+    queryKey: ['admin', 'opa', status],
+    queryFn: ({ signal }) => lireJson<ListeOpaAdminReponse>(`/api/v1/admin/takeovers?status=${status}`, signal),
+    placeholderData: keepPreviousData,
   });
 }
 
