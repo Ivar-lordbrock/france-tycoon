@@ -48,7 +48,7 @@ Les équipements viennent de `npm run import:bpe` (INSEE : domaines A services, 
 | Lyon (69) | MET | 519 127 | 35 740 | **9 448 700** | 30,7 | 13 | 94 487 | 14 173 100 |
 | Paris (75) | MET | 2 103 778 | 191 340 | **34 886 300** | 59,1 | 14 | 348 863 | 52 329 500 |
 
-Capital de départ : **30 000 ₮** (`CAPITAL_DEPART`, protection débutant 72 h : `PROTECTION_DEBUTANT_S`) → un village dès le premier jour ; Paris est l'objectif de fin de partie.
+Capital de départ : **50 000 ₮** (`CAPITAL_DEPART`, protection débutant 72 h : `PROTECTION_DEBUTANT_S`) → un village moyen **et** de quoi le bâtir dès le premier jour (relevé en ligne du 24/11/2026 : prix médian 10 200 ₮ sous 200 hab., 19 900 ₮ de 200 à 499 hab., 35 100 ₮ de 500 à 999 hab. ; avec 30 000 ₮, il restait ~10 000 ₮ pour bâtir) ; Paris est l'objectif de fin de partie.
 
 ## 5.2 Bâtiments
 
@@ -192,15 +192,15 @@ En patrimoine, une OPA réussie coûte `0,5 × V_T` à l'attaquant et rapporte `
 
 | Étape | Cash |
 |---|---|
-| Inscription | 30 000 |
-| Achète L'Abergement-Clémenciat (V0 = 21 800) | 8 200 |
-| Récompense tutoriel « premier achat » | 13 200 |
-| Construit une Résidence (4 430) | 8 770 |
-| Récompense « encaisser » | 10 770 |
-| 2 Résidences de plus (8 860) | 1 910 |
+| Inscription | 50 000 |
+| Achète L'Abergement-Clémenciat (V0 = 21 800) | 28 200 |
+| Récompense tutoriel « premier achat » | 33 200 |
+| Construit une Résidence (4 430) | 28 770 |
+| Récompense « encaisser » | 30 770 |
+| 2 Résidences de plus (8 860) | 21 910 |
 | Revenu : 218 + 3 × 295 = **1 103 ₮/h** (≈ 26 500 ₮/jour) | |
 
-Avec les 7 emplacements remplis : ≈ 2 280 ₮/h, soit une 2ᵉ commune de village en moins d'une journée et une ville comme Pointe-à-Pitre en une à deux semaines avec 3 territoires. À ajuster après la bêta (étape 6), en changeant seulement `shared/src/balance.ts` et `building_types`.
+Il reste ~22 000 ₮ : un Commerce (8 120) et une 4ᵉ Résidence tout de suite, ou une 2ᵉ petite commune (médiane 10 200 ₮ sous 200 hab.). Avec les 7 emplacements remplis : ≈ 2 280 ₮/h, soit une 2ᵉ commune de village en moins d'une journée et une ville comme Pointe-à-Pitre en une à deux semaines avec 3 territoires. À ajuster après la bêta (étape 6), en changeant seulement `shared/src/balance.ts` et `building_types`.
 
 ## 5.10 Réglages à chaud (dashboard /admin)
 

@@ -168,7 +168,7 @@ describe('libération à 14 jours (release-inactive)', () => {
 
     expect(moi.statusCode).toBe(200);
     expect(statut(bruno.id)).toBe('active');
-    expect(moi.json().wallet.cash).toBeGreaterThan(30_000 + 28_100); // départ + rachat + revenus en attente
+    expect(moi.json().wallet.cash).toBeGreaterThan(50_000 + 28_100); // départ + rachat + revenus en attente
   });
 });
 

@@ -145,7 +145,7 @@ describe('POST /territories/:insee/takeovers', () => {
     expect(takeover.expiresAt - takeover.createdAt).toBe(DELAI_REPONSE_OPA_S);
     expect(wallet.cash).toBe(67_300);
     expect(cash(alice.id)).toBe(67_300);
-    expect(cash(bruno.id)).toBe(30_000); // rien ne bouge chez le défenseur avant sa réponse
+    expect(cash(bruno.id)).toBe(50_000); // rien ne bouge chez le défenseur avant sa réponse
 
     const journal = db
       .prepare(

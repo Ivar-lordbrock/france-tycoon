@@ -31,7 +31,7 @@ test('un nouveau joueur se connecte et achète une commune', async ({ page }) =>
   // Elle est à moi, et mon cash a baissé du prix (il remonte ensuite un peu avec le revenu).
   await expect(page.getByText(/Testville est à toi/)).toBeVisible();
   const cash = page.locator('dt:has-text("Cash") + dd');
-  const attendu = 30_000 - prix;
+  const attendu = 50_000 - prix;
   await expect.poll(async () => chiffres(await cash.textContent())).toBeLessThan(attendu + 100);
   expect(chiffres(await cash.textContent())).toBeGreaterThanOrEqual(attendu);
 });

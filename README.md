@@ -8,7 +8,7 @@ Jeu web multijoueur de gestion et de conquête immobilière **sur la vraie carte
 
 ## Le jeu en bref
 
-- Connexion **Google** uniquement ; 30 000 ₮ pour démarrer.
+- Connexion **Google** uniquement ; 50 000 ₮ pour démarrer.
 - **34 969 communes** réelles (API Geo de l'État), prix calculé avec la population et les équipements réels (INSEE, OpenStreetMap).
 - **3 territoires** au départ, plus avec le Siège social et les rangs.
 - **OPA** : rachète la commune d'un rival à 150 % de sa valeur ; il a 24 h pour se défendre.
