@@ -37,7 +37,7 @@ export interface Identite {
 
 /**
  * Retrouve le joueur, ou crée son compte au premier passage : pseudo libre, protection
- * débutant de 72 h et 30 000 ₮ (`signup_bonus`, via `wallet.apply`), en une transaction.
+ * débutant de 72 h et 50 000 ₮ (`signup_bonus`, via `wallet.apply`), en une transaction.
  */
 export function connecterJoueur(
   db: Base,

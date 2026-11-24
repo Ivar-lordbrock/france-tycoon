@@ -34,7 +34,7 @@ describe('GET /api/v1/auth/config', () => {
 });
 
 describe('POST /api/v1/auth/google', () => {
-  it('crée le compte au premier passage : 30 000 ₮ via wallet.apply, protection 72 h, cookie HttpOnly', async () => {
+  it('crée le compte au premier passage : 50 000 ₮ via wallet.apply, protection 72 h, cookie HttpOnly', async () => {
     const db = baseDeTest();
     const app = appGoogle(GOOGLE_OK, db);
     const avant = Math.floor(Date.now() / 1000);
@@ -52,11 +52,11 @@ describe('POST /api/v1/auth/google', () => {
     const cookie = reponse.cookies.find((c) => c.name === 'sid');
     expect(cookie).toMatchObject({ httpOnly: true, sameSite: 'Lax', path: '/', maxAge: 30 * 86_400 });
     expect(db.prepare('SELECT cash, newbie_shield_until - created_at AS protection FROM users').get()).toEqual({
-      cash: 30_000,
+      cash: 50_000,
       protection: 72 * 3_600,
     });
     expect(db.prepare('SELECT amount, balance_after, reason FROM wallet_transactions').all()).toEqual([
-      { amount: 30_000, balance_after: 30_000, reason: 'signup_bonus' },
+      { amount: 50_000, balance_after: 50_000, reason: 'signup_bonus' },
     ]);
     // La session est stockée hachée, jamais le jeton du cookie.
     const session = db.prepare('SELECT id, expires_at FROM sessions').get() as { id: string; expires_at: number };
@@ -79,7 +79,7 @@ describe('POST /api/v1/auth/google', () => {
     expect(reponse.json().isNew).toBe(false);
     expect(db.prepare('SELECT count(*) FROM users').pluck().get()).toBe(1);
     expect(db.prepare('SELECT count(*) FROM wallet_transactions').pluck().get()).toBe(1);
-    expect(db.prepare('SELECT cash FROM users').pluck().get()).toBe(30_000);
+    expect(db.prepare('SELECT cash FROM users').pluck().get()).toBe(50_000);
   });
 
   it('pseudo déjà pris : on ajoute un numéro', async () => {
@@ -132,7 +132,7 @@ describe('POST /api/v1/auth/google', () => {
 });
 
 describe('POST /api/v1/auth/dev (connexion de développement)', () => {
-  it('crée un compte de test avec 30 000 ₮, et le même nom le retrouve', async () => {
+  it('crée un compte de test avec 50 000 ₮, et le même nom le retrouve', async () => {
     const db = baseDeTest();
     const app = appDeTest(db);
 
@@ -141,7 +141,7 @@ describe('POST /api/v1/auth/dev (connexion de développement)', () => {
 
     expect(premier.json()).toMatchObject({ isNew: true, user: { pseudo: 'Alice', email: 'alice@dev.invalid' } });
     expect(second.json()).toMatchObject({ isNew: false, user: { id: premier.json().user.id } });
-    expect(db.prepare('SELECT google_id, cash FROM users').all()).toEqual([{ google_id: 'dev:alice', cash: 30_000 }]);
+    expect(db.prepare('SELECT google_id, cash FROM users').all()).toEqual([{ google_id: 'dev:alice', cash: 50_000 }]);
   });
 
   it('n’existe pas quand AUTH_DEV est faux', async () => {
@@ -171,7 +171,7 @@ describe('session, GET /me et POST /auth/logout', () => {
     expect(reponse.statusCode).toBe(200);
     expect(moiReponseSchema.parse(reponse.json())).toMatchObject({
       user: { pseudo: 'Alice', markerColor: '#2563eb', avatarUrl: null },
-      wallet: { cash: 30_000, gems: 0 },
+      wallet: { cash: 50_000, gems: 0 },
       incomePerHour: 0,
       territories: { owned: 0, max: 4 },
       rankLevel: 0,

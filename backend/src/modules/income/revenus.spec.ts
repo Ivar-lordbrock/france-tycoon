@@ -197,7 +197,7 @@ describe('routes : encaisser d’abord', () => {
 
     const moi = moiReponseSchema.parse((await requete('GET', '/me')).json());
 
-    expect(moi.wallet.cash).toBe(30_000 + 976);
+    expect(moi.wallet.cash).toBe(50_000 + 976);
     expect(moi.incomePerHour).toBe(SOL + RESIDENCE_1);
     expect(moi.unreadNotifications).toBe(1);
     expect(moi.finishedWorks).toEqual([
@@ -231,8 +231,8 @@ describe('routes : encaisser d’abord', () => {
     const premier = encaissementReponseSchema.parse((await requete('POST', '/me/collect')).json());
     const second = encaissementReponseSchema.parse((await requete('POST', '/me/collect')).json());
 
-    expect(premier).toEqual({ collected: SOL, cash: 30_000 + SOL, incomePerHour: SOL });
-    expect(second).toEqual({ collected: 0, cash: 30_000 + SOL, incomePerHour: SOL });
+    expect(premier).toEqual({ collected: SOL, cash: 50_000 + SOL, incomePerHour: SOL });
+    expect(second).toEqual({ collected: 0, cash: 50_000 + SOL, incomePerHour: SOL });
   });
 
   it('acheter : les revenus en attente comptent pour payer', async () => {
@@ -255,7 +255,7 @@ describe('routes : encaisser d’abord', () => {
     const vente = await requete('POST', '/territories/01001/sell');
 
     expect(vente.statusCode).toBe(200);
-    expect(vente.json().wallet.cash).toBe(30_000 + 2 * SOL + 15_200);
+    expect(vente.json().wallet.cash).toBe(50_000 + 2 * SOL + 15_200);
   });
 
   it('marquer tous les messages lus d’un coup ; corps vide refusé', async () => {

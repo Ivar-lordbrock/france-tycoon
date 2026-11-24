@@ -97,8 +97,8 @@ describe('revenu du sol et valeur d’un territoire (5.3, 5.4)', () => {
     expect(valeurTerritoire(21_800, 0, 10_500)).toBe(32_300);
   });
 
-  it('capital de départ : 30 000 ₮, de quoi acheter L’Abergement-Clémenciat', () => {
-    expect(CAPITAL_DEPART).toBe(30_000);
+  it('capital de départ : 50 000 ₮, L’Abergement-Clémenciat et de quoi le bâtir', () => {
+    expect(CAPITAL_DEPART).toBe(50_000);
     expect(CAPITAL_DEPART).toBeGreaterThan(valeurBase(859, 7));
   });
 });

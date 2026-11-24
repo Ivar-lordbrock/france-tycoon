@@ -76,7 +76,7 @@ function Connexion() {
       <h2 id={`${id}-titre`} className="font-bold">
         Connecte-toi pour jouer
       </h2>
-      <p className="mt-1 text-sm text-ardoise">30 000 ₮ offerts pour acheter ta première commune.</p>
+      <p className="mt-1 text-sm text-ardoise">50 000 ₮ offerts pour acheter ta première commune.</p>
 
       <div className="mt-3 flex flex-col gap-3">
         {config?.googleClientId && (
