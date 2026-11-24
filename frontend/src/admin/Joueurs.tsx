@@ -292,7 +292,10 @@ function Fiche({ id, moi, grade, onRetour }: { id: number; moi: string; grade: G
   const { player: p, communes, transactions, takeovers, logins, notes, audit } = data;
   const statut = statutDe(p);
   // Le serveur tranche ; on cache juste ce qu'il refuserait à coup sûr.
-  const touchable = p.pseudo !== moi && !p.roleFixe && (grade === 'admin' || p.role === 'player');
+  const soi = p.pseudo === moi;
+  const touchable = !soi && !p.roleFixe && (grade === 'admin' || p.role === 'player');
+  // Cadeau : à tout joueur ; à soi-même seulement pour un admin d'office (le serveur vérifie).
+  const cadeau = grade === 'admin' && (!soi || p.roleFixe);
 
   return (
     <div className="mt-3 flex flex-col gap-8 [font-variant-numeric:tabular-nums]">
@@ -325,7 +328,7 @@ function Fiche({ id, moi, grade, onRetour }: { id: number; moi: string; grade: G
         <Chiffre libelle="Patrimoine">{tycoons(p.netWorth)}</Chiffre>
       </dl>
 
-      {touchable && <Actions p={p} grade={grade} />}
+      {(touchable || cadeau) && <Actions p={p} grade={grade} complet={touchable} />}
       <Notes id={p.id} notes={notes} />
 
       <Section titre="Historique">
@@ -430,7 +433,7 @@ function Details({ titre, children }: { titre: string; children: ReactNode }) {
   );
 }
 
-type IdAction = 'suspend' | 'unsuspend' | 'ban' | 'unban' | 'role' | 'adjust' | 'reset';
+type IdAction = 'suspend' | 'unsuspend' | 'ban' | 'unban' | 'role' | 'adjust' | 'gift' | 'reset';
 type Cible = FicheJoueurReponse['player'];
 
 const ACTIONS: Record<IdAction, { libelle: string; effet: (p: Cible) => string; danger?: boolean }> = {
@@ -450,6 +453,11 @@ const ACTIONS: Record<IdAction, { libelle: string; effet: (p: Cible) => string; 
     libelle: 'Ajuster le solde',
     effet: () => 'Positif : on ajoute. Négatif : on retire. Écrit dans ses transactions.',
   },
+  gift: {
+    libelle: 'Offrir un cadeau',
+    effet: (p) =>
+      `Ajouté au solde de ${p.pseudo}, écrit dans ses transactions. Il reçoit ton message dans ses notifications. Sans retour.`,
+  },
   reset: {
     libelle: 'Reset partiel',
     danger: true,
@@ -467,12 +475,17 @@ const DUREES: [number, string][] = [
   [720, '30 jours'],
 ];
 
-function Actions({ p, grade }: { p: Cible; grade: Grade }) {
+/** `complet` faux : seul le cadeau est permis (sa propre fiche d'admin d'office, ou un autre admin). */
+function Actions({ p, grade, complet }: { p: Cible; grade: Grade; complet: boolean }) {
   const [ouverte, setOuverte] = useState<IdAction | null>(null);
-  const liste: IdAction[] = [
-    p.suspendedUntil === null ? 'suspend' : 'unsuspend',
-    ...(grade === 'admin' ? ([p.status === 'banned' ? 'unban' : 'ban', 'role', 'adjust', 'reset'] as const) : []),
-  ];
+  const liste: IdAction[] = complet
+    ? [
+        p.suspendedUntil === null ? 'suspend' : 'unsuspend',
+        ...(grade === 'admin'
+          ? ([p.status === 'banned' ? 'unban' : 'ban', 'role', 'adjust', 'gift', 'reset'] as const)
+          : []),
+      ]
+    : ['gift'];
   return (
     <Section titre="Actions">
       <div className="flex flex-wrap gap-2">
@@ -502,7 +515,10 @@ function FormAction({ action, p, onFini }: { action: IdAction; p: Cible; onFini:
   const [devise, setDevise] = useState<'cash' | 'gems'>('cash');
   const [somme, setSomme] = useState('');
   const n = Number(somme);
-  const sommeOk = action !== 'adjust' || (somme.trim() !== '' && Number.isInteger(n) && n !== 0);
+  const sommeOk =
+    action === 'adjust'
+      ? somme.trim() !== '' && Number.isInteger(n) && n !== 0
+      : action !== 'gift' || (Number.isInteger(n) && n >= 1 && n <= 1_000_000_000);
   const pret = motif.trim().length >= 3 && sommeOk && !(action === 'role' && role === p.role);
   const { libelle, effet, danger } = ACTIONS[action];
 
@@ -517,11 +533,11 @@ function FormAction({ action, p, onFini }: { action: IdAction; p: Cible; onFini:
           ? { role, reason }
           : action === 'adjust'
             ? { currency: devise, amount: n, reason }
-            : { reason };
-    envoi.mutate(
-      { methode: action === 'role' ? 'PUT' : 'POST', url: `players/${p.id}/${action}`, corps },
-      { onSuccess: onFini },
-    );
+            : action === 'gift'
+              ? { playerId: p.id, currency: devise, amount: n, reason }
+              : { reason };
+    const url = action === 'gift' ? 'gifts' : `players/${p.id}/${action}`;
+    envoi.mutate({ methode: action === 'role' ? 'PUT' : 'POST', url, corps }, { onSuccess: onFini });
   };
 
   return (
@@ -558,15 +574,15 @@ function FormAction({ action, p, onFini }: { action: IdAction; p: Cible; onFini:
           </select>
         </label>
       )}
-      {action === 'adjust' && (
+      {(action === 'adjust' || action === 'gift') && (
         <div className="flex gap-2">
           <label className="flex flex-1 flex-col gap-1 text-sm font-semibold text-ardoise">
-            Montant (− pour retirer)
+            {action === 'gift' ? 'Montant' : 'Montant (− pour retirer)'}
             <input
               inputMode="numeric"
               value={somme}
-              onChange={(e) => setSomme(e.target.value.replace(/[^\d-]/g, ''))}
-              placeholder="ex. 5000 ou -200"
+              onChange={(e) => setSomme(e.target.value.replace(action === 'gift' ? /\D/g : /[^\d-]/g, ''))}
+              placeholder={action === 'gift' ? 'ex. 20000' : 'ex. 5000 ou -200'}
               className={champ}
             />
           </label>
@@ -580,7 +596,7 @@ function FormAction({ action, p, onFini }: { action: IdAction; p: Cible; onFini:
         </div>
       )}
       <label className="flex flex-col gap-1 text-sm font-semibold text-ardoise">
-        Motif (gardé dans le journal d’audit)
+        {action === 'gift' ? 'Message au joueur (gardé aussi dans l’audit)' : 'Motif (gardé dans le journal d’audit)'}
         <input
           value={motif}
           onChange={(e) => setMotif(e.target.value)}

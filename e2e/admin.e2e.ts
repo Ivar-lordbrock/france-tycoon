@@ -64,7 +64,7 @@ test('un admin voit les 6 vues, prévoit un événement pour demain, l’arrête
   await expect(page.getByRole('link', { name: 'Joueurs' })).toBeVisible(); // export CSV (admin)
 });
 
-test('un admin trouve un joueur, le suspend, et le joueur voit le motif', async ({ browser }) => {
+test('un admin trouve un joueur, le suspend, lui offre un cadeau, et le joueur voit le motif', async ({ browser }) => {
   // Le joueur s'inscrit dans son propre navigateur.
   const cible = await browser.newPage();
   await cible.route(/^https?:\/\/(?!localhost|127\.0\.0\.1)/, (route) => route.abort());
@@ -85,6 +85,13 @@ test('un admin trouve un joueur, le suspend, et le joueur voit le motif', async 
   await expect(page.getByText('Motif : Essai e2e')).toBeVisible();
   await page.getByText('Journal d’audit').click();
   await expect(page.getByRole('cell', { name: 'Suspension' })).toBeVisible();
+
+  // Cadeau depuis la fiche : il passe par le journal des transactions et finit dans l'audit du joueur.
+  await page.getByRole('button', { name: 'Offrir un cadeau' }).click();
+  await page.getByPlaceholder('ex. 20000').fill('20000');
+  await page.getByPlaceholder('Pourquoi ?').fill('Bienvenue');
+  await page.getByRole('button', { name: 'Offrir un cadeau' }).last().click();
+  await expect(page.getByRole('cell', { name: 'Cadeau' })).toBeVisible();
 
   // Côté joueur : il regarde, mais encaisser est refusé avec le motif.
   await cible.reload();
