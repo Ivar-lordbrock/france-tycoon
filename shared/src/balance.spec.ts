@@ -27,6 +27,7 @@ import {
   scoreInfra,
   TERRITOIRES_DEPART,
   valeurBase,
+  valeurRevente,
   valeurTerritoire,
 } from './balance.ts';
 
@@ -298,6 +299,13 @@ describe('achat, vente, limites (5.4)', () => {
   it('vente à l’État : 70 % de V_T, arrondi à la centaine inférieure', () => {
     expect(prixVenteEtat(26_230)).toBe(18_300);
     expect(prixVenteEtat(21_800)).toBe(15_200);
+  });
+
+  it('revente : V0 plafonné au prix payé, donc aucun gain à acheter sous 70 % puis revendre', () => {
+    expect(valeurRevente(21_800, 21_800, 4_430, 0)).toBe(26_230);
+    expect(valeurRevente(21_800, null, 0, 1_000)).toBe(22_800);
+    expect(valeurRevente(21_800, 45_000, 0, 0)).toBe(21_800); // OPA payée plus cher que V0
+    expect(prixVenteEtat(valeurRevente(21_800, 5_500, 0, 0))).toBe(3_800); // prix réglé à 25 %
   });
 
   it('4 territoires au départ, 12 au maximum avec siège niveau 5, rang Magnat et emplacement acheté', () => {
