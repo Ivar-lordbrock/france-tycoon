@@ -85,7 +85,7 @@ describe('dashboard /admin : contrôle live et signalements', () => {
     expect((await etat(app)).banner).toBeNull();
   });
 
-  it('cadeaux : à un joueur ou à tous les actifs, par le journal, avec un message ; jamais à soi', async () => {
+  it('cadeaux : à un joueur ou à tous les actifs, par le journal, avec un message ; à soi seulement pour un admin d’office', async () => {
     const { app, chef, modo, alice, bruno } = await partie();
     const offrir = (cookie: string, corps: object) =>
       appel(app, cookie, 'POST', 'admin/gifts', {
@@ -98,8 +98,12 @@ describe('dashboard /admin : contrôle live et signalements', () => {
     const avant = { alice: gemmes(alice.id) as number, bruno: gemmes(bruno.id) as number };
 
     expect((await offrir(modo.cookie, { playerId: alice.id })).statusCode).toBe(403);
-    expect((await offrir(chef.cookie, { playerId: chef.id })).statusCode).toBe(403);
     expect((await offrir(chef.cookie, { playerId: 9_999 })).statusCode).toBe(404);
+    // À soi-même : Chef est admin d'office (ADMIN_EMAILS) ; un admin donné depuis l'écran ne peut pas.
+    expect(cadeauReponseSchema.parse((await offrir(chef.cookie, { playerId: chef.id })).json())).toEqual({ count: 1 });
+    app.db.prepare("UPDATE staff_roles SET role = 'admin' WHERE user_id = ?").run(modo.id);
+    expect((await offrir(modo.cookie, { playerId: modo.id })).statusCode).toBe(403);
+    app.db.prepare("UPDATE staff_roles SET role = 'moderator' WHERE user_id = ?").run(modo.id);
 
     const un = await offrir(chef.cookie, { playerId: alice.id });
     expect(cadeauReponseSchema.parse(un.json())).toEqual({ count: 1 });
@@ -119,7 +123,7 @@ describe('dashboard /admin : contrôle live et signalements', () => {
       .pluck()
       .get(alice.id);
     expect(journal).toBe(2);
-    expect(nbAudit(app, 'gift.send')).toBe(2);
+    expect(nbAudit(app, 'gift.send')).toBe(3);
   });
 
   it('signalements : 5 par jour, suivi par l’équipe, le joueur prévenu à la clôture', async () => {

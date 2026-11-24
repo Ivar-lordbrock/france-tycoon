@@ -84,7 +84,10 @@ export const routesAdminLive: FastifyPluginAsyncZod = async (app) => {
         let ids: number[];
         if (playerId === undefined) ids = actifs.all(acteur.id);
         else {
-          if (playerId === acteur.id) throw new ErreurMetier('FORBIDDEN', 403, 'Pas de cadeau à toi-même.');
+          // À soi-même : seulement un admin d'office (ADMIN_EMAILS), qui tient déjà le serveur.
+          if (playerId === acteur.id && !acteur.fixe) {
+            throw new ErreurMetier('FORBIDDEN', 403, 'Pas de cadeau à toi-même (réservé aux admins d’office).');
+          }
           const id = joueurCadeau.get(playerId);
           if (id === undefined) throw new ErreurMetier('NOT_FOUND', 404, 'Joueur introuvable.');
           ids = [id];
