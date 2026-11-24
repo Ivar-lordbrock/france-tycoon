@@ -21,13 +21,16 @@ test('sans compte puis en simple joueur, /admin refuse l’entrée', async ({ pa
   await expect(page.getByRole('heading', { name: 'Accès réservé' })).toBeVisible();
 });
 
-test('un admin voit les 6 vues, puis prévoit un événement pour demain et l’arrête', async ({ page }) => {
+test('un admin voit les 6 vues, prévoit un événement pour demain, l’arrête et le retrouve dans l’audit', async ({
+  page,
+}) => {
   await entrer(page, 'Chef');
   await page.goto('/admin');
 
   await expect(page.getByRole('heading', { level: 1, name: 'Vue d’ensemble' })).toBeVisible();
   await expect(page.getByText('Inscrits')).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Vues du dashboard' }).getByRole('button')).toHaveCount(6);
+  await expect(page.getByRole('heading', { name: '14 derniers jours' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Joueurs' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Joueurs' })).toBeVisible();
@@ -52,6 +55,13 @@ test('un admin voit les 6 vues, puis prévoit un événement pour demain et l’
   await ligne.getByRole('button', { name: 'Arrêter' }).click();
   await ligne.getByRole('button', { name: 'Confirmer l’arrêt' }).click();
   await expect(ligne.getByText('Annulé')).toBeVisible();
+
+  // L'arrêt est dans le journal d'audit de la vue « Anti-triche & logs ».
+  await page.getByRole('button', { name: 'Anti-triche & logs' }).click();
+  await expect(page.getByRole('heading', { name: 'Alertes' })).toBeVisible();
+  await page.getByRole('button', { name: 'Audit de l’équipe' }).click();
+  await expect(page.getByRole('cell', { name: 'Événement arrêté' }).first()).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Joueurs' })).toBeVisible(); // export CSV (admin)
 });
 
 test('un admin trouve un joueur, le suspend, et le joueur voit le motif', async ({ browser }) => {

@@ -1,9 +1,13 @@
 import type {
   AdminMoiReponse,
+  AlertesReponse,
   CadeauCorps,
   CadeauReponse,
   EtatSite,
   FicheJoueurReponse,
+  JournalActiviteReponse,
+  JournalAuditReponse,
+  JournalErreursReponse,
   ListeCommunesAdminReponse,
   ListeJoueursReponse,
   ListeOpaAdminReponse,
@@ -146,5 +150,29 @@ export function useSauvegarder() {
   return useMutation({
     mutationFn: () => envoyerJson<SauvegardeReponse>('/api/v1/admin/backups', 'POST'),
     onSettled: () => client.invalidateQueries({ queryKey: ['admin', 'sauvegardes'] }),
+  });
+}
+
+/** Alertes anti-triche du moment (GET /admin/cheat-alerts), recalculées par le serveur à chaque lecture. */
+export function useAlertes() {
+  return useQuery({
+    queryKey: ['admin', 'alertes'],
+    queryFn: ({ signal }) => lireJson<AlertesReponse>('/api/v1/admin/cheat-alerts', signal),
+  });
+}
+
+interface Journaux {
+  activity: JournalActiviteReponse;
+  audit: JournalAuditReponse;
+  errors: JournalErreursReponse;
+}
+
+/** Les 100 lignes les plus récentes d'un journal (GET /admin/logs/:type?q). Un composant par journal. */
+export function useJournal<T extends keyof Journaux>(type: T, q: string) {
+  return useQuery({
+    queryKey: ['admin', 'journal', type, q],
+    queryFn: ({ signal }) =>
+      lireJson<Journaux[T]>(`/api/v1/admin/logs/${type}?${new URLSearchParams(q ? { q } : {})}`, signal),
+    placeholderData: keepPreviousData,
   });
 }

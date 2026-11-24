@@ -194,7 +194,7 @@ LIMIT 3000;
 
 **`roadmap_features`** (migration 009) — la feuille de route publique (page `/roadmap`, `GET /roadmap`). `code` unique (`intercommunalite`, `jumelage`, `saisons`, `gemmes`, `aleas`), `position` = ordre d’affichage, `category` (`social`, `gameplay`, `economy`), `status` (`planned` Prévu, `in_progress` En cours, `released` Déployé), `details` = tableau JSON de textes. Remplie par la migration elle-même, rejouable sans doublon (`ON CONFLICT (code) DO NOTHING`). Changer un statut ou un texte : nouvelle migration avec un `UPDATE`. Table seule, sans lien avec les autres.
 
-### Dashboard /admin (migrations 010 à 014)
+### Dashboard /admin (migrations 010 à 015)
 
 **`staff_roles`** (010) — grade de l'équipe : `role` `moderator` ou `admin`, `granted_by`, `granted_at`. Un joueur sans ligne n'a pas de grade. Les e-mails de `ADMIN_EMAILS` (`.env`) sont admin d'office, sans ligne ici. `users.role` (ancien) n'est pas lu.
 
@@ -213,6 +213,10 @@ LIMIT 3000;
 **`live_config`** (014) — réglages à chaud permanents, une ligne par changement (ajout seul) : `price_pct`, `income_pct`, `building_pct` (25 à 400 ; 100 = normal), `reason`, `created_by`, `starts_at` (jamais dans le passé). La plus récente déjà commencée s'applique ; aucune ligne = tout à 100 %.
 
 **`game_events`** (014) — événements datés : `title` (3 à 80), les trois `*_pct`, `starts_at`, `ends_at` (fin automatique), `cancelled_at` (arrêt avant la fin ; le passé ne change pas). Leurs % multiplient ceux de `live_config` pendant `[starts_at ; min(ends_at, cancelled_at))`. On ne modifie pas un événement : on l'arrête et on en crée un autre. Les deux tables gardent tout : les revenus non encaissés se calculent par morceaux avec elles (docs/05 § 5.10).
+
+**`cheat_reviews`** (015) — alertes anti-triche classées par l'équipe : `alert_key` (règle + faits), `note`, `reviewed_by`, `reviewed_at`. Les alertes elles-mêmes ne sont pas stockées : le serveur les recalcule à chaque lecture depuis `login_events`, `wallet_transactions` et `takeovers` (docs/04). Index ajoutés sur `wallet_transactions` : `(user_id, currency)` pour retrouver le mouvement précédent, `(created_at)` pour le journal et les graphiques.
+
+**`app_errors`** (015) — erreurs 500 de l'API : `method`, `route` (le modèle, sans paramètres ni requête), `message` (500 caractères au plus). On garde les 1 000 dernières.
 
 **`admin_audit`** (011) — journal des actions de l'équipe : qui (`actor_*`, recopiés), quoi (`action`, `target_type`, `target_id`), `before_json` / `after_json`, `reason`. **En ajout seul** : des déclencheurs refusent `UPDATE` et `DELETE`. Pas de clé étrangère, pour qu'une ligne ne bouge jamais.
 

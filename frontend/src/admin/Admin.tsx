@@ -8,18 +8,19 @@ import { Joueurs } from './Joueurs.tsx';
 import { Sauvegardes } from './Sauvegardes.tsx';
 import { Signalements } from './Signalements.tsx';
 import { Territoires } from './Territoires.tsx';
+import { Triche } from './Triche.tsx';
 import { VueEnsemble } from './VueEnsemble.tsx';
 
 type IdVue = 'ensemble' | 'joueurs' | 'territoires' | 'triche' | 'config' | 'sauvegardes';
 
-// Les 6 vues. `admin` : cachée au modérateur (le serveur refuse de toute façon). `etape` : pas encore construite.
-type Vue = { id: IdVue; libelle: string; admin?: boolean; etape?: number };
+// Les 6 vues. `admin` : cachée au modérateur (le serveur refuse de toute façon).
+type Vue = { id: IdVue; libelle: string; admin?: boolean };
 const ENSEMBLE: Vue = { id: 'ensemble', libelle: 'Vue d’ensemble' };
 const VUES: Vue[] = [
   ENSEMBLE,
   { id: 'joueurs', libelle: 'Joueurs' },
   { id: 'territoires', libelle: 'Territoires & OPA' },
-  { id: 'triche', libelle: 'Anti-triche & logs', etape: 7 },
+  { id: 'triche', libelle: 'Anti-triche & logs' },
   { id: 'config', libelle: 'Live config & events', admin: true },
   { id: 'sauvegardes', libelle: 'Sauvegardes & signalements' },
 ];
@@ -78,7 +79,12 @@ function Tableau({ pseudo, grade }: { pseudo: string; grade: Grade }) {
   const [menu, setMenu] = useState(false);
   const vues = VUES.filter((v) => grade === 'admin' || !v.admin);
   const vue = vues.find((v) => v.id === id) ?? ENSEMBLE;
-  const signalements = useVueEnsemble().data?.reports.open ?? 0;
+  const ensemble = useVueEnsemble().data;
+  // Badges : signalements nouveaux, alertes anti-triche pas encore classées.
+  const badges: Partial<Record<IdVue, [number, string]>> = {
+    sauvegardes: [ensemble?.reports.open ?? 0, 'signalements nouveaux'],
+    triche: [ensemble?.alerts.open ?? 0, 'alertes à classer'],
+  };
 
   useEffect(() => {
     if (!menu) return;
@@ -139,12 +145,7 @@ function Tableau({ pseudo, grade }: { pseudo: string; grade: Grade }) {
                 }`}
               >
                 {v.libelle}
-                {v.id === 'sauvegardes' && signalements > 0 && (
-                  <span className="shrink-0 rounded-full bg-alerte px-1.5 text-xs leading-5 font-bold text-fond tabular-nums">
-                    {signalements}
-                    <span className="sr-only"> signalements nouveaux</span>
-                  </span>
-                )}
+                <Badge compte={badges[v.id]} />
               </button>
             </li>
           ))}
@@ -177,9 +178,19 @@ function Tableau({ pseudo, grade }: { pseudo: string; grade: Grade }) {
             <Signalements />
           </>
         ) : (
-          <p className="mt-3 text-ardoise">Cette vue arrive à l’étape {vue.etape} du dashboard.</p>
+          <Triche admin={grade === 'admin'} />
         )}
       </main>
     </div>
+  );
+}
+
+function Badge({ compte }: { compte?: [number, string] }) {
+  if (!compte || compte[0] === 0) return null;
+  return (
+    <span className="shrink-0 rounded-full bg-alerte px-1.5 text-xs leading-5 font-bold text-fond tabular-nums">
+      {compte[0]}
+      <span className="sr-only"> {compte[1]}</span>
+    </span>
   );
 }
