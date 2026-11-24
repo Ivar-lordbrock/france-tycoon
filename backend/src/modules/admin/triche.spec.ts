@@ -7,6 +7,7 @@ import {
 } from '@france-tycoon/shared';
 import { describe, expect, it } from 'vitest';
 import { type App, construireApp } from '../../app.ts';
+import { ouvrirBase } from '../../db/connexion.ts';
 import { baseDeTest, connecter } from '../../outils-test/base.ts';
 import { insererCommunes } from '../../outils-test/communes.ts';
 import { versCsv } from './triche.ts';
@@ -118,6 +119,11 @@ describe('dashboard /admin : anti-triche, journaux et export', () => {
     expect(vue.daily).toHaveLength(14);
     expect(vue.daily.at(-1)).toMatchObject({ signups: 4 });
     expect(vue.daily.at(-1)?.active).toBeGreaterThanOrEqual(4); // bonus d'inscription de chacun
+  });
+
+  it('l’app se construit sur une base sans migrations : server.ts les applique juste après', () => {
+    // Le 24/11, la table app_errors lue trop tôt a fait planter le serveur en production.
+    expect(() => construireApp({ db: ouvrirBase(':memory:') })).not.toThrow();
   });
 
   it('journaux : activité, audit, erreurs 500 et tâches en erreur', async () => {

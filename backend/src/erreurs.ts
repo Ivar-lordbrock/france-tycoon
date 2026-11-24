@@ -24,15 +24,14 @@ function corps(code: CodeErreur, message: string, details?: unknown): ErreurApi 
 /** Toutes les erreurs sortent au format `{ error: { code, message, details } }`. */
 export function brancherGestionErreurs(app: FastifyInstance): void {
   // Erreurs 500 notées pour le dashboard (vue « Anti-triche & logs ») : la route sans paramètres, jamais la requête.
-  const noter = app.db.prepare<[string, string, string]>(
-    'INSERT INTO app_errors (method, route, message) VALUES (?, ?, ?)',
-  );
-  const elaguer = app.db.prepare('DELETE FROM app_errors WHERE id <= (SELECT max(id) FROM app_errors) - 1000');
+  // Requêtes préparées à la première erreur : ici, les migrations ne sont pas encore passées (server.ts).
   const noterErreur = (requete: FastifyRequest, erreur: Error) => {
     try {
       app.db.transaction(() => {
-        noter.run(requete.method, requete.routeOptions.url ?? 'route inconnue', erreur.message.slice(0, 500));
-        elaguer.run();
+        app.db
+          .prepare('INSERT INTO app_errors (method, route, message) VALUES (?, ?, ?)')
+          .run(requete.method, requete.routeOptions.url ?? 'route inconnue', erreur.message.slice(0, 500));
+        app.db.prepare('DELETE FROM app_errors WHERE id <= (SELECT max(id) FROM app_errors) - 1000').run();
       })();
     } catch {
       // Base en panne : l'erreur reste dans le journal du serveur.
