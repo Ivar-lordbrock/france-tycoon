@@ -309,6 +309,14 @@ export function prixVenteEtat(valeurTotale: number): number {
   return Math.floor((TAUX_VENTE_ETAT * valeurTotale) / 100) * 100;
 }
 
+/**
+ * V_T de la vente à l'État, avec V0 plafonné au prix payé : une commune achetée sous 70 % de V0
+ * (réglage des prix, événement, prix forcé) ne se revend pas aussitôt avec gain.
+ */
+export function valeurRevente(v0: number, prixPaye: number | null, investi: number, fortifications: number): number {
+  return valeurTerritoire(Math.min(v0, prixPaye ?? v0), investi, fortifications);
+}
+
 /** Territoires possédables au départ (4 depuis que le siège social s'arrête au niveau 5). */
 export const TERRITOIRES_DEPART = 4;
 
