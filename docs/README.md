@@ -9,3 +9,4 @@
 7. [Travailler à deux (outils du duo)](07-travailler-a-deux.md)
 8. [Brancher la connexion Google (pas à pas)](08-connexion-google.md)
 9. [Mettre le jeu en ligne (pas à pas)](09-mise-en-ligne.md)
+10. [Dashboard /admin (configuration et test)](10-admin.md)
