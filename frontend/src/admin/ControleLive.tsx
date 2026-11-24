@@ -205,7 +205,10 @@ function Cadeau() {
           <Confirmer
             titre="Envoyer ce cadeau ?"
             lignes={[
-              ['Pour', apercu.playerId === undefined ? 'Tous les joueurs actifs' : `Joueur n° ${apercu.playerId}`],
+              [
+                'Pour',
+                apercu.playerId === undefined ? 'Tous les joueurs actifs (sauf toi)' : `Joueur n° ${apercu.playerId}`,
+              ],
               ['Cadeau', don(apercu)],
               ['Message', apercu.reason],
             ]}
@@ -237,7 +240,7 @@ function Cadeau() {
           <legend className="sr-only">Pour qui</legend>
           <label className="flex items-center gap-2">
             <input type="radio" checked={pour === 'tous'} onChange={() => setPour('tous')} />
-            Tous les joueurs actifs
+            Tous les joueurs actifs (sauf toi)
           </label>
           <label className="flex items-center gap-2">
             <input type="radio" checked={pour === 'un'} onChange={() => setPour('un')} />

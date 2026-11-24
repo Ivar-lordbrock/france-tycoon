@@ -79,6 +79,7 @@ Dans `.env`, avec `AUTH_DEV=true`, la connexion de développement donne l'e-mail
 | | changer le grade | ❌ | ✅ |
 | | reset partiel (communes, bâtiments, OPA) | ❌ | ✅ |
 | | ajuster le solde (₮ ou gemmes) | ❌ | ✅ |
+| | offrir un cadeau (₮ ou gemmes, avec un message au joueur) | ❌ | ✅ |
 | Territoires & OPA | chercher une commune, une OPA | ✅ | ✅ |
 | | forcer un prix, revenir au prix calculé | ❌ | ✅ |
 | | forcer ou annuler une OPA | ❌ | ✅ |
@@ -90,6 +91,8 @@ Dans `.env`, avec `AUTH_DEV=true`, la connexion de développement donne l'e-mail
 | | lancer une sauvegarde | ❌ | ✅ |
 | | suivre les signalements des joueurs | ✅ | ✅ |
 | Contrôle live | maintenance, bannière, cadeaux | ❌ | ✅ |
+
+**Cadeaux** : depuis la fiche d'un joueur (« Offrir un cadeau ») ou dans « Contrôle live » pour tous les joueurs actifs, **sauf celui qui l'envoie**. Un cadeau à soi-même n'est permis qu'à un admin d'office (sur sa propre fiche).
 
 Pendant une **maintenance**, les joueurs regardent sans agir. Toute l'équipe (modérateurs compris) continue à jouer pour tester.
 
