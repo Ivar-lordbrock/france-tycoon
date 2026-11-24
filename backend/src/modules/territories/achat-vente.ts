@@ -7,7 +7,7 @@ import {
   prixAchat,
   prixVenteEtat,
   type VenteReponse,
-  valeurTerritoire,
+  valeurRevente,
 } from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
 import { ErreurMetier } from '../../erreurs.ts';
@@ -76,6 +76,8 @@ interface LigneCommune {
   ownerId: number | null;
   isCapital: number;
   fortification: number;
+  /** Prix payé par le propriétaire (achat ou OPA), `null` si libre. */
+  acquiredPrice: number | null;
 }
 
 type LireFiche = (insee: string, moi: number | null, maintenant: number) => FicheCommune | null;
@@ -84,7 +86,7 @@ type LireFiche = (insee: string, moi: number | null, maintenant: number) => Fich
 export function creerAchatVente(db: Base, lireFiche: LireFiche) {
   const commune = db.prepare<[string], LigneCommune>(`
     SELECT id, base_value AS baseValue, forced_price AS forcedPrice, owner_id AS ownerId, is_capital AS isCapital,
-      fortification_value AS fortification
+      fortification_value AS fortification, acquired_price AS acquiredPrice
     FROM territories WHERE insee_code = ?`);
   const lireJoueur = creerLecteurJoueurAchat(db);
   const opaEnCours = db
@@ -196,7 +198,9 @@ export function creerAchatVente(db: Base, lireFiche: LireFiche) {
           throw new ErreurMetier(raison, 409, 'Une OPA est en cours sur cette commune : tu ne peux pas la vendre.');
         }
 
-        const montant = prixVenteEtat(valeurTerritoire(c.baseValue, investi.get(c.id) ?? 0, c.fortification));
+        const montant = prixVenteEtat(
+          valeurRevente(c.baseValue, c.acquiredPrice, investi.get(c.id) ?? 0, c.fortification),
+        );
         detruireBatiments.run(c.id);
         if (liberer.run(c.id, moi).changes !== 1) throw new Error(`Vente de ${insee} : la commune n'était plus à toi`);
         noterHistorique.run(c.id, moi, null, 'sale', montant, maintenant);

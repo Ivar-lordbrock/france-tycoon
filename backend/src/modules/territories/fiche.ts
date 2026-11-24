@@ -7,6 +7,7 @@ import {
   type FicheCommune,
   prixAchat,
   prixVenteEtat,
+  valeurRevente,
   valeurTerritoire,
   type ZoneCode,
 } from '@france-tycoon/shared';
@@ -40,6 +41,8 @@ interface LigneTerritoire {
   slots: number;
   ownerId: number | null;
   fortification: number;
+  /** Prix payé par le propriétaire (achat ou OPA), `null` si libre. */
+  acquiredPrice: number | null;
   shieldUntil: number | null;
   isCapital: number;
   ownerPseudo: string | null;
@@ -61,7 +64,7 @@ export function creerLecteurFiche(db: Base) {
     SELECT t.id, t.insee_code AS insee, t.name, t.department_code AS department, t.zone_code AS zone,
       t.region_type AS regionType, t.population, t.area_km2 AS areaKm2, t.center_lat AS lat, t.center_lng AS lng,
       t.infra_score AS infraScore, t.base_value AS baseValue, t.forced_price AS forcedPrice, t.building_slots AS slots, t.owner_id AS ownerId,
-      t.fortification_value AS fortification, t.shield_until AS shieldUntil, t.is_capital AS isCapital,
+      t.fortification_value AS fortification, t.shield_until AS shieldUntil, t.is_capital AS isCapital, t.acquired_price AS acquiredPrice,
       u.pseudo AS ownerPseudo, u.marker_color AS ownerColor, u.avatar_url AS ownerAvatar
     FROM territories AS t LEFT JOIN users AS u ON u.id = t.owner_id
     WHERE t.insee_code = ?`);
@@ -169,7 +172,10 @@ export function creerLecteurFiche(db: Base) {
         buyPrice: t.ownerId === null ? prix : null,
         buyReasons,
         canSell: sellReasons.length === 0,
-        sellPrice: moi !== null && t.ownerId === moi ? prixVenteEtat(totalValue) : null,
+        sellPrice:
+          moi !== null && t.ownerId === moi
+            ? prixVenteEtat(valeurRevente(t.baseValue, t.acquiredPrice, investi, t.fortification))
+            : null,
         sellReasons,
         canTakeover: takeoverReasons.length === 0,
         takeoverReasons,

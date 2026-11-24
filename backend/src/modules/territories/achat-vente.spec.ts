@@ -224,6 +224,24 @@ describe('POST /api/v1/territories/:insee/sell', () => {
     expect(cash(alice.id)).toBe(CAPITAL_DEPART);
   });
 
+  it('prix réglé à 25 % : acheter puis revendre à l’État ne rapporte rien (fiche et vente d’accord)', async () => {
+    const { db, app, alice, action, cash } = await partie();
+    db.prepare(
+      "INSERT INTO live_config (price_pct, income_pct, building_pct, reason, created_by, starts_at) VALUES (25, 100, 100, 'Soldes', ?, unixepoch() - 10)",
+    ).run(alice.id);
+    await action('buy', '01001', alice.cookie);
+    expect(cash(alice.id)).toBe(CAPITAL_DEPART - 5_500);
+
+    const fiche = ficheCommuneSchema.parse(
+      (await app.inject({ url: '/api/v1/territories/01001', headers: { cookie: alice.cookie } })).json(),
+    );
+    const vente = venteReponseSchema.parse((await action('sell', '01001', alice.cookie)).json());
+
+    expect(vente.saleAmount).toBe(3_800); // 70 % du prix payé, pas de V0 (15 200)
+    expect(fiche.actions.sellPrice).toBe(vente.saleAmount);
+    expect(cash(alice.id)).toBeLessThan(CAPITAL_DEPART);
+  });
+
   it('rejouer la même clé ne crédite qu’une fois', async () => {
     const { db, alice, action, cash } = await partie();
     await action('buy', '01001', alice.cookie);
