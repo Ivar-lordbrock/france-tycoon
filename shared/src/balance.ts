@@ -108,8 +108,8 @@ export function emplacements(population: number): number {
 
 // --- Étape 2 : inscription, revenu du sol, valeur d'un territoire ---
 
-/** Cash versé à l'inscription (`signup_bonus`) : de quoi acheter un village le premier jour (5.1, 5.9). */
-export const CAPITAL_DEPART = 30_000;
+/** Cash versé à l'inscription (`signup_bonus`) : un village moyen et de quoi le bâtir le premier jour (5.1, 5.9). */
+export const CAPITAL_DEPART = 50_000;
 
 /** Protection débutant : pas d'OPA sur un nouveau joueur pendant 72 h (5.5). */
 export const PROTECTION_DEBUTANT_S = 72 * 3_600;
