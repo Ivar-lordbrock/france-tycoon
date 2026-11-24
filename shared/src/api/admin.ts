@@ -49,6 +49,10 @@ export const vueEnsembleReponseSchema = z.object({
   takeovers: z.object({ active: nombre, finished: nombre }),
   /** Signalements de bugs pas encore traités (`open`). */
   reports: z.object({ open: nombre }),
+  /** Alertes anti-triche pas encore classées. */
+  alerts: z.object({ open: nombre }),
+  /** 14 derniers jours (UTC), du plus ancien à aujourd'hui : inscriptions et joueurs avec un mouvement d'argent. */
+  daily: z.array(z.object({ day: z.string(), signups: nombre, active: nombre })),
   system: z.object({
     jobs: santeReponseSchema.shape.jobs,
     databaseBytes: nombre,
@@ -340,3 +344,77 @@ export const reglagesAdminReponseSchema = z.object({
   events: z.array(ligneEvenementSchema),
 });
 export type ReglagesAdminReponse = z.infer<typeof reglagesAdminReponseSchema>;
+
+// Anti-triche et journaux (étape 7). Les alertes sont recalculées à chaque lecture (docs/04).
+
+/** IP hachée commune à plusieurs comptes, sur ce nombre de jours de connexions. */
+export const TRICHE_IP_JOURS = 30;
+/** Argent apparu hors du registre (`wallet_transactions`), sur ce nombre de jours. */
+export const TRICHE_SOLDE_JOURS = 7;
+/** Au moins TRICHE_OPA_MIN OPA entre les deux mêmes joueurs (dans un sens ou l'autre) en TRICHE_OPA_JOURS jours. */
+export const TRICHE_OPA_JOURS = 7;
+export const TRICHE_OPA_MIN = 3;
+
+export const REGLES_TRICHE = ['shared_ip', 'balance_jump', 'repeat_takeovers'] as const;
+export type RegleTriche = (typeof REGLES_TRICHE)[number];
+const joueurCourtSchema = z.object({ id: z.number().int(), pseudo: z.string() });
+const deviseSchema = z.enum(['cash', 'gems']);
+
+export const ligneAlerteSchema = z.object({
+  /** Règle + faits : un fait nouveau donne une clé nouvelle, et l'alerte revient même classée. */
+  key: z.string(),
+  rule: z.enum(REGLES_TRICHE),
+  players: z.array(joueurCourtSchema),
+  /** IP partagée : nombre de comptes ; solde : montant apparu ; OPA : nombre d'OPA. */
+  count: z.number().int(),
+  currency: deviseSchema.nullable(),
+  /** Dernier fait vu. */
+  at: z.number().int(),
+  review: z.object({ by: z.string().nullable(), note: z.string(), at: z.number().int() }).nullable(),
+});
+export type LigneAlerte = z.infer<typeof ligneAlerteSchema>;
+
+// GET /admin/cheat-alerts — non classées d'abord, puis les plus récentes.
+export const alertesReponseSchema = z.object({ alerts: z.array(ligneAlerteSchema) });
+export type AlertesReponse = z.infer<typeof alertesReponseSchema>;
+
+// POST /admin/cheat-alerts/review — toute l'équipe ; la note va dans l'audit.
+export const classerAlerteCorpsSchema = z.object({
+  key: z.string().min(3).max(200),
+  note: z.string().trim().min(3).max(500),
+});
+export type ClasserAlerteCorps = z.infer<typeof classerAlerteCorpsSchema>;
+
+// GET /admin/logs/{activity,audit,errors}?q — les 100 plus récents.
+export const journalQuerySchema = z.object({ q: z.string().trim().max(100).default('') });
+
+const ligneActiviteSchema = z.object({
+  id: z.number().int(),
+  player: joueurCourtSchema,
+  currency: deviseSchema,
+  amount: z.number().int(),
+  balanceAfter: z.number().int(),
+  reason: z.string(),
+  createdAt: z.number().int(),
+});
+export const journalActiviteReponseSchema = z.object({ rows: z.array(ligneActiviteSchema) });
+export type JournalActiviteReponse = z.infer<typeof journalActiviteReponseSchema>;
+
+export const journalAuditReponseSchema = z.object({
+  rows: z.array(ligneAuditSchema.extend({ targetType: z.string(), targetId: z.string() })),
+});
+export type JournalAuditReponse = z.infer<typeof journalAuditReponseSchema>;
+
+const ligneErreurSchema = z.object({
+  /** `api` : erreur 500 d'une route ; `job` : tâche planifiée en erreur. */
+  source: z.enum(['api', 'job']),
+  place: z.string(),
+  message: z.string(),
+  at: z.number().int(),
+});
+export const journalErreursReponseSchema = z.object({ rows: z.array(ligneErreurSchema) });
+export type JournalErreursReponse = z.infer<typeof journalErreursReponseSchema>;
+
+// GET /admin/export/:quoi — fichier CSV, admins seulement (e-mails des joueurs dedans).
+export const EXPORTS_CSV = ['players', 'audit', 'activity'] as const;
+export const exportParamsSchema = z.object({ quoi: z.enum(EXPORTS_CSV) });

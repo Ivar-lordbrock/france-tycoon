@@ -20,7 +20,7 @@ const STATUTS = {
 } as const;
 const statutDe = (p: LigneJoueur) => (p.suspendedUntil !== null && p.status !== 'banned' ? 'suspended' : p.status);
 
-const RAISONS: Record<string, string> = {
+export const RAISONS: Record<string, string> = {
   signup_bonus: 'Bonus d’inscription',
   income_collect: 'Revenus',
   territory_purchase: 'Achat de commune',
@@ -49,7 +49,7 @@ export const ISSUES_OPA: Record<string, string> = {
   cancelled: 'Retirée',
   voided: 'Annulée',
 };
-const ACTIONS_AUDIT: Record<string, string> = {
+export const ACTIONS_AUDIT: Record<string, string> = {
   'note.add': 'Note ajoutée',
   'note.edit': 'Note modifiée',
   'note.delete': 'Note effacée',
@@ -61,17 +61,29 @@ const ACTIONS_AUDIT: Record<string, string> = {
   'player.reset': 'Reset partiel',
   'player.adjust': 'Ajustement du solde',
   'gift.send': 'Cadeau',
+  'territory.price': 'Prix forcé',
+  'takeover.force': 'OPA forcée',
+  'takeover.cancel': 'OPA annulée',
+  'site.maintenance': 'Maintenance',
+  'site.banner': 'Bannière',
+  'report.update': 'Signalement suivi',
+  'backup.create': 'Sauvegarde',
+  'config.update': 'Réglages changés',
+  'event.create': 'Événement lancé',
+  'event.cancel': 'Événement arrêté',
+  'alert.review': 'Alerte classée',
+  'export.csv': 'Export CSV',
 };
 
 const format = new Intl.DateTimeFormat('fr-FR', { timeZone: FUSEAU_JEU, dateStyle: 'medium', timeStyle: 'short' });
 export const quand = (s: number) => format.format(s * 1000);
 const maintenant = () => Math.floor(Date.now() / 1000);
 const signe = (n: number, texte: string) => `${n > 0 ? '+' : '−'}${texte}`;
-const montant = (n: number, devise: 'cash' | 'gems') =>
+export const montant = (n: number, devise: 'cash' | 'gems') =>
   signe(n, devise === 'cash' ? tycoons(Math.abs(n)) : `${entier(Math.abs(n))} gemmes`);
 
 /** « suspendedUntil : 12 nov. 2026, 14:00 · hours : 24 » : les valeurs avant/après d'une ligne d'audit. */
-function valeurs(v: Record<string, unknown> | null): string {
+export function valeurs(v: Record<string, unknown> | null): string {
   if (!v) return '—';
   return Object.entries(v)
     .map(([cle, x]) => {

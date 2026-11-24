@@ -19,6 +19,7 @@ import { routesAdminLive } from './live.ts';
 import { routesAdminReglages } from './reglages.ts';
 import { routesAdminSauvegardes } from './sauvegardes.ts';
 import { routesAdminTerritoires } from './territoires.ts';
+import { creerDetecteurTriche, routesAdminTriche } from './triche.ts';
 
 const VERSION = process.env.npm_package_version ?? '0.1.0';
 const JOUR_S = 86_400;
@@ -105,6 +106,7 @@ export const routesAdmin: FastifyPluginAsyncZod<OptionsAdmin> = async (
     equipe.register(routesAdminLive);
     equipe.register(routesAdminReglages);
     equipe.register(routesAdminSauvegardes, { dossier: dossierSauvegardes });
+    equipe.register(routesAdminTriche, { adminEmails });
 
     const joueurs = app.db.prepare<[number, number, number], VueEnsembleReponse['players']>(`
       SELECT count(*) AS total,
@@ -127,6 +129,16 @@ export const routesAdmin: FastifyPluginAsyncZod<OptionsAdmin> = async (
     const signalementsOuverts = app.db
       .prepare<[], number>("SELECT count(*) FROM player_reports WHERE status = 'open'")
       .pluck();
+    const alertes = creerDetecteurTriche(app.db);
+    // shortcut: jours en UTC (le jeu vit à Paris) ; caler sur FUSEAU_JEU si l'écart d'une heure gêne.
+    const parJour = app.db.prepare<[number, number], VueEnsembleReponse['daily'][number]>(`
+      WITH RECURSIVE jours (j) AS (
+        SELECT date(?, 'unixepoch') UNION ALL SELECT date(j, '+1 day') FROM jours WHERE j < date(?, 'unixepoch'))
+      SELECT j AS day,
+        (SELECT count(*) FROM users WHERE created_at >= unixepoch(j) AND created_at < unixepoch(j, '+1 day')) AS signups,
+        (SELECT count(DISTINCT user_id) FROM wallet_transactions
+          WHERE created_at >= unixepoch(j) AND created_at < unixepoch(j, '+1 day')) AS active
+      FROM jours`);
     const tailleBase = app.db
       .prepare<[], number>('SELECT page_count * page_size FROM pragma_page_count(), pragma_page_size()')
       .pluck();
@@ -159,6 +171,8 @@ export const routesAdmin: FastifyPluginAsyncZod<OptionsAdmin> = async (
         economy: { ...(soldes.get() ?? { cash: 0, gems: 0 }), incomePerHour },
         takeovers: opa.get() ?? { active: 0, finished: 0 },
         reports: { open: signalementsOuverts.get() ?? 0 },
+        alerts: { open: alertes(now).filter((x) => x.review === null).length },
+        daily: parJour.all(now - 13 * JOUR_S, now),
         system: { jobs: derniereExecution.all(), databaseBytes: tailleBase.get() ?? 0, diskFreeBytes },
       };
     });

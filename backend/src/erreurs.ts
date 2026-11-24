@@ -1,5 +1,5 @@
 import type { CodeErreur, ErreurApi } from '@france-tycoon/shared';
-import type { FastifyError, FastifyInstance } from 'fastify';
+import type { FastifyError, FastifyInstance, FastifyRequest } from 'fastify';
 import { hasZodFastifySchemaValidationErrors, isResponseSerializationError } from 'fastify-type-provider-zod';
 
 /** Erreur prévue par les règles du jeu : renvoyée telle quelle au client. */
@@ -23,6 +23,22 @@ function corps(code: CodeErreur, message: string, details?: unknown): ErreurApi 
 
 /** Toutes les erreurs sortent au format `{ error: { code, message, details } }`. */
 export function brancherGestionErreurs(app: FastifyInstance): void {
+  // Erreurs 500 notées pour le dashboard (vue « Anti-triche & logs ») : la route sans paramètres, jamais la requête.
+  const noter = app.db.prepare<[string, string, string]>(
+    'INSERT INTO app_errors (method, route, message) VALUES (?, ?, ?)',
+  );
+  const elaguer = app.db.prepare('DELETE FROM app_errors WHERE id <= (SELECT max(id) FROM app_errors) - 1000');
+  const noterErreur = (requete: FastifyRequest, erreur: Error) => {
+    try {
+      app.db.transaction(() => {
+        noter.run(requete.method, requete.routeOptions.url ?? 'route inconnue', erreur.message.slice(0, 500));
+        elaguer.run();
+      })();
+    } catch {
+      // Base en panne : l'erreur reste dans le journal du serveur.
+    }
+  };
+
   app.setErrorHandler<FastifyError | ErreurMetier>((erreur, requete, reponse) => {
     if (erreur instanceof ErreurMetier) {
       return reponse.code(erreur.statut).send(corps(erreur.code, erreur.message, erreur.details));
@@ -36,11 +52,13 @@ export function brancherGestionErreurs(app: FastifyInstance): void {
     }
     if (isResponseSerializationError(erreur)) {
       requete.log.error({ err: erreur, issues: erreur.cause.issues }, 'réponse non conforme au schéma');
+      noterErreur(requete, erreur);
       return reponse.code(500).send(corps('INTERNAL_ERROR', 'Erreur interne'));
     }
     const statut = erreur.statusCode ?? 500;
     if (statut >= 500) {
       requete.log.error({ err: erreur }, 'erreur interne');
+      noterErreur(requete, erreur);
       return reponse.code(500).send(corps('INTERNAL_ERROR', 'Erreur interne'));
     }
     if (statut === 429) return reponse.code(429).send(corps('RATE_LIMITED', 'Trop de requêtes'));
