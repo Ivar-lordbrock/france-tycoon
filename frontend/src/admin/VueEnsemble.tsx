@@ -40,7 +40,7 @@ export function VueEnsemble() {
       </p>
     );
 
-  const { players, territories, economy, takeovers, system, daily, now } = data;
+  const { players, territories, economy, takeovers, system, daily, now, season } = data;
   return (
     <div className="mt-2 flex flex-col gap-8 [font-variant-numeric:tabular-nums]">
       <div className="flex items-center gap-3 text-sm text-ardoise">
@@ -84,6 +84,16 @@ export function VueEnsemble() {
           <Zone nom="Métropole" communes={territories.metropole} />
           <Zone nom="DROM-COM" communes={territories.outreMer} />
         </div>
+      </Section>
+
+      <Section titre="Saison">
+        <dl className="panneau grid grid-cols-1 divide-encre/10 max-sm:divide-y sm:grid-cols-3 sm:divide-x">
+          <Chiffre libelle="Cette semaine, jusqu’à lundi">{season.name}</Chiffre>
+          <Chiffre libelle="Bonus et malus de revenus">{season.effectsActive ? 'Actifs' : 'Coupés (bêta)'}</Chiffre>
+          <Chiffre libelle="Communes : littoral · montagne · rural">
+            {entier(season.profiles.littoral)} · {entier(season.profiles.montagne)} · {entier(season.profiles.rural)}
+          </Chiffre>
+        </dl>
       </Section>
 
       <div className="grid gap-8 md:grid-cols-[3fr_2fr]">
