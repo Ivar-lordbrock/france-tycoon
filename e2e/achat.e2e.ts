@@ -34,4 +34,12 @@ test('un nouveau joueur se connecte et achète une commune', async ({ page }) =>
   const attendu = 50_000 - prix;
   await expect.poll(async () => chiffres(await cash.textContent())).toBeLessThan(attendu + 100);
   expect(chiffres(await cash.textContent())).toBeGreaterThanOrEqual(attendu);
+
+  // Onglet Quêtes : l'appel à projets de la semaine, au-dessus des quêtes du jour.
+  // (Dans cet essai : une nouvelle connexion buterait sur la limite par minute des autres essais.)
+  await page.getByRole('button', { name: /^Quêtes/ }).click();
+  const projet = page.getByRole('region', { name: 'Quêtes du jour' }).getByRole('region');
+  await expect(projet).toContainText('Appel à projets de l’État');
+  await expect(projet.getByText(/^Fin dans /)).toBeVisible();
+  await page.screenshot({ path: 'test-results/appel-a-projets.png' });
 });

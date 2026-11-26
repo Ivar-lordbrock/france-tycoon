@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { messageErreur } from '../api/client.ts';
-import { useQuetes, useReclamer } from '../api/quetes.ts';
+import { useAppelAProjets, useQuetes, useReclamer } from '../api/quetes.ts';
 import { useMaintenant } from '../etat/horloge.ts';
 import { minuteur } from '../panels/batiments-texte.ts';
 import { entier } from '../panels/fiche-texte.ts';
@@ -20,6 +20,7 @@ export function QuetesDuJour({ id }: { id: string }) {
   else {
     contenu = (
       <>
+        <AppelAProjets maintenant={maintenant} />
         <p className="px-3 text-[13px] text-ardoise tabular-nums">
           De nouvelles quêtes dans {minuteur(data.resetsAt - maintenant)}
         </p>
@@ -90,6 +91,48 @@ export function QuetesDuJour({ id }: { id: string }) {
   }
 
   return <div id={id}>{contenu}</div>;
+}
+
+/** L'appel à projets de la semaine : un objectif commun à tous ; réussi, la prime est versée sans bouton. */
+function AppelAProjets({ maintenant }: { maintenant: number }) {
+  const { data } = useAppelAProjets(true);
+  if (!data) return null;
+  const p = data.project;
+  const reussi = p.completedAt !== null;
+  return (
+    <section
+      aria-labelledby="appel-a-projets"
+      className="mx-3 mb-3 rounded-[14px] border border-surligneur/30 bg-surligneur/[0.06] p-3"
+    >
+      <p className="text-[11px] font-bold tracking-wide text-surligneur uppercase">Appel à projets de l’État</p>
+      <h3 id="appel-a-projets" className="mt-0.5 text-[15px] font-bold">
+        {p.title}
+      </h3>
+      <p className="mt-0.5 text-[13px] text-ardoise">{p.description}</p>
+      <Crans fait={p.progress} but={p.target} />
+      <span className="sr-only">
+        {p.progress} sur {p.target}
+      </span>
+      <p className="mt-2 flex items-center justify-between gap-3 text-[13px] tabular-nums">
+        <span className="text-ardoise">
+          {reussi ? 'Réussi : prime versée' : `Fin dans ${minuteur(data.endsAt - maintenant)}`}
+        </span>
+        <span className="flex items-center gap-2 font-bold">
+          <span className="sr-only">Prime : {recompenseQuete(p)}</span>
+          <span className="flex items-center gap-1.5" aria-hidden="true">
+            <Piece />
+            {entier(p.rewardCash)}
+          </span>
+          {p.rewardGems > 0 && (
+            <span className="flex items-center gap-1.5 text-[#c4b5fd]" aria-hidden="true">
+              <Icone nom="gemme" className="size-4" />
+              {entier(p.rewardGems)}
+            </span>
+          )}
+        </span>
+      </p>
+    </section>
+  );
 }
 
 /** Avancement en crans (un par action) ; au-delà de 10, une barre continue. */

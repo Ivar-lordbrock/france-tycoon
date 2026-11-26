@@ -11,6 +11,7 @@ import { routesClassement, routesJoueurs } from './modules/leaderboard/routes.ts
 import { routesCarte } from './modules/map/routes.ts';
 import { routesMoi } from './modules/me/routes.ts';
 import { type OptionsDirect, routesDirect } from './modules/notifications/routes.ts';
+import { routesAppelsAProjets } from './modules/projets/routes.ts';
 import { routesQuetes } from './modules/quests/routes.ts';
 import { routesFeuilleDeRoute } from './modules/roadmap/routes.ts';
 import { routesSite } from './modules/site/routes.ts';
@@ -66,6 +67,7 @@ export function construireApp({
   app.register(routesBatiments, { prefix: '/api/v1/buildings' });
   app.register(routesMoi, { prefix: '/api/v1/me' });
   app.register(routesQuetes, { prefix: '/api/v1/me/quests' });
+  app.register(routesAppelsAProjets, { prefix: '/api/v1/me/state-project' });
   app.register(routesDirect, { prefix: '/api/v1/events', ...direct });
   app.register(routesSuivi, { prefix: '/api/v1/events' });
   app.register(routesClassement, { prefix: '/api/v1/leaderboard' });

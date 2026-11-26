@@ -19,6 +19,7 @@ const TYPES_CONNUS = {
   rank_up: true,
   gift_received: true,
   report_closed: true,
+  project_completed: true,
 } satisfies Record<TypeNotification, true>;
 export const TYPES_NOTIFICATION = JSON.stringify(Object.keys(TYPES_CONNUS));
 

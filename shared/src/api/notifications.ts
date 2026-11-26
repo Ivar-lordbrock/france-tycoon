@@ -68,6 +68,15 @@ export const contenuQueteTermineeSchema = z.object({
 });
 export type ContenuQueteTerminee = z.infer<typeof contenuQueteTermineeSchema>;
 
+/** L'appel à projets de la semaine est réussi : la prime est déjà versée (docs/05, 5.11). */
+export const contenuProjetReussiSchema = z.object({
+  code: z.string(),
+  title: z.string(),
+  rewardCash: entier.nonnegative(),
+  rewardGems: entier.nonnegative(),
+});
+export type ContenuProjetReussi = z.infer<typeof contenuProjetReussiSchema>;
+
 /** Le patrimoine a franchi un seuil (5.4) : nouveau rang, qui ne redescendra plus. */
 export const contenuNouveauRangSchema = z.object({
   /** 1 Notable … 4 Tycoon (`RANGS`). */
@@ -121,6 +130,7 @@ export const notificationSchema = z.discriminatedUnion('kind', [
   messageNouveauRang,
   z.object({ ...message, kind: z.literal('gift_received'), payload: contenuCadeauSchema }),
   z.object({ ...message, kind: z.literal('report_closed'), payload: contenuSignalementClosSchema }),
+  z.object({ ...message, kind: z.literal('project_completed'), payload: contenuProjetReussiSchema }),
 ]);
 /** Un message du jeu (à ne pas confondre avec `Notification` du navigateur). */
 export type NotificationJeu = z.infer<typeof notificationSchema>;
