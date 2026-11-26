@@ -242,7 +242,12 @@ Un objectif **commun à tous les joueurs**, du lundi minuit au lundi suivant (he
 
 Une année tient en **4 semaines** : une saison par semaine, du lundi minuit au lundi suivant (heure de Paris). Printemps, été, automne, hiver, puis on recommence (`saisonDeLaSemaine`). Constantes dans `shared/src/balance.ts`.
 
-- **Profil d'une commune** (`territories.season_profile`) : `littoral`, `montagne` ou `rural`. Sans profil, la saison ne change rien. Les profils sont **vides** : ils viendront d'un import (listes officielles des communes littorales et de montagne, densité pour le rural).
+- **Profil d'une commune** (`territories.season_profile`) : `littoral`, `montagne` ou `rural`. Sans profil, la saison ne change rien. Rempli par la migration 018 (26/11/2026) :
+  - **littoral** : communes de la loi Littoral (mer, estuaire, lac), liste officielle au code géographique 2022 (data.gouv.fr, DGALN) ;
+  - **montagne** : communes de la loi montagne, même source ; une commune dans les deux listes reste littoral (Ajaccio, Nice, Annecy…) ;
+  - **rural** : le reste, sous 100 habitants au km² ;
+  - **sans profil** : les communes plus denses (villes, banlieues).
+  - Sur les 34 963 communes : 1 174 littoral, 5 368 montagne, 21 104 rural, 7 317 sans profil.
 - **Bonus et malus** (`BONUS_SAISON`, en % des revenus du territoire, `pctSaison`) :
 
 | Profil | Printemps | Été | Automne | Hiver |
@@ -252,4 +257,4 @@ Une année tient en **4 semaines** : une saison par semaine, du lundi minuit au 
 | Rural | +20 % | 0 | +20 % | 0 |
 
 - **Où ça joue** : `R_J` (encaissement, `incomePerHour` de `/me`, primes des quêtes et des appels à projets) : chaque `R_T` devient `arrondi( R_T × pct / 100 )` avant la somme. Hors ligne, le revenu change aussi chaque lundi à minuit (calcul par morceaux, § 5.3). Comme les réglages à chaud (§ 5.10), le revenu affiché sur la fiche d'une commune reste sans saison.
-- **Coupé pendant la bêta** (choix de l'utilisateur, 26/11/2026) : `EFFETS_SAISONS_ACTIFS = false`. La saison tourne et se voit dans le dashboard (vue d'ensemble), pas chez les joueurs. Pour activer : remplir les profils, passer la constante à `true`, puis montrer la saison aux joueurs.
+- **Coupé pendant la bêta** (choix de l'utilisateur, 26/11/2026) : `EFFETS_SAISONS_ACTIFS = false`. La saison tourne et se voit dans le dashboard (vue d'ensemble), pas chez les joueurs. Pour activer : passer la constante à `true`, puis montrer la saison aux joueurs.
