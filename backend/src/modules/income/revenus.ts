@@ -210,8 +210,9 @@ export function creerEncaisseurSimple(db: Base) {
       terminer.run(finishedAt, b.id);
       notifier.run(moi, JSON.stringify(fini), finishedAt);
       // Quêtes : un chantier compte quand il est fini (annulé, il est remboursé et ne compte pas).
-      emettre(db, { userId: moi, type: 'building_started', tirer: false }, maintenant);
-      if (fini.level > 1) emettre(db, { userId: moi, type: 'building_upgraded', tirer: false }, maintenant);
+      const kind = b.typeCode;
+      emettre(db, { userId: moi, type: 'building_started', tirer: false, kind }, maintenant);
+      if (fini.level > 1) emettre(db, { userId: moi, type: 'building_upgraded', tirer: false, kind }, maintenant);
       return fini;
     });
 

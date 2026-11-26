@@ -512,6 +512,98 @@ export function recompenseQuete(heures: number, revenuHeure: number, cashMin: nu
   return Math.max(cashMin, Math.round((heures * revenuHeure) / 100) * 100);
 }
 
+// --- Appels à projets de l'État (docs/05, 5.11) ---
+
+/** Jours écoulés depuis lundi : 0 lundi … 6 dimanche. */
+function joursDepuisLundi(annee: number, mois: number, jour: number): number {
+  return (new Date(Date.UTC(annee, mois - 1, jour)).getUTCDay() + 6) % 7;
+}
+
+/** Semaine du jeu : la date `AAAA-MM-JJ` de son lundi, à Paris (colonne `user_state_projects.week`). */
+export function semaineParis(instant: number): string {
+  const { annee, mois, jour } = heureDeParis(instant);
+  return new Date(Date.UTC(annee, mois - 1, jour - joursDepuisLundi(annee, mois, jour))).toISOString().slice(0, 10);
+}
+
+/** Prochain lundi minuit à Paris (secondes Unix) : l'appel à projets change à cet instant. */
+export function prochainLundiParis(instant: number): number {
+  const { annee, mois, jour } = heureDeParis(instant);
+  const minuitUtc = Date.UTC(annee, mois - 1, jour + 7 - joursDepuisLundi(annee, mois, jour)) / 1000;
+  return minuitUtc - decalageParis(minuitUtc - 3 * 3_600);
+}
+
+/** Un appel à projets : un objectif commun à tous les joueurs pendant une semaine. */
+export interface AppelAProjets {
+  code: string;
+  title: string;
+  /** `{target}` est remplacé par l'objectif. */
+  description: string;
+  /** Ce qui compte : un chantier fini (construction ou amélioration) ou une amélioration finie. */
+  eventType: 'building_started' | 'building_upgraded';
+  /** Seuls les chantiers de ce type comptent (`building_types.code`) ; absent : tous les types. */
+  buildingType?: string;
+  target: number;
+}
+
+/** Un projet par semaine, dans cet ordre (`appelDeLaSemaine`). Pas d'usine ni de bureaux : il faut une grande commune. */
+export const APPELS_A_PROJETS: readonly AppelAProjets[] = [
+  {
+    code: 'plan_logement',
+    title: 'Plan Logement',
+    description: 'Termine {target} chantiers de Résidence (construction ou amélioration).',
+    eventType: 'building_started',
+    buildingType: 'residence',
+    target: 6,
+  },
+  {
+    code: 'france_services',
+    title: 'France Services',
+    description: 'Termine {target} chantiers d’Équipement public (construction ou amélioration).',
+    eventType: 'building_started',
+    buildingType: 'equipement',
+    target: 3,
+  },
+  {
+    code: 'renovation_energetique',
+    title: 'Rénovation énergétique',
+    description: 'Termine {target} améliorations de bâtiments.',
+    eventType: 'building_upgraded',
+    target: 5,
+  },
+  {
+    code: 'coeur_de_bourg',
+    title: 'Cœur de bourg',
+    description: 'Termine {target} chantiers de Commerce de proximité (construction ou amélioration).',
+    eventType: 'building_started',
+    buildingType: 'commerce',
+    target: 4,
+  },
+  {
+    code: 'grands_travaux',
+    title: 'Grands travaux',
+    description: 'Termine {target} chantiers, tous bâtiments confondus.',
+    eventType: 'building_started',
+    target: 10,
+  },
+];
+
+/** L'appel à projets d'une semaine (son lundi `AAAA-MM-JJ`) : la liste tourne, une semaine après l'autre. */
+export function appelDeLaSemaine(semaine: string): AppelAProjets {
+  // Le 5 janvier 1970 était un lundi : 4 jours après le 1er.
+  const numero = Math.round((Date.parse(`${semaine}T00:00:00Z`) / 86_400_000 - 4) / 7);
+  const n = APPELS_A_PROJETS.length;
+  return APPELS_A_PROJETS[((numero % n) + n) % n] as AppelAProjets;
+}
+
+export const PRIME_PROJET_HEURES = 12;
+export const PRIME_PROJET_CASH_MIN = 15_000;
+export const PRIME_PROJET_GEMMES = 10;
+
+/** Prime en ₮ d'un appel à projets : max( 15 000 ; arrondi_100( 12 × R_J ) ), figée quand il est réussi. */
+export function primeProjet(revenuHeure: number): number {
+  return recompenseQuete(PRIME_PROJET_HEURES, revenuHeure, PRIME_PROJET_CASH_MIN);
+}
+
 // --- Réglages à chaud (dashboard /admin, étape 6) ---
 
 /** Un réglage en % : 100 = normal. Un admin règle chaque valeur entre ÷ 4 et × 4. */

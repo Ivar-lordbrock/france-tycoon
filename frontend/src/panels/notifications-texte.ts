@@ -96,6 +96,8 @@ export function phraseNotification(n: NotificationJeu): string {
     }
     case 'quest_completed':
       return `Quête « ${n.payload.title} » réussie : ${recompenseQuete(n.payload)} à réclamer.`;
+    case 'project_completed':
+      return `Appel à projets « ${n.payload.title} » réussi : l’État te verse ${recompenseQuete(n.payload)}.`;
     case 'rank_up':
       return phraseNouveauRang(n.payload);
     case 'gift_received': {

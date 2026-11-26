@@ -41,8 +41,9 @@ describe('exécuteur de migrations', () => {
       '013_admin_live.sql',
       '014_admin_reglages.sql',
       '015_admin_triche.sql',
+      '016_appels_a_projets.sql',
     ]);
-    expect(versionDuSchema(db)).toBe('015');
+    expect(versionDuSchema(db)).toBe('016');
     expect(db.prepare('SELECT count(*) FROM building_types').pluck().get()).toBe(7);
     const traces = db.prepare('SELECT version, name, length(checksum) AS l FROM schema_migrations').all();
     expect(traces).toEqual([
@@ -61,6 +62,7 @@ describe('exécuteur de migrations', () => {
       { version: '013', name: '013_admin_live.sql', l: 64 },
       { version: '014', name: '014_admin_reglages.sql', l: 64 },
       { version: '015', name: '015_admin_triche.sql', l: 64 },
+      { version: '016', name: '016_appels_a_projets.sql', l: 64 },
     ]);
   });
 

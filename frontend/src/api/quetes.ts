@@ -1,4 +1,5 @@
 import type {
+  AppelAProjetsReponse,
   EncaissementReponse,
   MoiReponse,
   QuetesReponse,
@@ -20,6 +21,20 @@ export function useQuetes(actif: boolean) {
     // Relues juste après minuit (heure de Paris) si le volet est resté ouvert.
     refetchInterval: (query) =>
       query.state.data ? Math.max(1_000, query.state.data.resetsAt * 1000 - Date.now()) : false,
+  });
+}
+
+/**
+ * L'appel à projets de la semaine. Clé sous `quetes` : relu chaque fois que les quêtes le sont
+ * (encaissement, chantier fini…). La prime est versée par le serveur, sans bouton.
+ */
+export function useAppelAProjets(actif: boolean) {
+  return useQuery({
+    queryKey: ['quetes', 'projet'],
+    queryFn: ({ signal }) => lireJson<AppelAProjetsReponse>('/api/v1/me/state-project', signal),
+    enabled: actif,
+    refetchInterval: (query) =>
+      query.state.data ? Math.max(1_000, query.state.data.endsAt * 1000 - Date.now()) : false,
   });
 }
 

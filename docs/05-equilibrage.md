@@ -219,3 +219,21 @@ Un admin change trois réglages sans redéployer, dans « Contrôle live » : **
 Pas touchés : la valeur d'un territoire (V_T), les OPA, la vente à l'État, les quêtes, la durée des chantiers.
 
 **Jamais dans le passé** : un changement part de maintenant, un événement aussi. Les revenus non encaissés se calculent par morceaux, à chaque changement de réglage (§ 5.3) : un week-end « revenus × 2 » ne double que les heures du week-end, même si le joueur encaisse lundi. Formules : `combinerPct`, `ajuster`, `prixAchat` (balance.ts) ; calendrier : `backend/src/modules/reglages/calendrier.ts`.
+
+## 5.11 Appels à projets de l'État
+
+Un objectif **commun à tous les joueurs**, du lundi minuit au lundi suivant (heure de Paris : `semaineParis`, `prochainLundiParis`). Constantes dans `shared/src/balance.ts`.
+
+- **Projet de la semaine** : la liste `APPELS_A_PROJETS` tourne dans l'ordre, une semaine après l'autre (`appelDeLaSemaine`) : jamais deux fois de suite, tous passent en 5 semaines.
+
+| Code | Titre | Ce qui compte | Objectif |
+|---|---|---|---|
+| `plan_logement` | Plan Logement | chantier de Résidence fini | 6 |
+| `france_services` | France Services | chantier d'Équipement public fini | 3 |
+| `renovation_energetique` | Rénovation énergétique | amélioration finie (tous types) | 5 |
+| `coeur_de_bourg` | Cœur de bourg | chantier de Commerce fini | 4 |
+| `grands_travaux` | Grands travaux | chantier fini (tous types) | 10 |
+
+- **Ce qui compte** : un chantier **fini** (construction ou amélioration), comme les quêtes (§ 5.7) : un chantier annulé est remboursé et ne compte pas. Pas d'usine ni de bureaux : il faut une grande commune. Pas d'achat de commune : acheter puis revendre à l'État ferait gagner la prime.
+- **Prime** : `max( 15 000 ; arrondi_100( 12 × R_J ) )` ₮ (`primeProjet`, `PRIME_PROJET_CASH_MIN`, `PRIME_PROJET_HEURES`) et 10 💎 (`PRIME_PROJET_GEMMES`), figée et **versée tout de suite** quand l'objectif est atteint (pas de bouton), une fois par semaine. Avant, l'écran montre la prime au revenu du moment.
+- Un chantier fini pendant l'absence du joueur compte à son retour (encaissement), dans la semaine de ce retour.

@@ -45,7 +45,7 @@ function evenementDuMessage(message: NotificationJeu): EvenementDirect | null {
 }
 
 /** Messages qui changent le cash ou le revenu sans que le joueur agisse : suivis de `wallet.changed`. */
-const BOUGENT_LE_PORTEFEUILLE = new Set(['takeover_resolved', 'inactivity_released']);
+const BOUGENT_LE_PORTEFEUILLE = new Set(['takeover_resolved', 'inactivity_released', 'project_completed']);
 
 export function creerDirect(db: Base) {
   const abonnes = new Map<number, Flux[]>();
