@@ -1,15 +1,19 @@
 import {
   chantierFiniNonLuSchema,
+  EFFETS_SAISONS_ACTIFS,
   encaissementReponseSchema,
   lireNotificationsReponseSchema,
   moiReponseSchema,
   PLAFOND_HORS_LIGNE_S,
+  prochainLundiParis,
+  saisonDeLaSemaine,
+  semaineParis,
 } from '@france-tycoon/shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Base } from '../../db/connexion.ts';
 import { appDeTest, baseDeTest, connecter } from '../../outils-test/base.ts';
 import { insererCommunes } from '../../outils-test/communes.ts';
-import { creerEncaisseur } from './revenus.ts';
+import { creerEncaisseur, cumulDepuis, revenuDuJoueur, type TerritoireRevenu } from './revenus.ts';
 
 // Revenus passifs en temps simulé (docs/05-equilibrage.md, 5.3).
 // Village 01001 : V0 = 21 800 → sol 218 ₮/h ; Résidence niveau 1 : 295 ₮/h, niveau 2 : 502 ₮/h.
@@ -266,5 +270,34 @@ describe('routes : encaisser d’abord', () => {
     expect((await requete('POST', '/me/notifications/read', { all: true })).json()).toEqual({
       unreadNotifications: 0,
     });
+  });
+});
+
+describe('saisons (5.12)', () => {
+  /** Premier lundi d'été après T0 ; la semaine d'avant est le printemps. */
+  let lundiEte = prochainLundiParis(T0);
+  while (saisonDeLaSemaine(semaineParis(lundiEte)) !== 'ete') lundiEte = prochainLundiParis(lundiEte);
+  const littoral: TerritoireRevenu = { baseValue: 21_800, batiments: [], profil: 'littoral' };
+  const sansProfil: TerritoireRevenu = { baseValue: 21_800, batiments: [] };
+  const LITTORAL_ETE = 327; // arrondi( 218 × 150 % )
+
+  it('coupées pendant la bêta : aucun revenu ne change', () => {
+    expect(EFFETS_SAISONS_ACTIFS).toBe(false);
+    expect(revenuDuJoueur([littoral], lundiEte + h)).toBe(SOL);
+    // Le cumul compte des ₮·s par heure (Σ R × Δt en secondes).
+    expect(cumulDepuis([littoral], lundiEte - 12 * h, lundiEte + 12 * h)).toBe(SOL * 24 * h);
+  });
+
+  it('actives : le littoral gagne 50 % en été ; sans profil, rien ne change', () => {
+    expect(revenuDuJoueur([littoral], lundiEte + h, 100, true)).toBe(LITTORAL_ETE);
+    expect(revenuDuJoueur([sansProfil], lundiEte + h, 100, true)).toBe(SOL);
+    expect(revenuDuJoueur([littoral, sansProfil], lundiEte + h, 100, true)).toBe(LITTORAL_ETE + SOL);
+    expect(revenuDuJoueur([littoral], lundiEte - h, 100, true)).toBe(SOL); // printemps : rien pour le littoral
+  });
+
+  it('actives : le cumul change pile le lundi à minuit', () => {
+    expect(cumulDepuis([littoral], lundiEte - 12 * h, lundiEte + 12 * h, undefined, true)).toBe(
+      (SOL * 12 + LITTORAL_ETE * 12) * h,
+    );
   });
 });

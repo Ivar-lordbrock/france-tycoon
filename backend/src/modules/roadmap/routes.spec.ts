@@ -13,8 +13,9 @@ describe('GET /roadmap', () => {
     const { features } = feuilleDeRouteReponseSchema.parse(reponse.json());
     expect(features.map((f) => f.code)).toEqual(CODES);
     expect(features.map((f) => f.category)).toEqual(['social', 'social', 'gameplay', 'economy', 'gameplay']);
-    // Migration 016 : les aléas passent « en cours » (appels à projets) ; les autres restent prévues.
-    expect(features.map((f) => f.status)).toEqual(CODES.map((c) => (c === 'aleas' ? 'in_progress' : 'planned')));
+    // Migrations 016 et 017 : aléas (appels à projets) et saisons « en cours » ; les autres restent prévues.
+    const enCours = ['saisons', 'aleas'];
+    expect(features.map((f) => f.status)).toEqual(CODES.map((c) => (enCours.includes(c) ? 'in_progress' : 'planned')));
     expect(features.every((f) => f.details.length >= 2)).toBe(true);
   });
 

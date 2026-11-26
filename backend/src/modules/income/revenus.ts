@@ -2,12 +2,18 @@ import {
   ajuster,
   apportBatiment,
   type ChantierFini,
+  EFFETS_SAISONS_ACTIFS,
   facteurTaille,
   type ParametresRevenu,
+  type ProfilSaison,
   partagerCumul,
+  pctSaison,
+  prochainLundiParis,
   revenuCumule,
   revenuJoueur,
   revenuTerritoire,
+  saisonDeLaSemaine,
+  semaineParis,
 } from '@france-tycoon/shared';
 import type { Base } from '../../db/connexion.ts';
 import { creerRecalculLimite } from '../buildings/limites.ts';
@@ -65,11 +71,26 @@ export function revenuDuTerritoire(v0: number, batiments: readonly BatimentReven
 export interface TerritoireRevenu {
   baseValue: number;
   batiments: BatimentRevenu[];
+  /** Profil saisonnier (`territories.season_profile`) : sans profil, la saison ne change rien (5.12). */
+  profil?: ProfilSaison | null;
 }
 
-/** R_J à l'instant `instant`, multiplié par le réglage des revenus en % (dashboard /admin ; 100 = normal). */
-export function revenuDuJoueur(territoires: readonly TerritoireRevenu[], instant: number, pct = 100): number {
-  return ajuster(revenuJoueur(territoires.map((t) => revenuDuTerritoire(t.baseValue, t.batiments, instant))), pct);
+/**
+ * R_J à l'instant `instant`, multiplié par le réglage des revenus en % (dashboard /admin ; 100 = normal).
+ * `saisons` : chaque R_T ajusté à la saison de son profil (5.12) ; coupé pendant la bêta.
+ */
+export function revenuDuJoueur(
+  territoires: readonly TerritoireRevenu[],
+  instant: number,
+  pct = 100,
+  saisons = EFFETS_SAISONS_ACTIFS,
+): number {
+  const saison = saisons ? saisonDeLaSemaine(semaineParis(instant)) : null;
+  const revenus = territoires.map((t) => {
+    const r = revenuDuTerritoire(t.baseValue, t.batiments, instant);
+    return saison ? ajuster(r, pctSaison(t.profil, saison)) : r;
+  });
+  return ajuster(revenuJoueur(revenus), pct);
 }
 
 /**
@@ -81,8 +102,11 @@ export function cumulDepuis(
   depuis: number,
   maintenant: number,
   reglages?: Calendrier,
+  saisons = EFFETS_SAISONS_ACTIFS,
 ): number {
   const fins = new Set<number>(reglages?.ruptures);
+  // Saisons : le revenu change aussi chaque lundi à minuit (heure de Paris).
+  if (saisons) for (let l = prochainLundiParis(depuis); l < maintenant; l = prochainLundiParis(l)) fins.add(l);
   for (const { batiments } of territoires) {
     for (const b of batiments) {
       if (b.targetLevel !== null && b.worksEndsAt !== null && b.worksEndsAt > depuis && b.worksEndsAt <= maintenant) {
@@ -90,7 +114,7 @@ export function cumulDepuis(
       }
     }
   }
-  const revenuA = (a: number) => revenuDuJoueur(territoires, a, reglages?.a(a).income);
+  const revenuA = (a: number) => revenuDuJoueur(territoires, a, reglages?.a(a).income, saisons);
   const changements = [...fins].map((a) => ({ a, revenuParHeure: revenuA(a) }));
   return revenuCumule(depuis, maintenant, revenuA(depuis), changements);
 }
@@ -98,6 +122,7 @@ export function cumulDepuis(
 interface LigneTerritoire {
   id: number;
   baseValue: number;
+  profil: ProfilSaison | null;
 }
 
 interface LigneBatimentJoueur extends LigneBatimentRevenu {
@@ -114,7 +139,7 @@ type BatimentJoueur = Omit<LigneBatimentJoueur, 'scalesWithTerritory'> & Batimen
 /** Les territoires d'un joueur et leurs bâtiments, prêts pour le calcul des revenus. */
 export function creerLecteurRevenus(db: Base) {
   const territoires = db.prepare<[number], LigneTerritoire>(
-    'SELECT id, base_value AS baseValue FROM territories WHERE owner_id = ? ORDER BY id',
+    'SELECT id, base_value AS baseValue, season_profile AS profil FROM territories WHERE owner_id = ? ORDER BY id',
   );
   const batiments = db.prepare<[number], LigneBatimentJoueur>(`
     SELECT b.id, b.territory_id AS territoryId, t.insee_code AS territoryInsee, t.name AS territoryName,
@@ -129,7 +154,8 @@ export function creerLecteurRevenus(db: Base) {
   /** Territoires du joueur, rangés par id, chacun avec ses bâtiments. */
   return function lireTerritoiresRevenu(moi: number): Map<number, TerritoireRevenu & { batiments: BatimentJoueur[] }> {
     const parTerritoire = new Map<number, TerritoireRevenu & { batiments: BatimentJoueur[] }>();
-    for (const t of territoires.all(moi)) parTerritoire.set(t.id, { baseValue: t.baseValue, batiments: [] });
+    for (const t of territoires.all(moi))
+      parTerritoire.set(t.id, { baseValue: t.baseValue, profil: t.profil, batiments: [] });
     for (const ligne of batiments.all(moi))
       parTerritoire.get(ligne.territoryId)?.batiments.push(versBatimentRevenu(ligne));
     return parTerritoire;

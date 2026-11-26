@@ -144,7 +144,7 @@ Le flux relit la table `notifications` : tant qu'un joueur écoute, un passage c
 |---|---|---|---|
 | GET | `/admin/health` | | état du serveur, de la base, dernière exécution des tâches (sans 🛡️ pour la supervision, sans données sensibles) |
 | GET | `/admin/me` | 🛡️ équipe | grade du compte connecté (`moderator` ou `admin`) ; 401 sans session, 403 pour un joueur |
-| GET | `/admin/overview` | 🛡️ équipe | dashboard : joueurs actifs 24 h / 7 j / 14 j, communes possédées par zone, soldes et revenu par heure, OPA, signalements et alertes à traiter, tâches, taille de la base, disque libre, `daily[]` : 14 derniers jours (UTC) `{ day, signups, active }` (active = joueurs avec un mouvement d'argent) |
+| GET | `/admin/overview` | 🛡️ équipe | dashboard : joueurs actifs 24 h / 7 j / 14 j, communes possédées par zone, soldes et revenu par heure, OPA, signalements et alertes à traiter, tâches, taille de la base, disque libre, `daily[]` : 14 derniers jours (UTC) `{ day, signups, active }` (active = joueurs avec un mouvement d'argent), `season` : `{ code, name, endsAt, effectsActive, profiles: { littoral, montagne, rural } }` (saison de la semaine, bonus coupés pendant la bêta) |
 | GET | `/admin/players?q&role&status` | 🛡️ équipe | recherche (pseudo ou e-mail en morceau, id Google ou n° exact), filtres grade et statut (`suspended` compris), 50 max |
 | GET | `/admin/players/:id` | 🛡️ équipe | fiche : soldes, revenu, communes, 50 transactions, 30 OPA, 20 connexions (empreintes hachées), notes, journal d'audit |
 | POST | `/admin/players/:id/notes` · PATCH/DELETE `/admin/notes/:id` | 🛡️ équipe | notes de l'équipe (`{ body }`) |

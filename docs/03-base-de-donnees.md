@@ -127,6 +127,7 @@ erDiagram
 **`territories`** — une ligne par commune française importée.
 - Géographie : `insee_code` (5 caractères), `department_code`, `region_code`, **`region_type`** (`metropole` / `outre_mer`), **`zone_code`** (12 zones autorisées, la base refuse le reste), `population`, `area_km2`, centre.
 - Valeurs calculées à l'import : `infra_score` (I), `base_value` (V0), `building_slots`, `balance_version`.
+- Saisons (migration 017) : `season_profile` (`littoral` / `montagne` / `rural`, ou `NULL`) dit quelle saison profite à la commune ([05](05-equilibrage.md) § 5.12). Vide pour l'instant : il viendra d'un import.
 - Propriété : `owner_id` (NULL = libre), `acquired_at`, `acquired_price`, `fortification_value` (F, gagnée en défendant une OPA), `shield_until`, `is_capital` (héberge le siège social, immunisé contre les OPA ; une seule capitale par joueur grâce à un index unique partiel).
 
 **`territory_geometries`** — contours GeoJSON `geojson_low` / `geojson_high`, séparés pour garder `territories` légère.

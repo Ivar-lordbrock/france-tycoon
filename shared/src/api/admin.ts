@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EVENEMENT_DUREE_MAX_H, REGLAGE_PCT_MAX, REGLAGE_PCT_MIN } from '../balance.ts';
+import { EVENEMENT_DUREE_MAX_H, REGLAGE_PCT_MAX, REGLAGE_PCT_MIN, SAISONS } from '../balance.ts';
 import { STATUTS_OPA } from './opa.ts';
 import { reglagesSchema, STATUTS_SIGNALEMENT } from './site.ts';
 
@@ -51,6 +51,16 @@ export const vueEnsembleReponseSchema = z.object({
   reports: z.object({ open: nombre }),
   /** Alertes anti-triche pas encore classées. */
   alerts: z.object({ open: nombre }),
+  /** Saison de la semaine (docs/05, 5.12) ; `effectsActive` faux : elle ne change aucun revenu (bêta). */
+  season: z.object({
+    code: z.enum(SAISONS),
+    name: z.string(),
+    /** Prochain lundi minuit à Paris : la saison suivante commence. */
+    endsAt: z.number().int(),
+    effectsActive: z.boolean(),
+    /** Communes qui ont un profil saisonnier (`territories.season_profile`). */
+    profiles: z.object({ littoral: nombre, montagne: nombre, rural: nombre }),
+  }),
   /** 14 derniers jours (UTC), du plus ancien à aujourd'hui : inscriptions et joueurs avec un mouvement d'argent. */
   daily: z.array(z.object({ day: z.string(), signups: nombre, active: nombre })),
   system: z.object({
