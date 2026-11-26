@@ -43,8 +43,9 @@ describe('exécuteur de migrations', () => {
       '015_admin_triche.sql',
       '016_appels_a_projets.sql',
       '017_saisons.sql',
+      '018_profils_saisons.sql',
     ]);
-    expect(versionDuSchema(db)).toBe('017');
+    expect(versionDuSchema(db)).toBe('018');
     expect(db.prepare('SELECT count(*) FROM building_types').pluck().get()).toBe(7);
     const traces = db.prepare('SELECT version, name, length(checksum) AS l FROM schema_migrations').all();
     expect(traces).toEqual([
@@ -65,6 +66,31 @@ describe('exécuteur de migrations', () => {
       { version: '015', name: '015_admin_triche.sql', l: 64 },
       { version: '016', name: '016_appels_a_projets.sql', l: 64 },
       { version: '017', name: '017_saisons.sql', l: 64 },
+      { version: '018', name: '018_profils_saisons.sql', l: 64 },
+    ]);
+  });
+
+  it('018 classe les communes : listes officielles, littoral d’abord, puis rural sous 100 hab/km²', () => {
+    const avant018 = lireMigrations().filter((m) => m.name < '018');
+    const db = ouvrirBase(':memory:');
+    appliquerMigrations(db, dossierMigrations(Object.fromEntries(avant018.map((m) => [m.name, m.sql]))));
+    const inserer = db.prepare(`INSERT INTO territories (insee_code, name, department_code, region_type, zone_code,
+      population, area_km2, center_lat, center_lng, base_value, building_slots)
+      VALUES (?, ?, ?, 'metropole', 'MET', ?, ?, 46, 2, 1000, 5)`);
+    inserer.run('17300', 'La Rochelle', '17', 79851, 30.01); // littoral (mer)
+    inserer.run('74056', 'Chamonix-Mont-Blanc', '74', 8705, 245.4); // montagne
+    inserer.run('2A004', 'Ajaccio', '2A', 76320, 82.49); // dans les deux listes : littoral
+    inserer.run('75056', 'Paris', '75', 2103778, 105.36); // dense : sans profil
+    inserer.run('23001', 'Ahun', '23', 1394, 34.01); // rural
+
+    appliquerMigrations(db);
+
+    expect(db.prepare('SELECT insee_code, season_profile FROM territories ORDER BY id').raw().all()).toEqual([
+      ['17300', 'littoral'],
+      ['74056', 'montagne'],
+      ['2A004', 'littoral'],
+      ['75056', null],
+      ['23001', 'rural'],
     ]);
   });
 
