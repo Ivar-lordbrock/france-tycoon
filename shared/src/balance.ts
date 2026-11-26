@@ -587,12 +587,19 @@ export const APPELS_A_PROJETS: readonly AppelAProjets[] = [
   },
 ];
 
+/** Numéro d'une semaine (son lundi `AAAA-MM-JJ`) : 0 = semaine du lundi 5 janvier 1970 (4 jours après le 1er). */
+function numeroSemaine(semaine: string): number {
+  return Math.round((Date.parse(`${semaine}T00:00:00Z`) / 86_400_000 - 4) / 7);
+}
+
+/** Élément n° `i` d'une liste qui tourne (i peut être négatif). */
+function tourne<T>(liste: readonly T[], i: number): T {
+  return liste[((i % liste.length) + liste.length) % liste.length] as T;
+}
+
 /** L'appel à projets d'une semaine (son lundi `AAAA-MM-JJ`) : la liste tourne, une semaine après l'autre. */
 export function appelDeLaSemaine(semaine: string): AppelAProjets {
-  // Le 5 janvier 1970 était un lundi : 4 jours après le 1er.
-  const numero = Math.round((Date.parse(`${semaine}T00:00:00Z`) / 86_400_000 - 4) / 7);
-  const n = APPELS_A_PROJETS.length;
-  return APPELS_A_PROJETS[((numero % n) + n) % n] as AppelAProjets;
+  return tourne(APPELS_A_PROJETS, numeroSemaine(semaine));
 }
 
 export const PRIME_PROJET_HEURES = 12;
@@ -602,6 +609,44 @@ export const PRIME_PROJET_GEMMES = 10;
 /** Prime en ₮ d'un appel à projets : max( 15 000 ; arrondi_100( 12 × R_J ) ), figée quand il est réussi. */
 export function primeProjet(revenuHeure: number): number {
   return recompenseQuete(PRIME_PROJET_HEURES, revenuHeure, PRIME_PROJET_CASH_MIN);
+}
+
+// --- Saisons (docs/05, 5.12) : une année tient en 4 semaines, une saison par semaine (lundi, heure de Paris) ---
+
+export const SAISONS = ['printemps', 'ete', 'automne', 'hiver'] as const;
+export type Saison = (typeof SAISONS)[number];
+export const NOMS_SAISONS: Record<Saison, string> = {
+  printemps: 'Printemps',
+  ete: 'Été',
+  automne: 'Automne',
+  hiver: 'Hiver',
+};
+
+/** Profil d'une commune pour les saisons (`territories.season_profile`) ; sans profil, la saison ne change rien. */
+export const PROFILS_SAISON = ['littoral', 'montagne', 'rural'] as const;
+export type ProfilSaison = (typeof PROFILS_SAISON)[number];
+
+/** Bonus (ou malus, négatif) des revenus d'un territoire en %, par profil et par saison ; absent : 0. */
+export const BONUS_SAISON: Record<ProfilSaison, Partial<Record<Saison, number>>> = {
+  littoral: { ete: 50, hiver: -10 },
+  montagne: { hiver: 50 },
+  rural: { printemps: 20, automne: 20 },
+};
+
+/**
+ * Coupé pendant la bêta (choix de l'utilisateur, 26/11/2026) : les saisons tournent et se voient
+ * dans le dashboard, mais ne changent aucun revenu. Passer à `true` pour activer les bonus et malus.
+ */
+export const EFFETS_SAISONS_ACTIFS: boolean = false;
+
+/** La saison d'une semaine (son lundi `AAAA-MM-JJ`) : printemps, été, automne, hiver, puis on recommence. */
+export function saisonDeLaSemaine(semaine: string): Saison {
+  return tourne(SAISONS, numeroSemaine(semaine));
+}
+
+/** Réglage en % des revenus d'un territoire pour une saison (100 = rien ne change). */
+export function pctSaison(profil: ProfilSaison | null | undefined, saison: Saison): number {
+  return 100 + (profil ? (BONUS_SAISON[profil][saison] ?? 0) : 0);
 }
 
 // --- Réglages à chaud (dashboard /admin, étape 6) ---

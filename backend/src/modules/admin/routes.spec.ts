@@ -25,7 +25,7 @@ describe('GET /api/v1/admin/health', () => {
     expect(reponse.statusCode).toBe(200);
     const corps = santeReponseSchema.parse(reponse.json());
     expect(corps.status).toBe('ok');
-    expect(corps.database).toEqual({ ok: true, schemaVersion: '016', territories: 0 });
+    expect(corps.database).toEqual({ ok: true, schemaVersion: '017', territories: 0 });
     expect(corps.jobs).toEqual([
       { name: 'cleanup', status: 'error', startedAt: 50, finishedAt: 60 },
       { name: 'leaderboard', status: 'running', startedAt: 200, finishedAt: null },
@@ -104,6 +104,11 @@ describe('dashboard /admin : qui entre', () => {
     expect(vue.economy).toMatchObject({ cash: cashChef + 100, gems: 2 });
     expect(vue.economy.incomePerHour).toBeGreaterThan(0); // le sol des deux communes rapporte
     expect(vue.takeovers).toEqual({ active: 0, finished: 0 });
+    expect(vue.season).toMatchObject({ effectsActive: false, profiles: { littoral: 0, montagne: 0, rural: 0 } });
+    a.db.prepare("UPDATE territories SET season_profile = 'littoral' WHERE insee_code = '42001'").run();
+    const apres = vueEnsembleReponseSchema.parse((await lire(a, 'overview', chef.cookie)).json());
+    expect(apres.season.profiles).toEqual({ littoral: 1, montagne: 0, rural: 0 });
+    expect(apres.economy.incomePerHour).toBe(vue.economy.incomePerHour); // effets coupés : rien ne change
     expect(vue.system.databaseBytes).toBeGreaterThan(0);
   });
 });

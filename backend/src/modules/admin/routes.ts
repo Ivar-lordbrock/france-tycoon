@@ -3,9 +3,15 @@ import { dirname } from 'node:path';
 import {
   type AdminMoiReponse,
   adminMoiReponseSchema,
+  EFFETS_SAISONS_ACTIFS,
   type Grade,
+  NOMS_SAISONS,
+  type ProfilSaison,
+  prochainLundiParis,
   type SanteReponse,
+  saisonDeLaSemaine,
   santeReponseSchema,
+  semaineParis,
   type VueEnsembleReponse,
   vueEnsembleReponseSchema,
 } from '@france-tycoon/shared';
@@ -126,6 +132,9 @@ export const routesAdmin: FastifyPluginAsyncZod<OptionsAdmin> = async (
     const opa = app.db.prepare<[], VueEnsembleReponse['takeovers']>(`
       SELECT coalesce(sum(status = 'pending'), 0) AS active, coalesce(sum(status <> 'pending'), 0) AS finished
       FROM takeovers`);
+    const profils = app.db.prepare<[], { profil: ProfilSaison; n: number }>(`
+      SELECT season_profile AS profil, count(*) AS n FROM territories
+      WHERE season_profile IS NOT NULL GROUP BY season_profile`);
     const signalementsOuverts = app.db
       .prepare<[], number>("SELECT count(*) FROM player_reports WHERE status = 'open'")
       .pluck();
@@ -172,12 +181,26 @@ export const routesAdmin: FastifyPluginAsyncZod<OptionsAdmin> = async (
         takeovers: opa.get() ?? { active: 0, finished: 0 },
         reports: { open: signalementsOuverts.get() ?? 0 },
         alerts: { open: alertes(now).filter((x) => x.review === null).length },
+        season: saisonDuMoment(now, profils.all()),
         daily: parJour.all(now - 13 * JOUR_S, now),
         system: { jobs: derniereExecution.all(), databaseBytes: tailleBase.get() ?? 0, diskFreeBytes },
       };
     });
   });
 };
+
+/** La saison de la semaine et le nombre de communes de chaque profil (vue d'ensemble). */
+function saisonDuMoment(now: number, profils: { profil: ProfilSaison; n: number }[]) {
+  const code = saisonDeLaSemaine(semaineParis(now));
+  const compte = (p: ProfilSaison) => profils.find((x) => x.profil === p)?.n ?? 0;
+  return {
+    code,
+    name: NOMS_SAISONS[code],
+    endsAt: prochainLundiParis(now),
+    effectsActive: EFFETS_SAISONS_ACTIFS,
+    profiles: { littoral: compte('littoral'), montagne: compte('montagne'), rural: compte('rural') },
+  };
+}
 
 declare module 'fastify' {
   interface FastifyRequest {

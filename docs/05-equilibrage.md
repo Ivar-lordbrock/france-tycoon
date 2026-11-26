@@ -237,3 +237,19 @@ Un objectif **commun à tous les joueurs**, du lundi minuit au lundi suivant (he
 - **Ce qui compte** : un chantier **fini** (construction ou amélioration), comme les quêtes (§ 5.7) : un chantier annulé est remboursé et ne compte pas. Pas d'usine ni de bureaux : il faut une grande commune. Pas d'achat de commune : acheter puis revendre à l'État ferait gagner la prime.
 - **Prime** : `max( 15 000 ; arrondi_100( 12 × R_J ) )` ₮ (`primeProjet`, `PRIME_PROJET_CASH_MIN`, `PRIME_PROJET_HEURES`) et 10 💎 (`PRIME_PROJET_GEMMES`), figée et **versée tout de suite** quand l'objectif est atteint (pas de bouton), une fois par semaine. Avant, l'écran montre la prime au revenu du moment.
 - Un chantier fini pendant l'absence du joueur compte à son retour (encaissement), dans la semaine de ce retour.
+
+## 5.12 Saisons (effets coupés pendant la bêta)
+
+Une année tient en **4 semaines** : une saison par semaine, du lundi minuit au lundi suivant (heure de Paris). Printemps, été, automne, hiver, puis on recommence (`saisonDeLaSemaine`). Constantes dans `shared/src/balance.ts`.
+
+- **Profil d'une commune** (`territories.season_profile`) : `littoral`, `montagne` ou `rural`. Sans profil, la saison ne change rien. Les profils sont **vides** : ils viendront d'un import (listes officielles des communes littorales et de montagne, densité pour le rural).
+- **Bonus et malus** (`BONUS_SAISON`, en % des revenus du territoire, `pctSaison`) :
+
+| Profil | Printemps | Été | Automne | Hiver |
+|---|---|---|---|---|
+| Littoral | 0 | +50 % | 0 | −10 % |
+| Montagne | 0 | 0 | 0 | +50 % |
+| Rural | +20 % | 0 | +20 % | 0 |
+
+- **Où ça joue** : `R_J` (encaissement, `incomePerHour` de `/me`, primes des quêtes et des appels à projets) : chaque `R_T` devient `arrondi( R_T × pct / 100 )` avant la somme. Hors ligne, le revenu change aussi chaque lundi à minuit (calcul par morceaux, § 5.3). Comme les réglages à chaud (§ 5.10), le revenu affiché sur la fiche d'une commune reste sans saison.
+- **Coupé pendant la bêta** (choix de l'utilisateur, 26/11/2026) : `EFFETS_SAISONS_ACTIFS = false`. La saison tourne et se voit dans le dashboard (vue d'ensemble), pas chez les joueurs. Pour activer : remplir les profils, passer la constante à `true`, puis montrer la saison aux joueurs.

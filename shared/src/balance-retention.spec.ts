@@ -2,14 +2,18 @@ import { describe, expect, it } from 'vitest';
 import {
   APPELS_A_PROJETS,
   appelDeLaSemaine,
+  EFFETS_SAISONS_ACTIFS,
   jourParis,
   nouveauRang,
+  pctSaison,
   primeProjet,
   prochainLundiParis,
   prochainMinuitParis,
   RANGS,
   rangDuPatrimoine,
   recompenseQuete,
+  SAISONS,
+  saisonDeLaSemaine,
   semaineParis,
 } from './balance.ts';
 
@@ -109,5 +113,28 @@ describe('semaine des appels à projets (5.11)', () => {
     expect(primeProjet(0)).toBe(15_000);
     expect(primeProjet(1_000)).toBe(15_000);
     expect(primeProjet(2_049)).toBe(24_600);
+  });
+});
+
+describe('saisons (5.12)', () => {
+  it('une saison par semaine, dans l’ordre, puis on recommence', () => {
+    const semaines = Array.from({ length: 8 }, (_, i) => semaineParis(utc(2026, 11, 25) + i * 7 * 86_400));
+    const saisons = semaines.map(saisonDeLaSemaine);
+    const depart = SAISONS.indexOf(saisons[0] as (typeof SAISONS)[number]);
+    expect(saisons).toEqual(Array.from({ length: 8 }, (_, i) => SAISONS[(depart + i) % 4]));
+  });
+
+  it('bonus par profil ; sans profil, 100 %', () => {
+    expect(pctSaison('littoral', 'ete')).toBe(150);
+    expect(pctSaison('littoral', 'hiver')).toBe(90);
+    expect(pctSaison('montagne', 'hiver')).toBe(150);
+    expect(pctSaison('montagne', 'ete')).toBe(100);
+    expect(pctSaison('rural', 'printemps')).toBe(120);
+    expect(pctSaison('rural', 'automne')).toBe(120);
+    expect(pctSaison(null, 'ete')).toBe(100);
+  });
+
+  it('coupées pendant la bêta', () => {
+    expect(EFFETS_SAISONS_ACTIFS).toBe(false);
   });
 });
