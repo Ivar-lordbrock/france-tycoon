@@ -7,6 +7,7 @@ export * from './api/erreurs.ts';
 export * from './api/feuille-de-route.ts';
 export * from './api/notifications.ts';
 export * from './api/opa.ts';
+export * from './api/projets.ts';
 export * from './api/quetes.ts';
 export * from './api/site.ts';
 export * from './api/territoires.ts';

@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { jourParis, nouveauRang, prochainMinuitParis, RANGS, rangDuPatrimoine, recompenseQuete } from './balance.ts';
+import {
+  APPELS_A_PROJETS,
+  appelDeLaSemaine,
+  jourParis,
+  nouveauRang,
+  primeProjet,
+  prochainLundiParis,
+  prochainMinuitParis,
+  RANGS,
+  rangDuPatrimoine,
+  recompenseQuete,
+  semaineParis,
+} from './balance.ts';
 
 /** Secondes Unix d'une date UTC (mois de 1 à 12). */
 const utc = (annee: number, mois: number, jour: number, heure = 0, minute = 0, seconde = 0) =>
@@ -64,5 +76,38 @@ describe('récompense d’une quête (5.7)', () => {
     expect(recompenseQuete(4, 1_103, 3_000)).toBe(4_400);
     // Sans revenu, le minimum.
     expect(recompenseQuete(1, 0, 500)).toBe(500);
+  });
+});
+
+describe('semaine des appels à projets (5.11)', () => {
+  it('la semaine est le lundi à Paris ; elle change le lundi à minuit', () => {
+    expect(semaineParis(utc(2026, 11, 26, 12))).toBe('2026-11-23');
+    expect(semaineParis(utc(2026, 11, 29, 22, 59, 59))).toBe('2026-11-23'); // dimanche 23:59:59 à Paris
+    expect(semaineParis(utc(2026, 11, 29, 23))).toBe('2026-11-30');
+    expect(semaineParis(utc(2027, 1, 1, 12))).toBe('2026-12-28');
+  });
+
+  it('prochain lundi minuit : strictement après, changements d’heure compris', () => {
+    expect(prochainLundiParis(utc(2026, 11, 26, 12))).toBe(utc(2026, 11, 29, 23));
+    expect(prochainLundiParis(utc(2026, 7, 15, 12))).toBe(utc(2026, 7, 19, 22));
+    expect(prochainLundiParis(utc(2026, 11, 29, 23))).toBe(utc(2026, 12, 6, 23)); // pile lundi minuit
+    expect(prochainLundiParis(utc(2026, 3, 25, 12))).toBe(utc(2026, 3, 29, 22)); // heure d'été le dimanche 29
+    expect(prochainLundiParis(utc(2026, 10, 21, 12))).toBe(utc(2026, 10, 25, 23)); // heure d'hiver le dimanche 25
+  });
+
+  it('les projets tournent : tous passent en 5 semaines, jamais deux fois de suite', () => {
+    const codes: string[] = [];
+    for (let t = utc(2026, 11, 23, 12); codes.length < APPELS_A_PROJETS.length * 2; t += 7 * 86_400) {
+      codes.push(appelDeLaSemaine(semaineParis(t)).code);
+    }
+    expect(new Set(codes.slice(0, APPELS_A_PROJETS.length)).size).toBe(APPELS_A_PROJETS.length);
+    for (let i = 1; i < codes.length; i++) expect(codes[i]).not.toBe(codes[i - 1]);
+    expect(appelDeLaSemaine('2026-11-23')).toBe(appelDeLaSemaine('2026-11-23'));
+  });
+
+  it('prime : 15 000 ₮ au moins, sinon 12 heures de revenu arrondies à la centaine', () => {
+    expect(primeProjet(0)).toBe(15_000);
+    expect(primeProjet(1_000)).toBe(15_000);
+    expect(primeProjet(2_049)).toBe(24_600);
   });
 });
